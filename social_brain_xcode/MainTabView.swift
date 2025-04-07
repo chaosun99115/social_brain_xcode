@@ -5,7 +5,7 @@ struct MainTabView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            Text("Social Brain")
+            SocialBrainView()
                 .tabItem {
                     Label("Social Brain", systemImage: "brain")
                 }

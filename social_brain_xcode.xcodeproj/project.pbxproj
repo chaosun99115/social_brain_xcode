@@ -17,6 +17,7 @@
 		AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BCD2DA0772F0001DD71 /* SocialNote.swift */; };
 		AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BCE2DA0772F0001DD72 /* SocialNotesView.swift */; };
 		AFF98BD12DA43FAE0001DD70 /* SocialNetwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BD02DA43FAE0001DD70 /* SocialNetwork.swift */; };
+		AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BD22DA4453F0001DD70 /* SocialBrainView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		AFF98BCD2DA0772F0001DD71 /* SocialNote.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNote.swift; sourceTree = "<group>"; };
 		AFF98BCE2DA0772F0001DD72 /* SocialNotesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNotesView.swift; sourceTree = "<group>"; };
 		AFF98BD02DA43FAE0001DD70 /* SocialNetwork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNetwork.swift; sourceTree = "<group>"; };
+		AFF98BD22DA4453F0001DD70 /* SocialBrainView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialBrainView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +67,7 @@
 			isa = PBXGroup;
 			children = (
 				AFF98BCB2DA0772F0001DD70 /* MainTabView.swift */,
+				AFF98BD22DA4453F0001DD70 /* SocialBrainView.swift */,
 				AFF98BD02DA43FAE0001DD70 /* SocialNetwork.swift */,
 				AFF98BCC2DA0772F0001DD70 /* SocialNetworkView.swift */,
 				AFF98BCD2DA0772F0001DD71 /* SocialNote.swift */,
@@ -165,6 +168,7 @@
 				AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */,
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,
 				AFF98BD12DA43FAE0001DD70 /* SocialNetwork.swift in Sources */,
+				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
