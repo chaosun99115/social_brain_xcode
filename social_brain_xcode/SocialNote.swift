@@ -27,15 +27,11 @@ struct SocialNote: Identifiable {
     static let mockNotes = [
         SocialNote(
             date: Calendar.current.date(from: DateComponents(year: 2025, month: 3, day: 15))!,
-            content: "Met @Michael Johnson at Central Perk this morning. He's working as an analyst at Bridgewater Fund – seems to really know his stuff about market trends. Has two golden retrievers (Buddy and Max) that he takes to Prospect Park every weekend. Recently divorced, but didn't seem like he wanted to talk about it."
+            content: "今天和 @李经理 在午餐时偶遇一起吃了饭。他提到他二年级的女儿，最近开始学轮滑了。另外他自己有一套手冲咖啡器具，平时会研究咖啡。他的部门最近在准备一个项目，接下来三个月会比较忙。"
         ),
         SocialNote(
             date: Calendar.current.date(from: DateComponents(year: 2025, month: 3, day: 10))!,
-            content: "@James Chen started his new PM role at Microsoft! Family moved to Seattle from Boston last week. His wife Jennifer is looking for teaching positions for the fall. Kids: Ethan (10) and Sophia (7) will start at new schools next month. They bought a house in Bellevue."
-        ),
-        SocialNote(
-            date: Calendar.current.date(from: DateComponents(year: 2025, month: 2, day: 20))!,
-            content: "@Rachel Garcia moving to Chicago next month for Deloitte consulting job. Suggested Lincoln Park or Wicker Park neighborhoods based on my visit last year. She's looking for salsa classes there – maybe connect her with my cousin in Chicago?"
+            content: "今天在接佳佳的路上遇到了 @彤彤妈妈 。她提到学校下周日有「亲子阅读日」，但她可能因工作原因无法参加。她还提到自己喜欢烘焙，经常在周末做蛋糕给孩子们吃。另外，她最近想给彤彤报一个编程班，但不知道哪家机构比较好。"
         )
     ]
 } 

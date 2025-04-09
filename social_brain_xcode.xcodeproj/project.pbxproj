@@ -7,20 +7,48 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111D2DADA98E0071D444 /* NoteManager.swift */; };
+		AF6D11202DADA98E0071D444 /* ContactManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111E2DADA98E0071D444 /* ContactManager.swift */; };
+		AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11222DADA9B20071D444 /* CoreDataManager.swift */; };
+		AF6D11252DADAC610071D444 /* ContactsListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11242DADAC610071D444 /* ContactsListViewModel.swift */; };
+		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
+		AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E42DA70C770066907B /* InfoPlist.strings */; };
+		AFBD50EF2DA70C770066907B /* social_brain_xcode.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50E62DA70C770066907B /* social_brain_xcode.xcdatamodeld */; };
+		AFBD50F02DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E92DA70C770066907B /* Localizable.strings */; };
+		AFBD50F12DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50EB2DA70C770066907B /* InfoPlist.strings */; };
+		AFBD50F42DA70DDC0066907B /* SocialContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F22DA70DDC0066907B /* SocialContactView.swift */; };
+		AFBD50F52DA70DDC0066907B /* SocialContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F32DA70DDC0066907B /* SocialContact.swift */; };
+		AFBD50F82DA715550066907B /* SocialBrainMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F62DA715550066907B /* SocialBrainMessage.swift */; };
+		AFBD50F92DA715550066907B /* SocialBrainDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */; };
+		AFBD50FD2DA739660066907B /* SocialContactDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50FC2DA739660066907B /* SocialContactDetailView.swift */; };
 		AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */; };
 		AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBA2DA075730001DD70 /* Assets.xcassets */; };
 		AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBD2DA075730001DD70 /* Preview Assets.xcassets */; };
 		AFF98BC02DA075730001DD70 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BBF2DA075730001DD70 /* Persistence.swift */; };
 		AFF98BC32DA075730001DD70 /* social_brain_xcode.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BC12DA075730001DD70 /* social_brain_xcode.xcdatamodeld */; };
 		AFF98BCE2DA0772F0001DD70 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BCB2DA0772F0001DD70 /* MainTabView.swift */; };
-		AFF98BCF2DA0772F0001DD70 /* SocialNetworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BCC2DA0772F0001DD70 /* SocialNetworkView.swift */; };
 		AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BCD2DA0772F0001DD71 /* SocialNote.swift */; };
 		AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BCE2DA0772F0001DD72 /* SocialNotesView.swift */; };
-		AFF98BD12DA43FAE0001DD70 /* SocialNetwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BD02DA43FAE0001DD70 /* SocialNetwork.swift */; };
 		AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BD22DA4453F0001DD70 /* SocialBrainView.swift */; };
+		AFF98BD52DA4496C0001DD70 /* SocialBrainMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BD42DA4496C0001DD70 /* SocialBrainMessage.swift */; };
+		AFF98BD92DA45DA00001DD70 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BD82DA45DA00001DD70 /* AppTheme.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AF6D111D2DADA98E0071D444 /* NoteManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteManager.swift; sourceTree = "<group>"; };
+		AF6D111E2DADA98E0071D444 /* ContactManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactManager.swift; sourceTree = "<group>"; };
+		AF6D11222DADA9B20071D444 /* CoreDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
+		AF6D11242DADAC610071D444 /* ContactsListViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactsListViewModel.swift; sourceTree = "<group>"; };
+		AFBD50E32DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
+		AFBD50E52DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = InfoPlist.strings; sourceTree = "<group>"; };
+		AFBD50E72DA70C770066907B /* social_brain_xcode.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = social_brain_xcode.xcdatamodel; sourceTree = "<group>"; };
+		AFBD50EA2DA70C770066907B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = Localizable.strings; sourceTree = "<group>"; };
+		AFBD50EC2DA70C770066907B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = InfoPlist.strings; sourceTree = "<group>"; };
+		AFBD50F22DA70DDC0066907B /* SocialContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContactView.swift; sourceTree = "<group>"; };
+		AFBD50F32DA70DDC0066907B /* SocialContact.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContact.swift; sourceTree = "<group>"; };
+		AFBD50F62DA715550066907B /* SocialBrainMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialBrainMessage.swift; sourceTree = "<group>"; };
+		AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialBrainDialogView.swift; sourceTree = "<group>"; };
+		AFBD50FC2DA739660066907B /* SocialContactDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContactDetailView.swift; sourceTree = "<group>"; };
 		AFF98BB32DA075720001DD70 /* social_brain_xcode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = social_brain_xcode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = social_brain_xcodeApp.swift; sourceTree = "<group>"; };
 		AFF98BBA2DA075730001DD70 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -29,11 +57,11 @@
 		AFF98BC22DA075730001DD70 /* social_brain_xcode.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = social_brain_xcode.xcdatamodel; sourceTree = "<group>"; };
 		AFF98BC42DA075730001DD70 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AFF98BCB2DA0772F0001DD70 /* MainTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
-		AFF98BCC2DA0772F0001DD70 /* SocialNetworkView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNetworkView.swift; sourceTree = "<group>"; };
 		AFF98BCD2DA0772F0001DD71 /* SocialNote.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNote.swift; sourceTree = "<group>"; };
 		AFF98BCE2DA0772F0001DD72 /* SocialNotesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNotesView.swift; sourceTree = "<group>"; };
-		AFF98BD02DA43FAE0001DD70 /* SocialNetwork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNetwork.swift; sourceTree = "<group>"; };
 		AFF98BD22DA4453F0001DD70 /* SocialBrainView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialBrainView.swift; sourceTree = "<group>"; };
+		AFF98BD42DA4496C0001DD70 /* SocialBrainMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialBrainMessage.swift; sourceTree = "<group>"; };
+		AFF98BD82DA45DA00001DD70 /* AppTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +75,32 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AF6D11212DADA9B20071D444 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				AF6D11222DADA9B20071D444 /* CoreDataManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		AFBD50E12DA70C770066907B /* zh-Hans.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				AFBD50E22DA70C770066907B /* Localizable.strings */,
+				AFBD50E42DA70C770066907B /* InfoPlist.strings */,
+			);
+			path = "zh-Hans.lproj";
+			sourceTree = "<group>";
+		};
+		AFBD50E82DA70C770066907B /* en.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				AFBD50E92DA70C770066907B /* Localizable.strings */,
+				AFBD50EB2DA70C770066907B /* InfoPlist.strings */,
+			);
+			path = en.lproj;
+			sourceTree = "<group>";
+		};
 		AFF98BAA2DA075720001DD70 = {
 			isa = PBXGroup;
 			children = (
@@ -66,15 +120,27 @@
 		AFF98BB52DA075720001DD70 /* social_brain_xcode */ = {
 			isa = PBXGroup;
 			children = (
+				AFBD50E82DA70C770066907B /* en.lproj */,
+				AFBD50E62DA70C770066907B /* social_brain_xcode.xcdatamodeld */,
+				AFBD50E12DA70C770066907B /* zh-Hans.lproj */,
+				AFF98BD82DA45DA00001DD70 /* AppTheme.swift */,
 				AFF98BCB2DA0772F0001DD70 /* MainTabView.swift */,
 				AFF98BD22DA4453F0001DD70 /* SocialBrainView.swift */,
-				AFF98BD02DA43FAE0001DD70 /* SocialNetwork.swift */,
-				AFF98BCC2DA0772F0001DD70 /* SocialNetworkView.swift */,
-				AFF98BCD2DA0772F0001DD71 /* SocialNote.swift */,
+				AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */,
+				AFBD50FC2DA739660066907B /* SocialContactDetailView.swift */,
+				AFBD50F62DA715550066907B /* SocialBrainMessage.swift */,
 				AFF98BCE2DA0772F0001DD72 /* SocialNotesView.swift */,
+				AFBD50F32DA70DDC0066907B /* SocialContact.swift */,
+				AFBD50F22DA70DDC0066907B /* SocialContactView.swift */,
+				AFF98BD42DA4496C0001DD70 /* SocialBrainMessage.swift */,
+				AFF98BCD2DA0772F0001DD71 /* SocialNote.swift */,
 				AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */,
+				AF6D111E2DADA98E0071D444 /* ContactManager.swift */,
+				AF6D11242DADAC610071D444 /* ContactsListViewModel.swift */,
+				AF6D111D2DADA98E0071D444 /* NoteManager.swift */,
 				AFF98BBA2DA075730001DD70 /* Assets.xcassets */,
 				AFF98BBF2DA075730001DD70 /* Persistence.swift */,
+				AF6D11212DADA9B20071D444 /* Managers */,
 				AFF98BC42DA075730001DD70 /* Info.plist */,
 				AFF98BC12DA075730001DD70 /* social_brain_xcode.xcdatamodeld */,
 				AFF98BBC2DA075730001DD70 /* Preview Content */,
@@ -132,6 +198,7 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
 			);
 			mainGroup = AFF98BAA2DA075720001DD70;
 			productRefGroup = AFF98BB42DA075720001DD70 /* Products */;
@@ -148,7 +215,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFBD50F02DA70C770066907B /* Localizable.strings in Resources */,
+				AFBD50F12DA70C770066907B /* InfoPlist.strings in Resources */,
 				AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */,
+				AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */,
+				AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */,
 				AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -161,18 +232,63 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFF98BC02DA075730001DD70 /* Persistence.swift in Sources */,
-				AFF98BCF2DA0772F0001DD70 /* SocialNetworkView.swift in Sources */,
+				AFF98BD92DA45DA00001DD70 /* AppTheme.swift in Sources */,
+				AFBD50F92DA715550066907B /* SocialBrainDialogView.swift in Sources */,
 				AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */,
 				AFF98BC32DA075730001DD70 /* social_brain_xcode.xcdatamodeld in Sources */,
+				AFBD50F82DA715550066907B /* SocialBrainMessage.swift in Sources */,
+				AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */,
 				AFF98BCE2DA0772F0001DD70 /* MainTabView.swift in Sources */,
+				AFBD50FD2DA739660066907B /* SocialContactDetailView.swift in Sources */,
+				AFF98BD52DA4496C0001DD70 /* SocialBrainMessage.swift in Sources */,
+				AFBD50EF2DA70C770066907B /* social_brain_xcode.xcdatamodeld in Sources */,
 				AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */,
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,
-				AFF98BD12DA43FAE0001DD70 /* SocialNetwork.swift in Sources */,
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
+				AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */,
+				AF6D11202DADA98E0071D444 /* ContactManager.swift in Sources */,
+				AFBD50F42DA70DDC0066907B /* SocialContactView.swift in Sources */,
+				AF6D11252DADAC610071D444 /* ContactsListViewModel.swift in Sources */,
+				AFBD50F52DA70DDC0066907B /* SocialContact.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		AFBD50E22DA70C770066907B /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				AFBD50E32DA70C770066907B /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		AFBD50E42DA70C770066907B /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				AFBD50E52DA70C770066907B /* zh-Hans */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		AFBD50E92DA70C770066907B /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				AFBD50EA2DA70C770066907B /* en */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		AFBD50EB2DA70C770066907B /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				AFBD50EC2DA70C770066907B /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		AFF98BC52DA075730001DD70 /* Debug */ = {
@@ -297,6 +413,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"social_brain_xcode/Preview Content\"";
+				DEVELOPMENT_TEAM = G2726ZZ85E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -304,6 +421,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -325,6 +443,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"social_brain_xcode/Preview Content\"";
+				DEVELOPMENT_TEAM = G2726ZZ85E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -332,6 +451,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -369,6 +489,16 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
+		AFBD50E62DA70C770066907B /* social_brain_xcode.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				AFBD50E72DA70C770066907B /* social_brain_xcode.xcdatamodel */,
+			);
+			currentVersion = AFBD50E72DA70C770066907B /* social_brain_xcode.xcdatamodel */;
+			path = social_brain_xcode.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
 		AFF98BC12DA075730001DD70 /* social_brain_xcode.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (

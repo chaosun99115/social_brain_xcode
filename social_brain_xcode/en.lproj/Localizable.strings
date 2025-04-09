@@ -1,0 +1,51 @@
+/* Main Tab Items */
+"social_brain" = "Social Brain";
+"social_notes" = "Social Notes";
+"social_contacts" = "Social Contacts";
+
+/* Common UI Elements */
+"save" = "Save";
+"cancel" = "Cancel";
+"delete" = "Delete";
+"edit" = "Edit";
+"done" = "Done";
+"settings" = "Settings";
+
+/* Social Brain View */
+"ask_social_brain" = "Ask Social Brain";
+"hint_text" = "Type your question...";
+"searching_notes" = "Searching notes and generating response...";
+"social_quote" = "In my opinion, those who engage in superficial networking and only hand out business cards haven't grasped the essence of genuine social connections. Their approach simply doesn't work because sincerity is paramount when building relationships.";
+"quote_source" = "———— Never Eat Alone";
+"new_chat" = "New chat";
+
+/* Dialog View */
+"dialog_recent_interactions" = "Help me review my recent social interactions that need follow-up?";
+"dialog_manager_project" = "Manager mentioned in an interaction 5 days ago that his department is preparing a project that will keep them busy for the next three months. You can inquire about the situation, which might help you find new job opportunities.";
+"dialog_view_original_note" = "View original note";
+"dialog_manager_status" = "What's new with Manager?";
+"dialog_manager_daughter" = "Manager's daughter just started learning roller skating. You can ask about the child's learning experience. You haven't recorded any topics related to roller skating, you can let AI research what content you can talk about.";
+"dialog_ai_research" = "AI Research";
+
+/* Social Notes View */
+"add_note" = "Add Note";
+"search_notes" = "Search Notes";
+"no_notes" = "No notes yet. Add your first note!";
+
+/* Social Contacts View */
+"search_contacts" = "Search Contacts";
+"add_contact" = "Add Contact";
+"no_contacts" = "No contacts yet. Add your first contact!";
+"contact_1"="Alex Thompson";
+"contact_2"="Emma Wilson";
+"contact_3"="Jason Chen";
+"contact_4"="Sarah Miller";
+"last_mention"="last mention";
+"note"="note";
+
+/* Time Formatting */
+"yesterday" = "Yesterday";
+"days_ago" = "%d days ago";
+"hours_ago" = "%d hour(s) ago";
+"minutes_ago" = "%d minute(s) ago";
+"just_now" = "Just now";

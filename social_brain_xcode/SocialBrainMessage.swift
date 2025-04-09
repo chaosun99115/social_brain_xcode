@@ -5,23 +5,32 @@ struct SocialBrainMessage: Identifiable {
     let content: String
     let isFromUser: Bool
     let timestamp: Date
+    let suggestedAction: String?
     
-    // Mock data for Social Brain
+    init(content: String, isFromUser: Bool, timestamp: Date, suggestedAction: String? = nil) {
+        self.content = content
+        self.isFromUser = isFromUser
+        self.timestamp = timestamp
+        self.suggestedAction = suggestedAction
+    }
+    
+    // Mock data for Social Brain - suggested questions and responses
     static let mockMessages = [
+        // Suggested questions for the home screen
         SocialBrainMessage(
-            content: "下周要参加大学同学聚会，请帮我准备一些合适的话题，避免尬尴冷场。",
-            isFromUser: false,
-            timestamp: Calendar.current.date(byAdding: .day, value: -3, to: Date())!
+            content: "最近有什么值得回顾或者需要跟进的社交互动吗？",
+            isFromUser: true,
+            timestamp: Date()
         ),
         SocialBrainMessage(
-            content: "帮我回顾最近我有什么需要回顾的社交互动吗？",
-            isFromUser: false,
-            timestamp: Calendar.current.date(byAdding: .day, value: -2, to: Date())!
+            content: "最近的社交互动有提到什么话题是我的盲区吗？",
+            isFromUser: true,
+            timestamp: Date()
         ),
         SocialBrainMessage(
-            content: "帮我回顾最近我有什么需要特别注意的话题吗？",
-            isFromUser: false,
-            timestamp: Calendar.current.date(byAdding: .minute, value: -30, to: Date())!
+            content: "我要参加一个社交活动，帮我准备一下能用上的话题。",
+            isFromUser: true,
+            timestamp: Date()
         )
     ]
 } 

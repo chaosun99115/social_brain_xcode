@@ -2,24 +2,25 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab = 1 // Default to Social Notes (middle tab)
+    @EnvironmentObject var localizationManager: LocalizationManager
     
     var body: some View {
         TabView(selection: $selectedTab) {
             SocialBrainView()
                 .tabItem {
-                    Label("Social Brain", systemImage: "brain")
+                    Label("social_brain".localized, systemImage: "sparkles")
                 }
                 .tag(0)
             
             SocialNotesView()
                 .tabItem {
-                    Label("Social Notes", systemImage: "note.text")
+                    Label("social_notes".localized, systemImage: "doc.text")
                 }
                 .tag(1)
             
-            SocialNetworkView()
+            SocialContactView()
                 .tabItem {
-                    Label("Social Network", systemImage: "person.2")
+                    Label("social_contacts".localized, systemImage: "person.2")
                 }
                 .tag(2)
         }
@@ -29,5 +30,6 @@ struct MainTabView: View {
 struct MainTabView_Previews: PreviewProvider {
     static var previews: some View {
         MainTabView()
+            .environmentObject(LocalizationManager())
     }
 } 

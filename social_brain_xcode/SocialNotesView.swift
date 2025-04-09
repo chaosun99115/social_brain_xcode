@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SocialNotesView: View {
     @State private var searchText = ""
+    @EnvironmentObject var localizationManager: LocalizationManager
     
     var filteredNotes: [SocialNote] {
         if searchText.isEmpty {
@@ -15,26 +16,33 @@ struct SocialNotesView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color.white
+                Color.primaryBackground
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     List(filteredNotes) { note in
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(note.formattedDate)
+                            Text(formattedDate(for: note.date))
                                 .font(.headline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.secondaryText)
                             
-                            Text(note.content)
+                            MentionTextView(text: note.content)
                                 .font(.body)
+                                .foregroundColor(.primaryText)
                                 .lineSpacing(4)
+                                .lineLimit(4) 
                         }
                         .padding(.vertical, 12)
                         .padding(.horizontal, 16)
-                        .background(Color(.secondarySystemGroupedBackground))
+                        .background(Color.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                        .listRowBackground(Color.white)
+                        .shadow(color: Color.primaryText.opacity(0.05), radius: 2, x: 0, y: 1)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.divider, lineWidth: 0.5)
+                        )
+                        .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
+                        .listRowBackground(Color.primaryBackground)
                         .listRowSeparator(.hidden)
                     }
                     .listStyle(.plain)
@@ -49,26 +57,71 @@ struct SocialNotesView: View {
                             // Add note action
                         }) {
                             Image(systemName: "plus")
-                                .font(.title2.bold())
+                                .font(.system(size: 22, weight: .bold, design: .default))
                                 .foregroundColor(.white)
                                 .frame(width: 56, height: 56)
-                                .background(Color.blue)
+                                .background(Color.primaryAction)
                                 .clipShape(Circle())
-                                .shadow(color: Color.black.opacity(0.2), radius: 5)
+                                .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
                         }
                         .padding(.trailing, 20)
                         .padding(.bottom, 20)
                     }
                 }
             }
-            .navigationTitle("Social Notes")
-            .searchable(text: $searchText, prompt: "Search")
+            .navigationTitle("social_notes".localized)
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_notes".localized)
         }
+    }
+    
+    // iOS standard date formatting
+    func formattedDate(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        formatter.doesRelativeDateFormatting = true
+        return formatter.string(from: date)
+    }
+}
+
+struct MentionTextView: View {
+    let text: String
+    
+    var body: some View {
+        Text(attributedString)
+    }
+    
+    var attributedString: AttributedString {
+        let words = text.split(separator: " ")
+        var result = AttributedString("")
+        
+        for (index, word) in words.enumerated() {
+            if word.hasPrefix("@") {
+                var mentionText = AttributedString(String(word))
+                mentionText.foregroundColor = Color.mentionHighlight
+                mentionText.font = .subheadline.bold()
+                result.append(mentionText)
+            } else {
+                result.append(AttributedString(String(word)))
+            }
+            
+            if index < words.count - 1 {
+                result.append(AttributedString(" "))
+            }
+        }
+        
+        return result
     }
 }
 
 struct SocialNotesView_Previews: PreviewProvider {
     static var previews: some View {
         SocialNotesView()
+            .environment(\.colorScheme, .light)
+            .environmentObject(LocalizationManager())
+        
+        SocialNotesView()
+            .environment(\.colorScheme, .dark)
+            .environmentObject(LocalizationManager())
     }
 } 

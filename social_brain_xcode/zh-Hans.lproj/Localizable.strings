@@ -1,0 +1,53 @@
+/* Main Tab Items */
+"social_brain" = "社交大脑";
+"social_notes" = "社交笔记";
+"social_contacts" = "社交联系人";
+
+/* Common UI Elements */
+"save" = "保存";
+"cancel" = "取消";
+"delete" = "删除";
+"edit" = "编辑";
+"done" = "完成";
+"settings" = "设置";
+
+/* Social Brain View */
+"ask_social_brain" = "询问社交大脑";
+"hint_text" = "输入您的问题...";
+"searching_notes" = "正在检索笔记并生成答案...";
+"social_quote" = "在我看来，这种热衷于蜻蜓点水式的社交，只知道发名片的人根本没有掌握真诚社交的精髓。他们那一套根本不顶用，因为在建立关系时，真诚才是第一位的。";
+"quote_source" = "———— Never Eat Alone";
+"new_chat" = "新对话";
+
+/* Dialog View */
+"dialog_recent_interactions" = "帮我回顾最近我有什么需要回顾的社交互动吗?";
+"dialog_manager_project" = "李经理在5天前的互动里提到了他的部门最近在准备一个项目，接下来三个月会比较忙。你可以打听一下相关情况，可能能帮你找到新的工作机会。";
+"dialog_view_original_note" = "查看原笔记";
+"dialog_manager_status" = "李经理有什么近况?";
+"dialog_manager_daughter" = "李经理的女儿刚开始学轮滑，你可以询问孩子的学习体验。你没有记录过轮滑相关的话题，可以让AI调研一下有什么可以聊的内容";
+"dialog_ai_research" = "AI调研";
+
+/* Social Notes View */
+"add_note" = "添加笔记";
+"search_notes" = "搜索笔记";
+"no_notes" = "暂无笔记，添加您的第一条笔记！";
+
+/* Social Contacts View */
+"search_contacts" = "搜索联系人";
+"add_contact" = "添加联系人";
+"no_contacts" = "暂无联系人，添加您的第一个联系人！";
+"contact_1"="李经理";
+"contact_2"="彤彤妈妈";
+"contact_3"="小陈";
+"contact_4"="悦悦爸爸";
+"last_mention"="上一次提到";
+"note"="条笔记";
+
+/* Time Formatting */
+"yesterday" = "昨天";
+"days_ago" = "%d天前";
+"hours_ago" = "%d小时前";
+"minutes_ago" = "%d分钟前";
+"just_now" = "刚刚";
+
+

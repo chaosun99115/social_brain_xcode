@@ -6,7 +6,7 @@
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="noteToContactRelationships" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="contact" inverseEntity="NoteContactRelationship"/>
+        <relationship name="noteToContactRelationships" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="NoteContactRelationship" inverseName="contact" inverseEntity="NoteContactRelationship"/>
     </entity>
     <entity name="Note" representedClassName="Note" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
@@ -14,13 +14,12 @@
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="text" optional="YES" attributeType="String"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="contactToNoteRelationships" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="note" inverseEntity="NoteContactRelationship"/>
+        <relationship name="noteToContactRelationships" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="NoteContactRelationship" inverseName="note" inverseEntity="NoteContactRelationship"/>
     </entity>
     <entity name="NoteContactRelationship" representedClassName="NoteContactRelationship" syncable="YES" codeGenerationType="class">
-        <attribute name="attribute" optional="YES"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="relationshipId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <relationship name="contact" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contact" inverseName="noteToContactRelationships" inverseEntity="Contact"/>
-        <relationship name="note" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Note" inverseName="contactToNoteRelationships" inverseEntity="Note"/>
+        <relationship name="note" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Note" inverseName="noteToContactRelationships" inverseEntity="Note"/>
     </entity>
-</model>
+</model> 

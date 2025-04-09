@@ -6,5 +6,14 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>zh-Hans</string>
+	</array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>LSHasLocalizedDisplayName</key>
+	<true/>
 </dict>
 </plist>
