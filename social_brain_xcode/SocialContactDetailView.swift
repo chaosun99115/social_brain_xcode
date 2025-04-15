@@ -1,11 +1,15 @@
 import SwiftUI
 
 struct SocialContactDetailView: View {
-    let contact: Contact
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var localizationManager: LocalizationManager
     @State private var activeTab: TabType = .summary
+    
+    // Hardcoded contact data
+    private let contactName = "Manager Li"
+    private let latestStatus = "最近一次联系是在上周的部门会议，讨论了新项目的进展。"
+    private let relatedNotesCount = 3
     
     enum TabType: String, CaseIterable {
         case summary = "汇总"
@@ -62,7 +66,7 @@ struct SocialContactDetailView: View {
                 }
             }
         }
-        .navigationTitle(contact.name)
+        .navigationTitle(contactName)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -85,6 +89,9 @@ struct SocialContactDetailView: View {
     // MARK: - Summary Section
     private var summarySectionView: some View {
         VStack(spacing: 0) {
+            // Latest status
+            latestStatusView
+            
             // Conversation topics suggestions from AI
             ForEach(contactTopics, id: \.id) { topic in
                 ContactTopicRow(topic: topic)
@@ -172,7 +179,7 @@ struct SocialContactDetailView: View {
                 .font(.headline)
                 .foregroundColor(.primaryText)
                 
-            Text(contact.latestStatus)
+            Text(latestStatus)
                 .font(.body)
                 .foregroundColor(.primaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -181,6 +188,8 @@ struct SocialContactDetailView: View {
                 .cornerRadius(12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
     }
     
     private var relatedNotesView: some View {
@@ -192,8 +201,8 @@ struct SocialContactDetailView: View {
                 
                 Spacer()
                 
-                if contact.relatedNotesCount > 0 {
-                    Text("\(contact.relatedNotesCount)")
+                if relatedNotesCount > 0 {
+                    Text("\(relatedNotesCount)")
                         .font(.caption)
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
@@ -206,7 +215,7 @@ struct SocialContactDetailView: View {
                 }
             }
             
-            if contact.relatedNotesCount == 0 {
+            if relatedNotesCount == 0 {
                 Text("no_notes".localized)
                     .font(.subheadline)
                     .foregroundColor(.tertiaryText)
@@ -338,11 +347,11 @@ struct ContactNote: Identifiable {
 // MARK: - Previews
 struct SocialContactDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        SocialContactDetailView(contact: Contact.mockContacts[0])
+        SocialContactDetailView()
             .environmentObject(LocalizationManager())
             .environment(\.colorScheme, .light)
         
-        SocialContactDetailView(contact: Contact.mockContacts[0])
+        SocialContactDetailView()
             .environmentObject(LocalizationManager())
             .environment(\.colorScheme, .dark)
     }

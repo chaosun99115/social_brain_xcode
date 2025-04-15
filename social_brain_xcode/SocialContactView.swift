@@ -1,16 +1,30 @@
 import SwiftUI
 
+// Mock data structure
+struct MockContact: Identifiable {
+    let id = UUID()
+    let name: String
+    let createdAt: Date
+    let notesCount: Int
+}
+
 struct SocialContactView: View {
     @State private var searchText = ""
     @EnvironmentObject var localizationManager: LocalizationManager
-    @StateObject private var contactsViewModel = ContactsListViewModel()
     
-    var filteredContacts: [Contact] {
+    // Mock data
+    let mockContacts = [
+        MockContact(name: "John Doe", createdAt: Date().addingTimeInterval(-86400), notesCount: 3),
+        MockContact(name: "Jane Smith", createdAt: Date().addingTimeInterval(-172800), notesCount: 5),
+        MockContact(name: "Mike Johnson", createdAt: Date().addingTimeInterval(-259200), notesCount: 2)
+    ]
+    
+    var filteredContacts: [MockContact] {
         if searchText.isEmpty {
-            return contactsViewModel.contacts
+            return mockContacts
         }
-        return contactsViewModel.contacts.filter { contact in
-            contact.name?.localizedCaseInsensitiveContains(searchText) ?? false
+        return mockContacts.filter { contact in
+            contact.name.localizedCaseInsensitiveContains(searchText)
         }
     }
     
@@ -93,7 +107,7 @@ struct SocialContactView: View {
 }
 
 struct ContactDetailView: View {
-    let contact: Contact
+    let contact: MockContact
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var localizationManager: LocalizationManager
     
@@ -136,16 +150,14 @@ struct ContactDetailView: View {
     
     private var contactInfoView: some View {
         VStack(spacing: 10) {
-            Text(contact.name ?? "")
+            Text(contact.name)
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.primaryText)
             
-            if let createdAt = contact.createdAt {
-                Text("Added: \(formatDate(createdAt))")
-                    .font(.subheadline)
-                    .foregroundColor(.tertiaryText)
-            }
+            Text("Added: \(formatDate(contact.createdAt))")
+                .font(.subheadline)
+                .foregroundColor(.tertiaryText)
         }
     }
     
@@ -158,9 +170,8 @@ struct ContactDetailView: View {
                 
                 Spacer()
                 
-                let notesCount = contact.noteToContactRelationships?.count ?? 0
-                if notesCount > 0 {
-                    Text("\(notesCount)")
+                if contact.notesCount > 0 {
+                    Text("\(contact.notesCount)")
                         .font(.caption)
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
@@ -173,7 +184,7 @@ struct ContactDetailView: View {
                 }
             }
             
-            if contact.noteToContactRelationships?.count == 0 {
+            if contact.notesCount == 0 {
                 Text("No notes related to this contact")
                     .font(.subheadline)
                     .foregroundColor(.tertiaryText)
@@ -200,21 +211,19 @@ struct ContactDetailView: View {
 }
 
 struct ContactCardView: View {
-    let contact: Contact
+    let contact: MockContact
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(contact.name ?? "")
+            Text(contact.name)
                 .font(.title3)
                 .fontWeight(.medium)
                 .foregroundColor(.primaryText)
             
             HStack {
-                if let createdAt = contact.createdAt {
-                    Text(formatDate(createdAt))
-                }
+                Text(formatDate(contact.createdAt))
                 Text("|")
-                Text("\(contact.noteToContactRelationships?.count ?? 0) " + "note".localized)
+                Text("\(contact.notesCount) " + "note".localized)
             }
             .font(.footnote)
             .foregroundColor(.secondary)

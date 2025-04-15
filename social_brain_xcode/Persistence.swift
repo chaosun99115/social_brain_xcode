@@ -13,15 +13,34 @@ struct PersistenceController {
     static var preview: PersistenceController = {
         let result = PersistenceController(inMemory: true)
         let viewContext = result.container.viewContext
-        for _ in 0..<10 {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
+        
+        // Create sample social contacts
+        for i in 0..<5 {
+            let contact = NSEntityDescription.insertNewObject(forEntityName: "Contact", into: viewContext) as! Contact
+            contact.name = "Contact \(i)"
+            contact.createdAt = Date()
+            contact.updatedAt = Date()
+            contact.recordStatus = 0
+            
+            // Create sample social notes for each contact
+            let note = NSEntityDescription.insertNewObject(forEntityName: "Note", into: viewContext) as! Note
+            note.setValue(UUID(), forKey: "noteId")
+            note.setValue("Sample note for \(contact.name ?? "")", forKey: "text")
+            note.setValue(Date(), forKey: "createdAt")
+            note.setValue(Date(), forKey: "updatedAt")
+            note.setValue(0, forKey: "recordStatus")
+            
+            // Create relationship between note and contact
+            let relationship = NSEntityDescription.insertNewObject(forEntityName: "NoteContactRelationship", into: viewContext) as! NoteContactRelationship
+            relationship.relationshipId = UUID()
+//            relationship.note = note
+//            relationship.contact = contact
+//            relationship.createdAt = Date()
         }
+        
         do {
             try viewContext.save()
         } catch {
-            // Replace this implementation with code to handle the error appropriately.
-            // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
             let nsError = error as NSError
             fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
         }

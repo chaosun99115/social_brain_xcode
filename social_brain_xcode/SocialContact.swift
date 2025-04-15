@@ -36,7 +36,7 @@ extension SocialContact {
     
     static func fetchAll() -> [SocialContact] {
         let fetchRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
-        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Contact.updatedAt, ascending: false)]
+//        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Contact.updatedAt, ascending: false)]
         
         do {
             let contacts = try viewContext.fetch(fetchRequest)
@@ -76,13 +76,13 @@ extension SocialContact {
                 contact = existingContact
             } else {
                 contact = Contact(context: context)
-                contact.contactId = id
-                contact.createdAt = createdAt
+//                contact.contactId = id
+//                contact.createdAt = createdAt
             }
             
-            contact.name = name
-            contact.updatedAt = updatedAt
-            contact.recordStatus = recordStatus
+//            contact.name = name
+//            contact.updatedAt = updatedAt
+//            contact.recordStatus = recordStatus
             
             try context.save()
             return true

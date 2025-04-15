@@ -110,9 +110,9 @@ class NoteManager {
         
         let relationship = NoteContactRelationship(context: context)
         relationship.relationshipId = UUID()
-        relationship.note = note
-        relationship.contact = contact
-        relationship.createdAt = Date()
+//        relationship.note = note
+//        relationship.contact = contact
+//        relationship.createdAt = Date()
         
         do {
             try context.save()

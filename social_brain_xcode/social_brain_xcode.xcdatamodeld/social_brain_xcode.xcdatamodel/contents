@@ -4,9 +4,10 @@
         <attribute name="contactId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="noteToContactRelationships" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="noteToContactRelationships" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="contact" inverseEntity="NoteContactRelationship"/>
+        <relationship name="relationship" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="relationship" inverseEntity="NoteContactRelationship"/>
     </entity>
     <entity name="Note" representedClassName="Note" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
@@ -14,13 +15,13 @@
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="text" optional="YES" attributeType="String"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="contactToNoteRelationships" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="note" inverseEntity="NoteContactRelationship"/>
+        <relationship name="relationship" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="relationship1" inverseEntity="NoteContactRelationship"/>
     </entity>
     <entity name="NoteContactRelationship" representedClassName="NoteContactRelationship" syncable="YES" codeGenerationType="class">
-        <attribute name="attribute" optional="YES"/>
-        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="contact" optional="YES" attributeType="String"/>
+        <attribute name="note" optional="YES" attributeType="String"/>
         <attribute name="relationshipId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <relationship name="contact" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contact" inverseName="noteToContactRelationships" inverseEntity="Contact"/>
-        <relationship name="note" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Note" inverseName="contactToNoteRelationships" inverseEntity="Note"/>
+        <relationship name="relationship" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contact" inverseName="relationship" inverseEntity="Contact"/>
+        <relationship name="relationship1" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Note" inverseName="relationship" inverseEntity="Note"/>
     </entity>
 </model>

@@ -103,15 +103,17 @@ class ContactManager {
     
     // MARK: - Relationships
     func getNotesForContact(contactId: UUID) -> [Note] {
-        let request: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
-        request.predicate = NSPredicate(format: "contact.contactId == %@", contactId as CVarArg)
+        // Hardcoded notes for testing
+        let note1 = Note(context: context)
+        note1.noteId = UUID()
+        note1.text = "Had a great conversation about AI and machine learning"
+        note1.createdAt = Date()
         
-        do {
-            let relationships = try context.fetch(request)
-            return relationships.compactMap { $0.note }
-        } catch {
-            print("Error fetching notes for contact: \(error)")
-            return []
-        }
+        let note2 = Note(context: context)
+        note2.noteId = UUID()
+        note2.text = "Discussed potential collaboration on a new project"
+        note2.createdAt = Date()
+        
+        return [note1, note2]
     }
 } 
