@@ -265,13 +265,13 @@ struct SocialBrainView: View {
         } else {
             // Default response
             let responses = [
-                "I can help you prepare for social events, remember important details about your contacts, and suggest follow-up actions for your relationships.",
-                "Based on your notes, you might want to check in with Sarah Miller. You mentioned her project deadline is approaching.",
+                "这是新的回复",
+                "这是新的回复",
                 "Would you like me to suggest some conversation topics for your upcoming meeting? I can analyze your past interactions for relevant themes."
             ]
             
             return SocialBrainMessage(
-                content: responses.randomElement() ?? responses[0],
+                content: responses[0],
                 isFromUser: false,
                 timestamp: Date(),
                 suggestedAction: lowercasedInput.contains("meeting") || lowercasedInput.contains("conversation") ? 
