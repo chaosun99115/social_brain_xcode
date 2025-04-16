@@ -11,6 +11,7 @@
 		AF6D11202DADA98E0071D444 /* ContactManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111E2DADA98E0071D444 /* ContactManager.swift */; };
 		AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11222DADA9B20071D444 /* CoreDataManager.swift */; };
 		AF6D11252DADAC610071D444 /* ContactsListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11242DADAC610071D444 /* ContactsListViewModel.swift */; };
+		AF6D11272DB00A330071D444 /* SocialNoteModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11262DB00A320071D444 /* SocialNoteModalView.swift */; };
 		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
 		AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E42DA70C770066907B /* InfoPlist.strings */; };
 		AFBD50EF2DA70C770066907B /* social_brain_xcode.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50E62DA70C770066907B /* social_brain_xcode.xcdatamodeld */; };
@@ -39,6 +40,7 @@
 		AF6D111E2DADA98E0071D444 /* ContactManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactManager.swift; sourceTree = "<group>"; };
 		AF6D11222DADA9B20071D444 /* CoreDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
 		AF6D11242DADAC610071D444 /* ContactsListViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactsListViewModel.swift; sourceTree = "<group>"; };
+		AF6D11262DB00A320071D444 /* SocialNoteModalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNoteModalView.swift; sourceTree = "<group>"; };
 		AFBD50E32DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
 		AFBD50E52DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = InfoPlist.strings; sourceTree = "<group>"; };
 		AFBD50E72DA70C770066907B /* social_brain_xcode.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = social_brain_xcode.xcdatamodel; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 				AFBD50FC2DA739660066907B /* SocialContactDetailView.swift */,
 				AFBD50F62DA715550066907B /* SocialBrainMessage.swift */,
 				AFF98BCE2DA0772F0001DD72 /* SocialNotesView.swift */,
+				AF6D11262DB00A320071D444 /* SocialNoteModalView.swift */,
 				AFBD50F32DA70DDC0066907B /* SocialContact.swift */,
 				AFBD50F22DA70DDC0066907B /* SocialContactView.swift */,
 				AFF98BD42DA4496C0001DD70 /* SocialBrainMessage.swift */,
@@ -236,6 +239,7 @@
 				AFBD50F92DA715550066907B /* SocialBrainDialogView.swift in Sources */,
 				AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */,
 				AFF98BC32DA075730001DD70 /* social_brain_xcode.xcdatamodeld in Sources */,
+				AF6D11272DB00A330071D444 /* SocialNoteModalView.swift in Sources */,
 				AFBD50F82DA715550066907B /* SocialBrainMessage.swift in Sources */,
 				AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */,
 				AFF98BCE2DA0772F0001DD70 /* MainTabView.swift in Sources */,

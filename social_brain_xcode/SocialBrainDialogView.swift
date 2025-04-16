@@ -4,7 +4,7 @@ import UIKit
 struct SocialBrainDialogView: View {
     // For standalone usage
     @State private var inputText = ""
-    @State private var messages: [DialogMessage] = DialogMessage.sampleMessages
+    @State private var messages: [DialogMessage] = []
     @EnvironmentObject var localizationManager: LocalizationManager
     @Environment(\.colorScheme) private var colorScheme
     
@@ -14,6 +14,17 @@ struct SocialBrainDialogView: View {
     @Binding var selectedMessageIndex: Int?
     @State private var animationCompleted = false
     
+    // Method to dismiss the view
+    func dismiss() {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            animationCompleted = false
+            isShowing = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                selectedMessageIndex = nil
+            }
+        }
+    }
+    
     // To access the original messages
     var originalMessages: [SocialBrainMessage]? = nil
     
@@ -21,6 +32,24 @@ struct SocialBrainDialogView: View {
     init() {
         self._isShowing = .constant(true)
         self._selectedMessageIndex = .constant(nil)
+        self._messages = State(initialValue: DialogMessage.sampleMessages)
+    }
+    
+    // Initializer with initial prompt
+    init(initialPrompt: String) {
+        self._isShowing = .constant(true)
+        self._selectedMessageIndex = .constant(nil)
+        
+        // Start with AI greeting message
+        let initialMessages = [
+            DialogMessage(content: initialPrompt, isFromUser: false)
+        ]
+        self._messages = State(initialValue: initialMessages)
+        
+        // Simulate first response after a short delay to allow the view to load
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            // This will be executed after the view is loaded
+        }
     }
     
     // Initializer for animated transition
@@ -28,6 +57,7 @@ struct SocialBrainDialogView: View {
         self.namespace = namespace
         self._isShowing = isShowing
         self._selectedMessageIndex = selectedBubbleIndex
+        self._messages = State(initialValue: DialogMessage.sampleMessages)
     }
     
     // Initializer with original messages
@@ -69,6 +99,14 @@ struct SocialBrainDialogView: View {
         return windowScene?.windows.first?.safeAreaInsets ?? .zero
     }
     
+    // Computed property to get all user message content
+    private var userMessageContent: String {
+        return messages
+            .filter { $0.isFromUser }
+            .map { $0.content }
+            .joined(separator: "\n")
+    }
+    
     var body: some View {
         ZStack {
             // Full-screen background
@@ -76,42 +114,7 @@ struct SocialBrainDialogView: View {
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 0) {
-                // Navigation bar
-                HStack {
-                    Button(action: {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            animationCompleted = false
-                            isShowing = false
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                                selectedMessageIndex = nil
-                            }
-                        }
-                    }) {
-                        Image(systemName: "arrow.left")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.primaryText)
-                            .padding(8)
-                    }
-                    
-                    Spacer()
-                    
-                    Text("social_brain".localized)
-                        .font(.headline)
-                        .foregroundColor(.primaryText)
-                    
-                    Spacer()
-                    
-                    // Empty view for balance
-                    Image(systemName: "arrow.left")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.clear)
-                        .padding(8)
-                }
-                .padding(.horizontal)
-                .padding(.top, safeAreaInsets.top)
-                .padding(.bottom, 8)
-                .background(Color.primaryBackground.opacity(0.95))
-                .zIndex(1)
+                // Navigation bar section has been removed
                 
                 // Chat area
                 ScrollViewReader { scrollProxy in
@@ -153,7 +156,7 @@ struct SocialBrainDialogView: View {
                                 .id("bottomID")
                         }
                         .padding(.horizontal)
-                        .padding(.top, selectedMessageIndex == nil ? 8 : 0)
+                        .padding(.top, 16) // Added more top padding since navigation is removed
                     }
                     .onChange(of: messages.count) { _ in
                         withAnimation {
@@ -205,6 +208,11 @@ struct SocialBrainDialogView: View {
                 .opacity(animationCompleted ? 1 : 0)
                 .offset(y: animationCompleted ? 0 : 20)
             }
+        }
+        .preference(key: NoteContentPreferenceKey.self, value: userMessageContent)
+        .onChange(of: messages) { _ in
+            // Update the preference when messages change
+            let updatedContent = userMessageContent
         }
         .statusBar(hidden: false)
     }

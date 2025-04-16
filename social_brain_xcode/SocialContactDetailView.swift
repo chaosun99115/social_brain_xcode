@@ -128,21 +128,6 @@ struct SocialContactDetailView: View {
                 id: UUID(),
                 content: "李经理的的部门最近在准备一个项目，遇到李经理可以询问项目的进展",
                 actionText: nil
-            ),
-            ContactTopic(
-                id: UUID(),
-                content: "李经理喜欢咖啡文化（你没有记录过咖啡相关的话题，可以让AI调研一下有什么可以聊的内容）",
-                actionText: "AI调研"
-            ),
-            ContactTopic(
-                id: UUID(),
-                content: "你和李经理的小孩同龄，你可以分享你自己孩子的兴趣爱好，包括钢琴，芭蕾。如果有一样的兴趣可以一起活动。",
-                actionText: nil
-            ),
-            ContactTopic(
-                id: UUID(),
-                content: "你最近担心裁员，可以问问李经理的部门是否有招人，是否有转部门的可能性。",
-                actionText: nil
             )
         ]
     }
@@ -175,17 +160,9 @@ struct SocialContactDetailView: View {
     
     private var latestStatusView: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("latest_status".localized)
+            Text("最新近况")
                 .font(.headline)
                 .foregroundColor(.primaryText)
-                
-            Text(latestStatus)
-                .font(.body)
-                .foregroundColor(.primaryText)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(Color.secondaryBackground)
-                .cornerRadius(12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)

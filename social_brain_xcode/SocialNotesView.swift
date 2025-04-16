@@ -2,7 +2,9 @@ import SwiftUI
 
 struct SocialNotesView: View {
     @State private var searchText = ""
+    @State private var showingNoteModal = false
     @EnvironmentObject var localizationManager: LocalizationManager
+    @EnvironmentObject var noteManager: NoteManager
     
     var filteredNotes: [SocialNote] {
         if searchText.isEmpty {
@@ -54,7 +56,7 @@ struct SocialNotesView: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            // Add note action
+                            showingNoteModal = true
                         }) {
                             Image(systemName: "plus")
                                 .font(.system(size: 22, weight: .bold, design: .default))
@@ -71,6 +73,11 @@ struct SocialNotesView: View {
             }
             .navigationTitle("social_notes".localized)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_notes".localized)
+            .sheet(isPresented: $showingNoteModal) {
+                SocialNoteModalView(initialPrompt: "What would you like to take a note about today?")
+                    .environmentObject(noteManager)
+                    .environmentObject(localizationManager)
+            }
         }
     }
     

@@ -28,12 +28,14 @@ class LocalizationManager: ObservableObject {
 struct social_brain_xcodeApp: App {
     let persistenceController = PersistenceController.shared
     @StateObject private var localizationManager = LocalizationManager()
+    @StateObject private var noteManager = NoteManager.shared
 
     var body: some Scene {
         WindowGroup {
             MainTabView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(localizationManager)
+                .environmentObject(noteManager)
         }
     }
 }

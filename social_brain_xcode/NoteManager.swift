@@ -1,7 +1,15 @@
 import CoreData
 import Foundation
 
-class NoteManager {
+// Note type enum
+enum NoteType: Int {
+    case general = 0
+    case meeting = 1
+    case social = 2
+    case followUp = 3
+}
+
+class NoteManager: ObservableObject {
     static let shared = NoteManager()
     private let context = CoreDataManager.shared.viewContext
     
@@ -15,6 +23,25 @@ class NoteManager {
         note.createdAt = Date()
         note.updatedAt = Date()
         note.recordStatus = 0 // unsynced
+        
+        do {
+            try context.save()
+            return note
+        } catch {
+            print("Error creating note: \(error)")
+            return nil
+        }
+    }
+    
+    // New method to create a note with content and type
+    func createNote(content: String, type: NoteType = .general) -> Note? {
+        let note = Note(context: context)
+        note.noteId = UUID()
+        note.text = content
+        note.createdAt = Date()
+        note.updatedAt = Date()
+        note.recordStatus = 0 // unsynced
+        note.noteType = Int16(type.rawValue)
         
         do {
             try context.save()
