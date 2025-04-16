@@ -6,7 +6,7 @@ struct SocialNoteModalView: View {
     @EnvironmentObject var noteManager: NoteManager
     @State private var dragOffset: CGFloat = 0
     @State private var messageContent: String = "今天遇到了哪些事"
-    @State private var initialPrompt: String
+    @State private var initialPrompt: String = "今天遇到了哪些事"
     
     // Reference to the dialog view
     @State private var isShowingDialog: Bool = true
@@ -19,7 +19,7 @@ struct SocialNoteModalView: View {
     
     // Initial prompt to start the conversation
     init(initialPrompt: String = "今天遇到了哪些事") {
-        self._initialPrompt = State(initialValue: initialPrompt)
+        self._initialPrompt = State(initialValue: "今天遇到了哪些事")
     }
     
     var body: some View {

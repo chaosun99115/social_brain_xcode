@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "FECAABAD-0E9B-4C5B-8730-2E126843F184"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "4B4255DD-2BD9-4659-AD6F-D66F0833EB61"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "social_brain_xcode/Features/Notes/Views/SocialNoteModalView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "54"
+            endingLineNumber = "54"
+            landmarkName = "body"
+            landmarkType = "24">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "F0FC2A44-EADB-4F75-A4F6-BD92F29EE12B"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "social_brain_xcode/Features/Notes/Views/SocialNoteModalView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "21"
+            endingLineNumber = "21"
+            landmarkName = "init(initialPrompt:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "F0FC2A44-EADB-4F75-A4F6-BD92F29EE12B - 27c27f95b924c3e2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "default argument 0 of social_brain_xcode.SocialNoteModalView.init(initialPrompt: Swift.String) -&gt; social_brain_xcode.SocialNoteModalView"
+                  moduleName = "social_brain_xcode"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/chaosun/Documents/Social%20Brain/social_brain_xcode/social_brain_xcode/Features/Notes/Views/SocialNoteModalView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "21"
+                  endingLineNumber = "21"
+                  offsetFromSymbolStart = "4">
+               </Location>
+               <Location
+                  uuid = "F0FC2A44-EADB-4F75-A4F6-BD92F29EE12B - d87b9bb8be692244"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "social_brain_xcode.SocialNoteModalView.init(initialPrompt: Swift.String) -&gt; social_brain_xcode.SocialNoteModalView"
+                  moduleName = "social_brain_xcode"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/chaosun/Documents/Social%20Brain/social_brain_xcode/social_brain_xcode/Features/Notes/Views/SocialNoteModalView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "4"
+                  endingLineNumber = "4"
+                  offsetFromSymbolStart = "122">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>
