@@ -230,26 +230,51 @@ struct SocialBrainDialogView: View {
         
         // Simulate AI response after a delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            // Add a simulated response based on the user's question
-            if trimmedText.lowercased().contains("李经理") || trimmedText.lowercased().contains("manager") {
-                let response = DialogMessage(
-                    content: "dialog_manager_daughter".localized,
-                    isFromUser: false,
-                    actionText: "dialog_ai_research".localized
-                )
-                messages.append(response)
-            } else {
-                // Default response
-                let response = DialogMessage(
-                    content: "dialog_manager_project".localized,
-                    isFromUser: false,
-                    actionText: "dialog_view_original_note".localized
-                )
-                messages.append(response)
-            }
+            let response = generateAiResponse(to: trimmedText)
+            messages.append(response)
         }
     }
 }
+
+private func generateAiResponse(to userInput: String) -> DialogMessage {
+    // Generate different responses based on input content
+    let lowercasedInput = userInput.lowercased()
+    
+    // Check for specific keywords and return appropriate responses
+    if lowercasedInput.contains("今天") {
+        return DialogMessage(
+            content: "成功",
+            isFromUser: false,
+            actionText: "dialog_ai_research".localized
+        )
+    } else if lowercasedInput.contains("meeting") || lowercasedInput.contains("appointment") {
+        return DialogMessage(
+            content: "I see you're preparing for a meeting. Based on your notes, here are some topics that might be relevant.",
+            isFromUser: false,
+            actionText: "Generate meeting topics"
+        )
+    } else if lowercasedInput.contains("contact") || lowercasedInput.contains("person") {
+        return DialogMessage(
+            content: "I found this person in your contacts. Would you like to review your past interactions?",
+            isFromUser: false,
+            actionText: "View contact details"
+        )
+    } else if lowercasedInput.contains("follow") || lowercasedInput.contains("update") {
+        return DialogMessage(
+            content: "Here are some contacts you might want to follow up with based on your recent interactions.",
+            isFromUser: false,
+            actionText: "Show follow-up suggestions"
+        )
+    } else {
+        // Default response
+        return DialogMessage(
+            content: "dialog_manager_project".localized,
+            isFromUser: false,
+            actionText: "dialog_view_original_note".localized
+        )
+    }
+}
+
 
 struct DialogMessage: Identifiable, Equatable {
     let id = UUID()
