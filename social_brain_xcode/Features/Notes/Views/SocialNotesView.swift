@@ -50,7 +50,7 @@ struct SocialNotesView: View {
                     }
                 }
             }
-            .navigationTitle("social_notes".localized)
+            .navigationTitle("笔记")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_notes".localized)
             .sheet(isPresented: $showingNoteModal) {
                 SocialNoteModalView(initialPrompt: "What would you like to take a note about today?")

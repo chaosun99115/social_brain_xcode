@@ -107,9 +107,9 @@
 		AFA2761F2DB03BD400C29B81 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				AFF98BCE2DA0772F0001DD72 /* SocialNotesView.swift */,
 				AF6D11262DB00A320071D444 /* SocialNoteModalView.swift */,
 				AFA276192DB0349C00C29B81 /* SocialNotesList.swift */,
-				AFF98BCE2DA0772F0001DD72 /* SocialNotesView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -134,8 +134,8 @@
 		AFA276222DB03C8C00C29B81 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */,
 				AFF98BD22DA4453F0001DD70 /* SocialBrainView.swift */,
+				AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -160,8 +160,8 @@
 		AFA276252DB03D2A00C29B81 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				AFBD50FC2DA739660066907B /* SocialContactDetailView.swift */,
 				AFBD50F22DA70DDC0066907B /* SocialContactView.swift */,
+				AFBD50FC2DA739660066907B /* SocialContactDetailView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";

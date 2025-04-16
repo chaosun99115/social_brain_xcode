@@ -5,7 +5,7 @@ struct SocialNoteModalView: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var noteManager: NoteManager
     @State private var dragOffset: CGFloat = 0
-    @State private var messageContent: String = ""
+    @State private var messageContent: String = "今天遇到了哪些事"
     @State private var initialPrompt: String
     
     // Reference to the dialog view
@@ -18,7 +18,7 @@ struct SocialNoteModalView: View {
     private let dragIndicatorWidth: CGFloat = 36
     
     // Initial prompt to start the conversation
-    init(initialPrompt: String = "What would you like to take a note about?") {
+    init(initialPrompt: String = "今天遇到了哪些事") {
         self._initialPrompt = State(initialValue: initialPrompt)
     }
     

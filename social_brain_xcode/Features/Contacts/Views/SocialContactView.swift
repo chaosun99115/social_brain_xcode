@@ -15,8 +15,8 @@ struct SocialContactView: View {
     // Mock data
     let mockContacts = [
         MockContact(name: "Chao", createdAt: Date().addingTimeInterval(-86400), notesCount: 3),
-        MockContact(name: "Jane Smith", createdAt: Date().addingTimeInterval(-172800), notesCount: 5),
-        MockContact(name: "Mike Johnson", createdAt: Date().addingTimeInterval(-259200), notesCount: 2)
+        MockContact(name: "李经理", createdAt: Date().addingTimeInterval(-172800), notesCount: 5),
+        MockContact(name: "彤彤妈妈", createdAt: Date().addingTimeInterval(-259200), notesCount: 2)
     ]
     
     var filteredContacts: [MockContact] {
@@ -63,7 +63,7 @@ struct SocialContactView: View {
                     }
                 }
             }
-            .navigationTitle("social_contacts".localized)
+            .navigationTitle("联系人")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_contacts".localized)
         }
         .navigationViewStyle(StackNavigationViewStyle())

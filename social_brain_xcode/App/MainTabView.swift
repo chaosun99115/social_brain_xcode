@@ -8,19 +8,19 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             SocialBrainView()
                 .tabItem {
-                    Label("social_brain".localized, systemImage: "sparkles")
+                    Label("Relate AI", systemImage: "sparkles")
                 }
                 .tag(0)
             
             SocialNotesView()
                 .tabItem {
-                    Label("social_notes".localized, systemImage: "doc.text")
+                    Label("笔记", systemImage: "doc.text")
                 }
                 .tag(1)
             
             SocialContactView()
                 .tabItem {
-                    Label("social_contacts".localized, systemImage: "person.2")
+                    Label("联系人", systemImage: "person.2")
                 }
                 .tag(2)
         }

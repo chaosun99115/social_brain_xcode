@@ -158,7 +158,7 @@ struct SocialBrainView: View {
                     LoadingModal()
                 }
             }
-            .navigationTitle("social_brain".localized)
+            .navigationTitle("Relate AI")
             .gesture(
                 TapGesture()
                     .onEnded { _ in
