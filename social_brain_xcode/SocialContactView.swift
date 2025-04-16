@@ -92,7 +92,7 @@ struct SocialContactView: View {
     private var contactListView: some View {
         List {
             ForEach(filteredContacts) { contact in
-                NavigationLink(destination: ContactDetailView(contact: contact)) {
+                NavigationLink(destination: SocialContactDetailView(contact: contact)) {
                     ContactCardView(contact: contact)
                         .contentShape(Rectangle())
                 }
@@ -251,4 +251,4 @@ struct SocialContactView_Previews: PreviewProvider {
             .environment(\.colorScheme, .dark)
             .environmentObject(LocalizationManager())
     }
-} 
+}

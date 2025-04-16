@@ -1,15 +1,11 @@
 import SwiftUI
 
 struct SocialContactDetailView: View {
+    let contact: MockContact
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var localizationManager: LocalizationManager
     @State private var activeTab: TabType = .summary
-    
-    // Hardcoded contact data
-    private let contactName = "Manager Li"
-    private let latestStatus = "最近一次联系是在上周的部门会议，讨论了新项目的进展。"
-    private let relatedNotesCount = 3
     
     enum TabType: String, CaseIterable {
         case summary = "汇总"
@@ -66,7 +62,7 @@ struct SocialContactDetailView: View {
                 }
             }
         }
-        .navigationTitle(contactName)
+        .navigationTitle(contact.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -146,12 +142,8 @@ struct SocialContactDetailView: View {
     
     // MARK: - Notes Section
     private var notesSectionView: some View {
-        VStack(spacing: 0) {
-            ForEach(contactNotes, id: \.id) { note in
-                ContactNoteRow(note: note)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
-            }
+        VStack {
+            SocialNotesList(notes: contactNotes, showFullContent: true)
             
             // Spacer at the bottom for better scrolling
             Spacer().frame(height: 40)
@@ -206,28 +198,19 @@ struct SocialContactDetailView: View {
         ]
     }
     
-    private var contactNotes: [ContactNote] {
+    private var contactNotes: [SocialNote] {
         [
-            ContactNote(
-                id: UUID(),
-                title: "咖啡文化",
-                content: "李经理喜欢品尝不同的咖啡，对意式咖啡尤其感兴趣。最近开始研究手冲咖啡的不同器具。",
-                date: "2023年11月25日",
-                tags: ["兴趣爱好", "咖啡"]
+            SocialNote(
+                date: Calendar.current.date(from: DateComponents(year: 2023, month: 11, day: 25))!,
+                content: "李经理喜欢品尝不同的咖啡，对意式咖啡尤其感兴趣。最近开始研究手冲咖啡的不同器具。"
             ),
-            ContactNote(
-                id: UUID(),
-                title: "部门项目",
-                content: "李经理部门最近在开发一个新的数据分析平台，预计明年Q1上线。项目进展顺利，团队士气高涨。",
-                date: "2023年11月10日",
-                tags: ["工作", "项目"]
+            SocialNote(
+                date: Calendar.current.date(from: DateComponents(year: 2023, month: 11, day: 10))!,
+                content: "李经理部门最近在开发一个新的数据分析平台，预计明年Q1上线。项目进展顺利，团队士气高涨。"
             ),
-            ContactNote(
-                id: UUID(),
-                title: "女儿学习轮滑",
-                content: "李经理的女儿最近开始学习轮滑，年龄6岁，每周末去公园练习。李经理表示孩子很喜欢，但也有些担心安全问题。",
-                date: "2023年10月15日",
-                tags: ["家庭", "孩子", "轮滑"]
+            SocialNote(
+                date: Calendar.current.date(from: DateComponents(year: 2023, month: 10, day: 15))!,
+                content: "李经理的女儿最近开始学习轮滑，年龄6岁，每周末去公园练习。李经理表示孩子很喜欢，但也有些担心安全问题。"
             )
         ]
     }
@@ -242,8 +225,8 @@ struct SocialContactDetailView: View {
                 
                 Spacer()
                 
-                if relatedNotesCount > 0 {
-                    Text("\(relatedNotesCount)")
+                if contact.notesCount > 0 {
+                    Text("\(contact.notesCount)")
                         .font(.caption)
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
@@ -256,7 +239,7 @@ struct SocialContactDetailView: View {
                 }
             }
             
-            if relatedNotesCount == 0 {
+            if contact.notesCount == 0 {
                 Text("no_notes".localized)
                     .font(.subheadline)
                     .foregroundColor(.tertiaryText)
@@ -286,7 +269,7 @@ struct SummarySectionHeader: View {
             .foregroundColor(.primaryText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
-            .padding(.top, 28)
+            .padding(.top, 10)
             .padding(.bottom, 16)
     }
 }
@@ -346,51 +329,6 @@ struct ContactSummaryRow: View {
     }
 }
 
-struct ContactNoteRow: View {
-    let note: ContactNote
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header with title and date
-            HStack {
-                Text(note.title)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.primaryText)
-                
-                Spacer()
-                
-                Text(note.date)
-                    .font(.system(size: 14))
-                    .foregroundColor(.tertiaryText)
-            }
-            
-            // Content
-            Text(note.content)
-                .font(.system(size: 16))
-                .foregroundColor(.primaryText)
-                .lineSpacing(4)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            // Tags
-            HStack {
-                ForEach(note.tags, id: \.self) { tag in
-                    Text(tag)
-                        .font(.system(size: 13))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.secondaryBackground)
-                        .cornerRadius(4)
-                        .foregroundColor(.secondaryText)
-                }
-            }
-        }
-        .padding()
-        .background(Color.cardBackground)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
-    }
-}
-
 // MARK: - Supporting Models
 struct ContactSummaryEntity: Identifiable {
     enum SummaryType: Int {
@@ -405,24 +343,28 @@ struct ContactSummaryEntity: Identifiable {
     let actionText: String?
 }
 
-struct ContactNote: Identifiable {
-    let id: UUID
-    let title: String
-    let content: String
-    let date: String
-    let tags: [String]
-}
-
 // MARK: - Previews
 struct SocialContactDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        SocialContactDetailView()
-            .environmentObject(LocalizationManager())
-            .environment(\.colorScheme, .light)
+        SocialContactDetailView(
+            contact: MockContact(
+                name: "Chao", 
+                createdAt: Date().addingTimeInterval(-86400), 
+                notesCount: 3
+            )
+        )
+        .environmentObject(LocalizationManager())
+        .environment(\.colorScheme, .light)
         
-        SocialContactDetailView()
-            .environmentObject(LocalizationManager())
-            .environment(\.colorScheme, .dark)
+        SocialContactDetailView(
+            contact: MockContact(
+                name: "Jane", 
+                createdAt: Date().addingTimeInterval(-172800), 
+                notesCount: 2
+            )
+        )
+        .environmentObject(LocalizationManager())
+        .environment(\.colorScheme, .dark)
     }
 }
 
@@ -450,4 +392,4 @@ struct SectionContentWrapper<Content: View>: View {
         .padding(.vertical, 8)
         .padding(.bottom, 12)
     }
-} 
+}

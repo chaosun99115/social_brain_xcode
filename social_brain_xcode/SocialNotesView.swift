@@ -21,33 +21,12 @@ struct SocialNotesView: View {
                 Color.primaryBackground
                     .ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    List(filteredNotes) { note in
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(formattedDate(for: note.date))
-                                .font(.headline)
-                                .foregroundColor(.secondaryText)
-                            
-                            MentionTextView(text: note.content)
-                                .font(.body)
-                                .foregroundColor(.primaryText)
-                                .lineSpacing(4)
-                                .lineLimit(4) 
-                        }
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 16)
-                        .background(Color.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: Color.primaryText.opacity(0.05), radius: 2, x: 0, y: 1)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.divider, lineWidth: 0.5)
-                        )
-                        .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
-                        .listRowBackground(Color.primaryBackground)
-                        .listRowSeparator(.hidden)
-                    }
-                    .listStyle(.plain)
+                ScrollView {
+                    SocialNotesList(notes: filteredNotes)
+                        .padding(.top, 10)
+                    
+                    // Add space at the bottom for better scrolling and to avoid FAB overlap
+                    Spacer().frame(height: 80)
                 }
                 
                 // Floating Action Button
@@ -88,36 +67,6 @@ struct SocialNotesView: View {
         formatter.timeStyle = .none
         formatter.doesRelativeDateFormatting = true
         return formatter.string(from: date)
-    }
-}
-
-struct MentionTextView: View {
-    let text: String
-    
-    var body: some View {
-        Text(attributedString)
-    }
-    
-    var attributedString: AttributedString {
-        let words = text.split(separator: " ")
-        var result = AttributedString("")
-        
-        for (index, word) in words.enumerated() {
-            if word.hasPrefix("@") {
-                var mentionText = AttributedString(String(word))
-                mentionText.foregroundColor = Color.mentionHighlight
-                mentionText.font = .subheadline.bold()
-                result.append(mentionText)
-            } else {
-                result.append(AttributedString(String(word)))
-            }
-            
-            if index < words.count - 1 {
-                result.append(AttributedString(" "))
-            }
-        }
-        
-        return result
     }
 }
 
