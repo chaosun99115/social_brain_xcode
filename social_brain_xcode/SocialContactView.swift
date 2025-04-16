@@ -14,7 +14,7 @@ struct SocialContactView: View {
     
     // Mock data
     let mockContacts = [
-        MockContact(name: "John Doe", createdAt: Date().addingTimeInterval(-86400), notesCount: 3),
+        MockContact(name: "Chao", createdAt: Date().addingTimeInterval(-86400), notesCount: 3),
         MockContact(name: "Jane Smith", createdAt: Date().addingTimeInterval(-172800), notesCount: 5),
         MockContact(name: "Mike Johnson", createdAt: Date().addingTimeInterval(-259200), notesCount: 2)
     ]

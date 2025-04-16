@@ -17,8 +17,8 @@ struct SocialContactDetailView: View {
         
         var localizedName: String {
             switch self {
-            case .summary: return "summary".localized
-            case .notes: return "notes".localized
+            case .summary: return "汇总"
+            case .notes: return "笔记"
             }
         }
     }
@@ -89,12 +89,53 @@ struct SocialContactDetailView: View {
     // MARK: - Summary Section
     private var summarySectionView: some View {
         VStack(spacing: 0) {
-            // Latest status
-            latestStatusView
             
-            // Conversation topics suggestions from AI
-            ForEach(contactTopics, id: \.id) { topic in
-                ContactTopicRow(topic: topic)
+            // Group and display items by type
+            Group {
+                // Update section
+                if !contactSummaries.filter({ $0.type == .update }).isEmpty {
+                    SummarySectionHeader(title: "最新动态")
+                    
+                    SectionContentWrapper {
+                        let updateItems = contactSummaries.filter({ $0.type == .update })
+                        ForEach(Array(updateItems.enumerated()), id: \.element.id) { index, item in
+                            ContactSummaryRow(
+                                item: item,
+                                isLast: index == updateItems.count - 1
+                            )
+                        }
+                    }
+                }
+                
+                // Topic section
+                if !contactSummaries.filter({ $0.type == .topic }).isEmpty {
+                    SummarySectionHeader(title: "互动话题")
+                
+                    SectionContentWrapper {
+                        let topicItems = contactSummaries.filter({ $0.type == .topic })
+                        ForEach(Array(topicItems.enumerated()), id: \.element.id) { index, item in
+                            ContactSummaryRow(
+                                item: item,
+                                isLast: index == topicItems.count - 1
+                            )
+                        }
+                    }
+                }
+                
+                // Connection section
+                if !contactSummaries.filter({ $0.type == .connection }).isEmpty {
+                    SummarySectionHeader(title: "深化关系")
+                    
+                    SectionContentWrapper {
+                        let connectionItems = contactSummaries.filter({ $0.type == .connection })
+                        ForEach(Array(connectionItems.enumerated()), id: \.element.id) { index, item in
+                            ContactSummaryRow(
+                                item: item,
+                                isLast: index == connectionItems.count - 1
+                            )
+                        }
+                    }
+                }
             }
             
             // Spacer at the bottom for better scrolling
@@ -108,6 +149,8 @@ struct SocialContactDetailView: View {
         VStack(spacing: 0) {
             ForEach(contactNotes, id: \.id) { note in
                 ContactNoteRow(note: note)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
             }
             
             // Spacer at the bottom for better scrolling
@@ -117,16 +160,47 @@ struct SocialContactDetailView: View {
     }
     
     // MARK: - Mock Data
-    private var contactTopics: [ContactTopic] {
+    private var contactSummaries: [ContactSummaryEntity] {
         [
-            ContactTopic(
+            // Updates
+            ContactSummaryEntity(
                 id: UUID(),
+                type: .update,
+                content: "李经理最近一次联系是在上周的部门会议，讨论了新项目的进展。",
+                actionText: nil
+            ),
+            ContactSummaryEntity(
+                id: UUID(),
+                type: .update,
+                content: "李经理上周提到他部门已经完成了新数据分析平台的初步设计阶段。",
+                actionText: nil
+            ),
+            
+            // Topics
+            ContactSummaryEntity(
+                id: UUID(),
+                type: .topic,
                 content: "李经理的女儿刚开始学轮滑，你可以询问孩子的学习体验。（你没有记录过轮滑相关的话题，可以让AI调研一下有什么可以聊的内容）",
                 actionText: "AI调研"
             ),
-            ContactTopic(
+            ContactSummaryEntity(
                 id: UUID(),
-                content: "李经理的的部门最近在准备一个项目，遇到李经理可以询问项目的进展",
+                type: .topic,
+                content: "李经理的部门最近在准备一个项目，遇到李经理可以询问项目的进展。",
+                actionText: nil
+            ),
+            
+            // Connections
+            ContactSummaryEntity(
+                id: UUID(),
+                type: .connection,
+                content: "张主管是李经理的团队成员，最近与你有过沟通。可以谈谈张主管的表现。",
+                actionText: nil
+            ),
+            ContactSummaryEntity(
+                id: UUID(),
+                type: .connection,
+                content: "王总监是李经理的直属上级，你们上个月在季度会议上有交流。可以询问与王总监合作的情况。",
                 actionText: nil
             )
         ]
@@ -158,16 +232,6 @@ struct SocialContactDetailView: View {
         ]
     }
     
-    private var latestStatusView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("最新近况")
-                .font(.headline)
-                .foregroundColor(.primaryText)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
-        .padding(.bottom, 16)
-    }
     
     private var relatedNotesView: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -213,8 +277,28 @@ struct SocialContactDetailView: View {
 }
 
 // MARK: - Supporting Views
-struct ContactTopicRow: View {
-    let topic: ContactTopic
+struct SummarySectionHeader: View {
+    let title: String
+    
+    var body: some View {
+        Text(title)
+            .font(.headline)
+            .foregroundColor(.primaryText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.top, 28)
+            .padding(.bottom, 16)
+    }
+}
+
+struct ContactSummaryRow: View {
+    let item: ContactSummaryEntity
+    let isLast: Bool
+    
+    init(item: ContactSummaryEntity, isLast: Bool = false) {
+        self.item = item
+        self.isLast = isLast
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -225,18 +309,18 @@ struct ContactTopicRow: View {
                     .frame(width: 6, height: 6)
                     .padding(.top, 8)
                 
-                // Topic content
+                // Content
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(topic.content)
+                    Text(item.content)
                         .font(.system(size: 16))
                         .foregroundColor(.primaryText)
                         .lineSpacing(4)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
                     // Action button
-                    if let actionText = topic.actionText {
+                    if let actionText = item.actionText {
                         Button(action: {
-                            // AI research action
+                            // Action handler
                         }) {
                             Text(actionText)
                                 .font(.system(size: 15))
@@ -251,11 +335,14 @@ struct ContactTopicRow: View {
                 }
             }
             
-            Divider()
-                .padding(.leading, 22)
-                .padding(.vertical, 16)
+            if !isLast {
+                Divider()
+                    .padding(.leading, 22)
+                    .padding(.vertical, 16)
+            }
         }
         .padding(.horizontal, 20)
+        .padding(.vertical, 8)
     }
 }
 
@@ -301,14 +388,19 @@ struct ContactNoteRow: View {
         .background(Color.cardBackground)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
-        .padding(.horizontal, 16)
-        .padding(.bottom, 12)
     }
 }
 
 // MARK: - Supporting Models
-struct ContactTopic: Identifiable {
+struct ContactSummaryEntity: Identifiable {
+    enum SummaryType: Int {
+        case update = 0
+        case topic = 1
+        case connection = 2
+    }
+    
     let id: UUID
+    let type: SummaryType
     let content: String
     let actionText: String?
 }
@@ -331,5 +423,31 @@ struct SocialContactDetailView_Previews: PreviewProvider {
         SocialContactDetailView()
             .environmentObject(LocalizationManager())
             .environment(\.colorScheme, .dark)
+    }
+}
+
+// New SectionContentWrapper view
+struct SectionContentWrapper<Content: View>: View {
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            content
+        }
+        .padding(.vertical, 16)
+        .background(Color.cardBackground)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .padding(.bottom, 12)
     }
 } 
