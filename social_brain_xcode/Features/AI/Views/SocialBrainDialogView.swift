@@ -244,7 +244,7 @@ struct SocialBrainDialogView: View {
         var question = ""
         
         if actionText.contains("联系人") {
-            question = "你觉得这个App怎么样？"
+            question = "联系人已经建立。你有使用过这个App吗，体验怎么样？ "
         }
         
         let actionResponse = DialogMessage(
@@ -276,24 +276,30 @@ private func generateAiResponse(to userInput: String) -> DialogMessage {
             isFromUser: false,
             actionText: "建立新联系人"
         )
-    } else if lowercasedInput.contains("这个App怎么样") {
+    } else if lowercasedInput.contains("你觉得") {
         return DialogMessage(
-            content: "没用过，提醒我去下载使用一下",
+            content: "我还没用过这个App，提醒我去下载试用一下",
             isFromUser: false,
             actionText: nil
         )
     } else if lowercasedInput.contains("下载") {
         return DialogMessage(
-            content: "好的。除了应用，你还了解他其他的方面吗？",
+            content: "好的。除了这个应用，你还聊到关于Chao的其他事情吗？",
             isFromUser: false,
             actionText: nil
         )
-    } else if lowercasedInput.contains("没有") {
+    } else if lowercasedInput.contains("阅读") {
         return DialogMessage(
-            content: "你可以下次问问他怎么有了开发这个应用的想法。你曾经在三个月前的笔记里提到过你也想变更职业方向的想法。也许他的经历对你会有帮助。",
+            content: "还有其他的吗？",
             isFromUser: false,
             actionText:nil
         )
+    } else if lowercasedInput.contains("暂时") {
+            return DialogMessage(
+                content: "好的。你可以点击右上角的保存按钮，保存后你可以在联系人的页面查看关于Chao的汇总信息。",
+                isFromUser: false,
+                actionText:nil
+            )
     }else {
         // Default response
         return DialogMessage(

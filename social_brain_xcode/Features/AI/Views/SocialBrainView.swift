@@ -44,7 +44,10 @@ struct SocialBrainView: View {
                                             // AI response
                                             AiBubble(
                                                 text: message.content,
-                                                actionText: message.suggestedAction
+                                                actionText: message.suggestedAction,
+                                                onActionTapped: {
+                                                    handleActionButtonTapped(actionText: message.suggestedAction ?? "")
+                                                }
                                             )
                                         }
                                     }
@@ -158,7 +161,7 @@ struct SocialBrainView: View {
                     LoadingModal()
                 }
             }
-            .navigationTitle("Relate AI")
+            .navigationTitle("社交大脑")
             .gesture(
                 TapGesture()
                     .onEnded { _ in
@@ -173,7 +176,7 @@ struct SocialBrainView: View {
                 showLoadingModal = true
                 
                 // Hide the modal after 2 seconds but keep loading state
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                     showLoadingModal = false
                 }
             }
@@ -196,10 +199,17 @@ struct SocialBrainView: View {
         isLoading = true
         
         // Generate answer after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
             isLoading = false
-            let aiResponse = generateAiResponse(to: question)
-            messages.append(aiResponse)
+            if question.contains("帮我回顾一下最近的社交互动"){
+//                let response1 = generateAiResponse(to: "chao")
+//                messages.append(response1)
+                let response2 = generateAiResponse(to: "你和李明")
+                messages.append(response2)
+                let response3 = generateAiResponse(to: "你在笔记里")
+                messages.append(response3)
+            }
+            
         }
     }
     
@@ -227,7 +237,7 @@ struct SocialBrainView: View {
         isLoading = true
         
         // Simulate AI response after a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
             isLoading = false
             // Generate mock response based on user input
             let aiResponse = generateAiResponse(to: trimmedText)
@@ -248,36 +258,57 @@ struct SocialBrainView: View {
         let lowercasedInput = userInput.lowercased()
         
         // Generate different responses based on input content
-        if lowercasedInput.contains("manager") || lowercasedInput.contains("李经理") {
+        if lowercasedInput.contains("你和李明") {
             return SocialBrainMessage(
-                content: "dialog_manager_daughter".localized,
+                content: "1 你和李明在一起午餐的时候提到了，当时他提到了一个与 去中心化金融(DeFi) 相关的工作机会，但是你完全不熟悉这个领域，想要我帮你搜索一些相关信息吗？",
                 isFromUser: false,
                 timestamp: Date(),
-                suggestedAction: "dialog_ai_research".localized
+                suggestedAction: "搜索相关信息"
             )
-        } else if lowercasedInput.contains("interact") || lowercasedInput.contains("social") || lowercasedInput.contains("follow") {
+        } else if lowercasedInput.contains("你在笔记里") {
             return SocialBrainMessage(
-                content: "dialog_manager_project".localized,
+                content: "2 你在笔记里提到了林彤在初次见面的时候显得很抗拒聊天，你也不知道为什么。你想详细聊聊吗？",
                 isFromUser: false, 
                 timestamp: Date(),
-                suggestedAction: "dialog_view_original_note".localized
+                suggestedAction: "是的"
             )
         } else {
             // Default response
             let responses = [
-                "这是新的回复",
-                "这是新的回复",
-                "Would you like me to suggest some conversation topics for your upcoming meeting? I can analyze your past interactions for relevant themes."
+                "默认回复"
             ]
             
             return SocialBrainMessage(
                 content: responses[0],
                 isFromUser: false,
                 timestamp: Date(),
-                suggestedAction: lowercasedInput.contains("meeting") || lowercasedInput.contains("conversation") ? 
-                    "Suggest topics" : nil
+                suggestedAction: nil
             )
         }
+    }
+    
+    private func handleActionButtonTapped(actionText:String) {
+        // Create a new AI response based on the action
+        
+        var question = "1234"
+        let text = "是的"
+        
+        
+        if actionText.contains("搜索相关信息") {
+            question = "DeFi是 Decentralized Finance 的缩写，指不依赖传统中心化金融机构(如银行)而运行的金融系统。根据你与李明的对话记录，他可能是提到了币安 binance这家公司。你想进一步了解一这个领域吗？"
+        } else if actionText.contains("是的") {
+            question = "根据你们的互动记录分析，林彤的性格可能是非常关注逻辑理性的类型，你在与她的互动里经常讲述你自己的个人感受，可能让林彤因为不同的沟通风格而产生了抗拒情绪。你希望我把这个观察添加入到针对林彤的关系备忘录里去吗？"
+        }
+        
+        let actionResponse = SocialBrainMessage(
+            content: question,
+            isFromUser: false,
+            timestamp: Date(),
+            suggestedAction:text
+        )
+        
+        // Add the new message
+        messages.append(actionResponse)
     }
 }
 
@@ -294,7 +325,7 @@ struct LoadingModal: View {
             VStack(spacing: 0) {
                 // Header with loading message
                 VStack(spacing: 0) {
-                    Text("searching_notes".localized)
+                    Text("正在检索你的笔记。。。")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.primaryText)
                         .multilineTextAlignment(.center)
@@ -307,7 +338,7 @@ struct LoadingModal: View {
                 // Quote area with arrows
                 ZStack {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("social_quote".localized)
+                        Text("好的沟通不在于你是否能达成眼前的目标，而在于你能否不断地自我塑造。")
                             .font(.system(size: 16))
                             .foregroundColor(.primaryText)
                             .lineSpacing(5)
@@ -321,7 +352,7 @@ struct LoadingModal: View {
                             Divider()
                                 .padding(.horizontal, 40)
                             
-                            Text("quote_source".localized)
+                            Text("————《沟通的方法》")
                                 .font(.system(size: 14, weight: .regular))
                                 .foregroundColor(.gray)
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -443,6 +474,7 @@ struct SuggestedQuestionBubble: View {
 struct AiBubble: View {
     let text: String
     let actionText: String?
+    var onActionTapped: (() -> Void)?
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
@@ -464,6 +496,7 @@ struct AiBubble: View {
                     HStack {
                         Button(action: {
                             // Action button tap
+                            onActionTapped?()
                         }) {
                             Text(actionText)
                                 .font(.subheadline)

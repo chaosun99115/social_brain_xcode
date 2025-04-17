@@ -120,7 +120,7 @@ struct SocialContactDetailView: View {
                 
                 // Connection section
                 if !contactSummaries.filter({ $0.type == .connection }).isEmpty {
-                    SummarySectionHeader(title: "深化关系")
+                    SummarySectionHeader(title: "关系备忘录")
                     
                     SectionContentWrapper {
                         let connectionItems = contactSummaries.filter({ $0.type == .connection })
@@ -158,27 +158,21 @@ struct SocialContactDetailView: View {
             ContactSummaryEntity(
                 id: UUID(),
                 type: .update,
-                content: "李经理最近一次联系是在上周的部门会议，讨论了新项目的进展。",
-                actionText: nil
-            ),
-            ContactSummaryEntity(
-                id: UUID(),
-                type: .update,
-                content: "李经理上周提到他部门已经完成了新数据分析平台的初步设计阶段。",
-                actionText: nil
+                content: "你和Chao两天之前聊过，他正在开发自己的一款移动应用，叫做社交大脑。",
+                actionText: "查看相关笔记"
             ),
             
             // Topics
             ContactSummaryEntity(
                 id: UUID(),
                 type: .topic,
-                content: "李经理的女儿刚开始学轮滑，你可以询问孩子的学习体验。（你没有记录过轮滑相关的话题，可以让AI调研一下有什么可以聊的内容）",
-                actionText: "AI调研"
+                content: "Chao之前做过一次针对App的demo演示，下次遇见可以问问app的开发进展如何了",
+                actionText: nil
             ),
             ContactSummaryEntity(
                 id: UUID(),
                 type: .topic,
-                content: "李经理的部门最近在准备一个项目，遇到李经理可以询问项目的进展。",
+                content: "Chao喜欢阅读，可以问问他有新读了哪些书",
                 actionText: nil
             ),
             
@@ -186,13 +180,19 @@ struct SocialContactDetailView: View {
             ContactSummaryEntity(
                 id: UUID(),
                 type: .connection,
-                content: "张主管是李经理的团队成员，最近与你有过沟通。可以谈谈张主管的表现。",
+                content: "你与Chao是通过灵买的平台认识的",
                 actionText: nil
             ),
             ContactSummaryEntity(
                 id: UUID(),
                 type: .connection,
-                content: "王总监是李经理的直属上级，你们上个月在季度会议上有交流。可以询问与王总监合作的情况。",
+                content: "你下载使用社交大脑之后，可以给他发个信息告诉他你的使用体验",
+                actionText: nil
+            ),
+            ContactSummaryEntity(
+                id: UUID(),
+                type: .connection,
+                content: "你在三个月前与 李经理 聊过职业转型的想法，下次遇见Chao，也许你可以了解下他的转型经历，看看会不会给自己带来启发",
                 actionText: nil
             )
         ]
@@ -202,15 +202,7 @@ struct SocialContactDetailView: View {
         [
             SocialNote(
                 date: Calendar.current.date(from: DateComponents(year: 2023, month: 11, day: 25))!,
-                content: "李经理喜欢品尝不同的咖啡，对意式咖啡尤其感兴趣。最近开始研究手冲咖啡的不同器具。"
-            ),
-            SocialNote(
-                date: Calendar.current.date(from: DateComponents(year: 2023, month: 11, day: 10))!,
-                content: "李经理部门最近在开发一个新的数据分析平台，预计明年Q1上线。项目进展顺利，团队士气高涨。"
-            ),
-            SocialNote(
-                date: Calendar.current.date(from: DateComponents(year: 2023, month: 10, day: 15))!,
-                content: "李经理的女儿最近开始学习轮滑，年龄6岁，每周末去公园练习。李经理表示孩子很喜欢，但也有些担心安全问题。"
+                content: "在灵买的平台上与Chao互动过。Chao分享他正在开发一款叫做社交大脑的移动应用。"
             )
         ]
     }

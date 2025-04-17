@@ -18,17 +18,17 @@ struct SocialBrainMessage: Identifiable {
     static let mockMessages = [
         // Suggested questions for the home screen
         SocialBrainMessage(
-            content: "最近有什么值得回顾或者需要跟进的社交互动吗？",
+            content: "帮我回顾一下最近的社交互动",
             isFromUser: true,
             timestamp: Date()
         ),
         SocialBrainMessage(
-            content: "最近的社交互动有提到什么话题是我的盲区吗？",
+            content: "最近有什么需要我跟进的社交互动？",
             isFromUser: true,
             timestamp: Date()
         ),
         SocialBrainMessage(
-            content: "我要参加一个社交活动，帮我准备一下能用上的话题。",
+            content: "帮我为参加的社交活动准备一下话题",
             isFromUser: true,
             timestamp: Date()
         )

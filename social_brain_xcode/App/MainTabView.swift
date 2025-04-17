@@ -8,7 +8,7 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             SocialBrainView()
                 .tabItem {
-                    Label("Relate AI", systemImage: "sparkles")
+                    Label("社交大脑", systemImage: "sparkles")
                 }
                 .tag(0)
             

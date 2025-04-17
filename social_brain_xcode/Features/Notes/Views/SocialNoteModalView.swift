@@ -18,8 +18,8 @@ struct SocialNoteModalView: View {
     private let dragIndicatorWidth: CGFloat = 36
     
     // Initial prompt to start the conversation
-    init(initialPrompt: String = "今天遇到了哪些事") {
-        self._initialPrompt = State(initialValue: "今天遇到了哪些事")
+    init(initialPrompt: String = "今天遇到了哪些事，认识了哪些人？") {
+        self._initialPrompt = State(initialValue: "今天遇到了哪些事，认识了哪些人？")
     }
     
     var body: some View {
@@ -34,14 +34,14 @@ struct SocialNoteModalView: View {
                 
                 // Action buttons without the navigation bar
                 HStack {
-                    Button("Cancel") {
+                    Button("取消") {
                         dismiss()
                     }
                     .foregroundColor(.blue)
                     
                     Spacer()
                     
-                    Button("Save") {
+                    Button("保存笔记") {
                         saveNote()
                     }
                     .foregroundColor(.blue)
