@@ -144,7 +144,10 @@ struct SocialBrainDialogView: View {
                                 } else {
                                     DialogAnswerBubble(
                                         text: messages[index].content,
-                                        actionText: messages[index].actionText
+                                        actionText: messages[index].actionText,
+                                        onActionTapped: {
+                                            handleActionButtonTapped(actionText: messages[index].actionText ?? "123")
+                                        }
                                     )
                                     .opacity(animationCompleted ? 1 : 0)
                                     .offset(y: animationCompleted ? 0 : 20)
@@ -234,38 +237,64 @@ struct SocialBrainDialogView: View {
             messages.append(response)
         }
     }
+    
+    private func handleActionButtonTapped(actionText:String) {
+        // Create a new AI response based on the action
+        
+        var question = ""
+        
+        if actionText.contains("联系人") {
+            question = "你觉得这个App怎么样？"
+        }
+        
+        let actionResponse = DialogMessage(
+            content: question,
+            isFromUser: false
+        )
+        
+        // Add the new message
+        messages.append(actionResponse)
+    }
 }
+
+
 
 private func generateAiResponse(to userInput: String) -> DialogMessage {
     // Generate different responses based on input content
     let lowercasedInput = userInput.lowercased()
     
     // Check for specific keywords and return appropriate responses
-    if lowercasedInput.contains("今天") {
+    if lowercasedInput.contains("123") {
         return DialogMessage(
             content: "成功",
             isFromUser: false,
-            actionText: "dialog_ai_research".localized
+            actionText: nil
         )
-    } else if lowercasedInput.contains("meeting") || lowercasedInput.contains("appointment") {
+    } else if lowercasedInput.contains("灵买的用户") {
         return DialogMessage(
-            content: "I see you're preparing for a meeting. Based on your notes, here are some topics that might be relevant.",
+            content: "你还没有一个叫做Chao的联系人，是否帮你建立？",
             isFromUser: false,
-            actionText: "Generate meeting topics"
+            actionText: "建立新联系人"
         )
-    } else if lowercasedInput.contains("contact") || lowercasedInput.contains("person") {
+    } else if lowercasedInput.contains("这个App怎么样") {
         return DialogMessage(
-            content: "I found this person in your contacts. Would you like to review your past interactions?",
+            content: "没用过，提醒我去下载使用一下",
             isFromUser: false,
-            actionText: "View contact details"
+            actionText: nil
         )
-    } else if lowercasedInput.contains("follow") || lowercasedInput.contains("update") {
+    } else if lowercasedInput.contains("下载") {
         return DialogMessage(
-            content: "Here are some contacts you might want to follow up with based on your recent interactions.",
+            content: "好的。除了应用，你还了解他其他的方面吗？",
             isFromUser: false,
-            actionText: "Show follow-up suggestions"
+            actionText: nil
         )
-    } else {
+    } else if lowercasedInput.contains("没有") {
+        return DialogMessage(
+            content: "你可以下次问问他怎么有了开发这个应用的想法。你曾经在三个月前的笔记里提到过你也想变更职业方向的想法。也许他的经历对你会有帮助。",
+            isFromUser: false,
+            actionText:nil
+        )
+    }else {
         // Default response
         return DialogMessage(
             content: "dialog_manager_project".localized,
@@ -322,12 +351,12 @@ struct DialogQuestionBubble: View {
     let text: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .trailing, spacing: 0) {
             Text(text)
                 .font(.body)
                 .foregroundColor(.primaryText)
                 .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .trailing)
                 .background(
                     LinearGradient(
                         gradient: Gradient(colors: [Color.inputBackground, Color.secondaryBackground]),
@@ -345,6 +374,7 @@ struct DialogQuestionBubble: View {
 struct DialogAnswerBubble: View {
     let text: String
     let actionText: String?
+    var onActionTapped: (() -> Void)?
     @Environment(\.colorScheme) private var colorScheme
     
     // Different button style options
@@ -376,6 +406,7 @@ struct DialogAnswerBubble: View {
                     HStack {
                         Button(action: {
                             // Action button tap
+                            onActionTapped?()
                         }) {
                             Text(actionText)
                                 .font(.subheadline)
