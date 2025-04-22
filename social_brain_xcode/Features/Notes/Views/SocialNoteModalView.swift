@@ -12,10 +12,19 @@ struct SocialNoteModalView: View {
     @State private var isShowingDialog: Bool = true
     @State private var selectedMessageIndex: Int? = nil
     
+    // Keyboard state
+    @State private var keyboardHeight: CGFloat = 0
+    @State private var isKeyboardVisible: Bool = false
+    @State private var contentSize: CGSize = .zero
+    @State private var isPreparingForResponse: Bool = false
+    
     // Drag gesture constants
     private let dismissThreshold: CGFloat = 100
     private let dragIndicatorHeight: CGFloat = 5
     private let dragIndicatorWidth: CGFloat = 36
+    
+    // Input field height estimation for positioning
+    private let estimatedInputFieldHeight: CGFloat = 60
     
     // Initial prompt to start the conversation
     init(initialPrompt: String = "今天遇到了哪些事，认识了哪些人？") {
@@ -24,71 +33,204 @@ struct SocialNoteModalView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            VStack(spacing: 0) {
-                // Drag indicator
-                Rectangle()
-                    .fill(Color.gray.opacity(0.5))
-                    .frame(width: dragIndicatorWidth, height: dragIndicatorHeight)
-                    .cornerRadius(dragIndicatorHeight / 2)
-                    .padding(.top, 10)
-                
-                // Action buttons without the navigation bar
-                HStack {
-                    Button("取消") {
-                        dismiss()
+            ZStack(alignment: .bottom) {
+                VStack(spacing: 0) {
+                    // Drag indicator
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.5))
+                        .frame(width: dragIndicatorWidth, height: dragIndicatorHeight)
+                        .cornerRadius(dragIndicatorHeight / 2)
+                        .padding(.top, 10)
+                    
+                    // Action buttons without the navigation bar
+                    HStack {
+                        Button("取消") {
+                            dismiss()
+                        }
+                        .foregroundColor(.blue)
+                        
+                        Spacer()
+                        
+                        Button("保存笔记") {
+                            saveNote()
+                        }
+                        .foregroundColor(.blue)
                     }
-                    .foregroundColor(.blue)
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
+                    
+                    // Calculate available vertical space
+                    let availableHeight = geometry.size.height * 0.93 - (isKeyboardVisible ? keyboardHeight : 0)
+                    
+                    // Custom SocialBrainDialogView with binding to capture content
+                    SocialBrainDialogView(initialPrompt: initialPrompt)
+                        .environmentObject(noteManager)
+                        .onPreferenceChange(NoteContentPreferenceKey.self) { value in
+                            messageContent = value
+                        }
+                        .background(
+                            GeometryReader { contentGeometry in
+                                Color.clear.preference(key: ContentSizePreferenceKey.self, value: contentGeometry.size)
+                            }
+                        )
                     
                     Spacer()
-                    
-                    Button("保存笔记") {
-                        saveNote()
-                    }
-                    .foregroundColor(.blue)
                 }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .padding(.bottom, 8)
-                
-                // Custom SocialBrainDialogView with binding to capture content
-                SocialBrainDialogView(initialPrompt: initialPrompt)
-                    .environmentObject(noteManager)
-                    .onPreferenceChange(NoteContentPreferenceKey.self) { value in
-                        messageContent = value
-                    }
-                
-                Spacer()
-            }
-            .background(Color.primaryBackground)
-            .cornerRadius(20, corners: [.topLeft, .topRight])
-            .offset(y: max(0, dragOffset))
-            .frame(height: geometry.size.height * 0.93)
-            .frame(maxWidth: .infinity)
-            .position(x: geometry.size.width / 2, y: geometry.size.height * 0.5)
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        if value.translation.height > 0 {
-                            dragOffset = value.translation.height
-                        }
-                    }
-                    .onEnded { value in
-                        if dragOffset > dismissThreshold {
-                            dismiss()
-                        } else {
-                            withAnimation(.spring()) {
-                                dragOffset = 0
+                .background(Color.primaryBackground)
+                .cornerRadius(20, corners: [.topLeft, .topRight])
+                .offset(y: max(0, dragOffset))
+                // Calculate dynamic keyboard offset with response preparation
+                .offset(y: calculateKeyboardOffset(
+                    geometryHeight: geometry.size.height,
+                    keyboardHeight: keyboardHeight,
+                    isKeyboardVisible: isKeyboardVisible,
+                    contentSize: contentSize,
+                    isPreparingForResponse: isPreparingForResponse
+                ))
+                .frame(height: geometry.size.height * 0.93)
+                .frame(maxWidth: .infinity)
+                .position(x: geometry.size.width / 2, y: geometry.size.height * 0.5)
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            if value.translation.height > 0 {
+                                // Dismiss keyboard first if it's showing
+                                if isKeyboardVisible {
+                                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                } else {
+                                    dragOffset = value.translation.height
+                                }
                             }
                         }
-                    }
-            )
-            .transition(.move(edge: .bottom))
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: dragOffset)
+                        .onEnded { value in
+                            if dragOffset > dismissThreshold {
+                                dismiss()
+                            } else {
+                                withAnimation(.spring()) {
+                                    dragOffset = 0
+                                }
+                            }
+                        }
+                )
+                .onTapGesture {
+                    // Dismiss keyboard when tapping outside of text field
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
+                .onPreferenceChange(ContentSizePreferenceKey.self) { newSize in
+                    contentSize = newSize
+                }
+                .transition(.move(edge: .bottom))
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: dragOffset)
+                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: keyboardHeight)
+            }
         }
         .ignoresSafeArea()
+        .onAppear {
+            setupKeyboardObservers()
+            setupResponseObservers()
+        }
+        .onDisappear {
+            removeKeyboardObservers()
+            removeResponseObservers()
+        }
+    }
+    
+    // Calculate the appropriate keyboard offset based on content vs available space
+    private func calculateKeyboardOffset(geometryHeight: CGFloat, keyboardHeight: CGFloat, isKeyboardVisible: Bool, contentSize: CGSize, isPreparingForResponse: Bool) -> CGFloat {
+        guard isKeyboardVisible, dragOffset == 0, keyboardHeight > 0 else { return 0 }
+        
+        let modalHeight = geometryHeight * 0.93
+        let visibleHeight = modalHeight - keyboardHeight
+        
+        // If preparing for a response, always provide extra space to ensure visibility
+        if isPreparingForResponse {
+            return -min(keyboardHeight * 0.7, 250) // Use medium offset when preparing for response
+        }
+        
+        // If content fits in the visible area, provide a small offset to ensure input field is properly positioned
+        if contentSize.height < visibleHeight - estimatedInputFieldHeight {
+            // Small offset to ensure proper input field positioning
+            NotificationCenter.default.post(name: Notification.Name("CheckContentVisibility"), object: nil)
+            return -min(30, keyboardHeight * 0.1) // Small offset to improve appearance
+        } else {
+            // Content would be cut off, apply a larger offset to ensure visibility
+            // Increased offset to provide more space for content
+            return -min(keyboardHeight * 0.8, 300)
+        }
+    }
+    
+    // Get safe area insets
+    private var safeAreaInsets: UIEdgeInsets {
+        let scenes = UIApplication.shared.connectedScenes
+        let windowScene = scenes.first as? UIWindowScene
+        return windowScene?.windows.first?.safeAreaInsets ?? .zero
+    }
+    
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+               let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
+                
+                withAnimation(.easeOut(duration: duration)) {
+                    self.keyboardHeight = keyboardFrame.height
+                    self.isKeyboardVisible = true
+                }
+            }
+        }
+        
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { notification in
+            if let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
+                withAnimation(.easeOut(duration: duration)) {
+                    self.keyboardHeight = 0
+                    self.isKeyboardVisible = false
+                }
+            }
+        }
+    }
+    
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+    
+    private func setupResponseObservers() {
+        NotificationCenter.default.addObserver(forName: Notification.Name("ReserveSpaceForResponse"), object: nil, queue: .main) { _ in
+            withAnimation(.easeOut(duration: 0.2)) {
+                self.isPreparingForResponse = true
+                
+                // Reset after a reasonable time if no response arrives
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    if self.isPreparingForResponse {
+                        withAnimation {
+                            self.isPreparingForResponse = false
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Listen for message addition to reset the preparation state
+        NotificationCenter.default.addObserver(forName: Notification.Name("ScrollToNewestMessage"), object: nil, queue: .main) { _ in
+            if self.isPreparingForResponse {
+                withAnimation {
+                    self.isPreparingForResponse = false
+                }
+            }
+        }
+    }
+    
+    private func removeResponseObservers() {
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("ReserveSpaceForResponse"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("ScrollToNewestMessage"), object: nil)
     }
     
     private func dismiss() {
+        // Dismiss keyboard if visible
+        if isKeyboardVisible {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
+        
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             presentationMode.wrappedValue.dismiss()
         }
@@ -117,6 +259,15 @@ struct NoteContentPreferenceKey: PreferenceKey {
     static var defaultValue: String = ""
     
     static func reduce(value: inout String, nextValue: () -> String) {
+        value = nextValue()
+    }
+}
+
+// Preference key to track content size for dynamic layout adjustments
+struct ContentSizePreferenceKey: PreferenceKey {
+    static var defaultValue: CGSize = .zero
+    
+    static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
         value = nextValue()
     }
 }

@@ -14,6 +14,11 @@ struct SocialBrainDialogView: View {
     @Binding var selectedMessageIndex: Int?
     @State private var animationCompleted = false
     
+    // For keyboard handling
+    @State private var keyboardHeight: CGFloat = 0
+    @State private var isKeyboardVisible: Bool = false
+    @State private var scrollToBottom: Bool = false
+    
     // Method to dismiss the view
     func dismiss() {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -114,8 +119,6 @@ struct SocialBrainDialogView: View {
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 0) {
-                // Navigation bar section has been removed
-                
                 // Chat area
                 ScrollViewReader { scrollProxy in
                     ScrollView {
@@ -141,6 +144,7 @@ struct SocialBrainDialogView: View {
                                     DialogQuestionBubble(text: messages[index].content)
                                         .opacity(animationCompleted ? 1 : 0)
                                         .offset(y: animationCompleted ? 0 : 20)
+                                        .id("msg\(index)")
                                 } else {
                                     DialogAnswerBubble(
                                         text: messages[index].content,
@@ -151,24 +155,113 @@ struct SocialBrainDialogView: View {
                                     )
                                     .opacity(animationCompleted ? 1 : 0)
                                     .offset(y: animationCompleted ? 0 : 20)
+                                    .id("msg\(index)")
                                 }
                             }
                             
-                            // Spacer at the bottom for input field
-                            Spacer().frame(height: 60)
-                                .id("bottomID")
+                            // Spacer at the bottom when keyboard not showing
+                            if !isKeyboardVisible {
+                                Spacer().frame(height: 16)
+                                    .id("bottomID")
+                            } else {
+                                // Significantly increase spacing when keyboard is showing to ensure full message visibility
+                                Spacer().frame(height: 300)
+                                    .id("bottomID")
+                            }
                         }
                         .padding(.horizontal)
-                        .padding(.top, 16) // Added more top padding since navigation is removed
+                        .padding(.top, 16)
+                        // Add extra bottom padding when keyboard is showing to push content up
+                        .padding(.bottom, isKeyboardVisible ? 80 : 0)
                     }
                     .onChange(of: messages.count) { _ in
-                        withAnimation {
-                            scrollProxy.scrollTo("bottomID", anchor: .bottom)
+                        // Scroll to the last message with animation
+                        // We use a slight delay to ensure layout is complete
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation {
+                                if let lastIndex = messages.indices.last {
+                                    // When keyboard is visible, use .center to ensure message is visible
+                                    let anchor: UnitPoint = isKeyboardVisible ? .center : .bottom
+                                    scrollProxy.scrollTo("msg\(lastIndex)", anchor: anchor)
+                                } else {
+                                    scrollProxy.scrollTo("bottomID", anchor: .bottom)
+                                }
+                            }
+                        }
+                    }
+                    .onChange(of: keyboardHeight) { newHeight in
+                        // When keyboard appears, scroll to show the latest messages
+                        if newHeight > 0 && !messages.isEmpty {
+                            withAnimation {
+                                if let lastIndex = messages.indices.last {
+                                    scrollProxy.scrollTo("msg\(lastIndex)", anchor: .center)
+                                } else {
+                                    scrollProxy.scrollTo("bottomID", anchor: .bottom)
+                                }
+                            }
+                        }
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ScrollToNewestMessage"))) { _ in
+                        // This specifically handles scrolling after a new message is added
+                        if !messages.isEmpty {
+                            // Add a longer delay to ensure layout is complete
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                withAnimation(.easeInOut(duration: 0.4)) {
+                                    if let lastIndex = messages.indices.last {
+                                        // For better visibility, always use .top to show the full message from the top
+                                        scrollProxy.scrollTo("msg\(lastIndex)", anchor: .top)
+                                        
+                                        // For response messages with action buttons, also scroll a bit more up
+                                        if !messages[lastIndex].isFromUser && messages[lastIndex].actionText != nil {
+                                            // Need to scroll even more to show action buttons
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                    // Second scroll to ensure full visibility including buttons
+                                                    scrollProxy.scrollTo("msg\(lastIndex)", anchor: .top)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: Notification.Name("CheckContentVisibility"))) { _ in
+                        // This is triggered by the parent view to check if content is visible
+                        if !messages.isEmpty, isKeyboardVisible {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    // When parent view requests visibility check, ensure last few messages are visible
+                                    if let lastIndex = messages.indices.last {
+                                        scrollProxy.scrollTo("msg\(lastIndex)", anchor: .center)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: Notification.Name("PrepareForResponse"))) { _ in
+                        // This is triggered just before an AI response will be added
+                        // Pre-position the scroll to ensure space is reserved for the upcoming response
+                        if !messages.isEmpty, isKeyboardVisible {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                // Scroll to bottom and add some extra space to reserve room for the response
+                                scrollProxy.scrollTo("bottomID", anchor: .bottom)
+                                
+                                // Also notify parent view that we need space for a new response
+                                NotificationCenter.default.post(name: Notification.Name("ReserveSpaceForResponse"), object: nil)
+                            }
                         }
                     }
                     .onAppear {
+                        setupKeyboardObservers()
+                        
                         if selectedMessageIndex == nil {
-                            scrollProxy.scrollTo("bottomID", anchor: .bottom)
+                            // Initial scroll to bottom with a short delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                withAnimation {
+                                    scrollProxy.scrollTo("bottomID", anchor: .bottom)
+                                }
+                            }
                         }
                         
                         // Trigger fade-in animation after a short delay
@@ -177,6 +270,9 @@ struct SocialBrainDialogView: View {
                                 animationCompleted = true
                             }
                         }
+                    }
+                    .onDisappear {
+                        removeKeyboardObservers()
                     }
                 }
                 
@@ -191,9 +287,15 @@ struct SocialBrainDialogView: View {
                         .cornerRadius(25)
                         .onSubmit {
                             sendMessage()
+                            // Keep focus on the text field
+                            keepKeyboardVisible()
                         }
                     
-                    Button(action: sendMessage) {
+                    Button(action: {
+                        sendMessage()
+                        // Keep focus on the text field
+                        keepKeyboardVisible()
+                    }) {
                         Image(systemName: "arrow.up")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(.white)
@@ -205,11 +307,13 @@ struct SocialBrainDialogView: View {
                     .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .padding(.horizontal)
-                .padding(.vertical, 10)
-                .padding(.bottom, safeAreaInsets.bottom)
+                .padding(.vertical, 0)
+                .padding(.bottom, 0)
                 .background(Color.primaryBackground)
                 .opacity(animationCompleted ? 1 : 0)
                 .offset(y: animationCompleted ? 0 : 20)
+                // Position input field directly above keyboard with minimal gap
+                .offset(y: isKeyboardVisible ? -keyboardHeight + 40 : 0)
             }
         }
         .preference(key: NoteContentPreferenceKey.self, value: userMessageContent)
@@ -218,6 +322,25 @@ struct SocialBrainDialogView: View {
             let updatedContent = userMessageContent
         }
         .statusBar(hidden: false)
+    }
+    
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                self.keyboardHeight = keyboardFrame.height
+                self.isKeyboardVisible = true
+            }
+        }
+        
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+            self.keyboardHeight = 0
+            self.isKeyboardVisible = false
+        }
+    }
+    
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     private func sendMessage() {
@@ -231,10 +354,32 @@ struct SocialBrainDialogView: View {
         // Clear input
         inputText = ""
         
+        // Force immediate scroll to show the user message
+        NotificationCenter.default.post(name: Notification.Name("ScrollToNewestMessage"), object: nil)
+        
+        // Pre-position the view before the response arrives to reserve space
+        NotificationCenter.default.post(name: Notification.Name("PrepareForResponse"), object: nil)
+        
         // Simulate AI response after a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             let response = generateAiResponse(to: trimmedText)
-            messages.append(response)
+            
+            // Add the response with animation
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                self.messages.append(response)
+            }
+            
+            // Ensure visibility immediately as the message is added
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                NotificationCenter.default.post(name: Notification.Name("ScrollToNewestMessage"), object: nil)
+                
+                // For responses with action buttons, do an additional scroll after a bit more time
+                if response.actionText != nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        NotificationCenter.default.post(name: Notification.Name("ScrollToNewestMessage"), object: nil)
+                    }
+                }
+            }
         }
     }
     
@@ -254,10 +399,23 @@ struct SocialBrainDialogView: View {
         
         // Add the new message
         messages.append(actionResponse)
+        
+        // Trigger manual scroll to make the response visible
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            NotificationCenter.default.post(name: Notification.Name("ScrollToNewestMessage"), object: nil)
+        }
+    }
+    
+    // Helper method to keep keyboard visible after text submission
+    private func keepKeyboardVisible() {
+        // This is a placeholder method that represents the intent
+        // In practice, we rely on the text field staying in focus
+        // The actual implementation would depend on specific iOS behavior testing
+        
+        // For improved keyboard behavior in a production app,
+        // you would typically use a custom TextField wrapper or UIViewRepresentable
     }
 }
-
-
 
 private func generateAiResponse(to userInput: String) -> DialogMessage {
     // Generate different responses based on input content
@@ -309,7 +467,6 @@ private func generateAiResponse(to userInput: String) -> DialogMessage {
         )
     }
 }
-
 
 struct DialogMessage: Identifiable, Equatable {
     let id = UUID()
