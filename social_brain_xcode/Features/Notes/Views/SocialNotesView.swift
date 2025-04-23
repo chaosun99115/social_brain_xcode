@@ -3,6 +3,7 @@ import SwiftUI
 struct SocialNotesView: View {
     @State private var searchText = ""
     @State private var showingNoteModal = false
+    @State private var showingSimpleNoteModal = false
     @EnvironmentObject var localizationManager: LocalizationManager
     @EnvironmentObject var noteManager: NoteManager
     
@@ -35,7 +36,7 @@ struct SocialNotesView: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            showingNoteModal = true
+                            showingSimpleNoteModal = true
                         }) {
                             Image(systemName: "plus")
                                 .font(.system(size: 22, weight: .bold, design: .default))
@@ -56,6 +57,10 @@ struct SocialNotesView: View {
                 SocialNoteModalView(initialPrompt: "What would you like to take a note about today?")
                     .environmentObject(noteManager)
                     .environmentObject(localizationManager)
+            }
+            .sheet(isPresented: $showingSimpleNoteModal) {
+                SimpleNoteModalView()
+                    .environmentObject(noteManager)
             }
         }
     }
