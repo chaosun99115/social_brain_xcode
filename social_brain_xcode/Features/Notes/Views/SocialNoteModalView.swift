@@ -35,59 +35,57 @@ struct SocialNoteModalView: View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 VStack(spacing: 0) {
-                    // Drag indicator
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.5))
-                        .frame(width: dragIndicatorWidth, height: dragIndicatorHeight)
-                        .cornerRadius(dragIndicatorHeight / 2)
-                        .padding(.top, 10)
-                    
-                    // Action buttons without the navigation bar
-                    HStack {
-                        Button("取消") {
-                            dismiss()
-                        }
-                        .foregroundColor(.blue)
+                    // Fixed top elements - these stay in place regardless of keyboard
+                    VStack(spacing: 0) {
+                        // Drag indicator
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.5))
+                            .frame(width: dragIndicatorWidth, height: dragIndicatorHeight)
+                            .cornerRadius(dragIndicatorHeight / 2)
+                            .padding(.top, 6)
                         
-                        Spacer()
-                        
-                        Button("保存笔记") {
-                            saveNote()
-                        }
-                        .foregroundColor(.blue)
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                    .padding(.bottom, 8)
-                    
-                    // Calculate available vertical space
-                    let availableHeight = geometry.size.height * 0.93 - (isKeyboardVisible ? keyboardHeight : 0)
-                    
-                    // Custom SocialBrainDialogView with binding to capture content
-                    SocialBrainDialogView(initialPrompt: initialPrompt)
-                        .environmentObject(noteManager)
-                        .onPreferenceChange(NoteContentPreferenceKey.self) { value in
-                            messageContent = value
-                        }
-                        .background(
-                            GeometryReader { contentGeometry in
-                                Color.clear.preference(key: ContentSizePreferenceKey.self, value: contentGeometry.size)
+                        // Action buttons without the navigation bar
+                        HStack {
+                            Button("取消") {
+                                dismiss()
                             }
-                        )
+                            .foregroundColor(.blue)
+                            
+                            Spacer()
+                            
+                            Button("保存笔记") {
+                                saveNote()
+                            }
+                            .foregroundColor(.blue)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 4)
+                        .padding(.bottom, 8)
+                    }
+                    .zIndex(1) // Ensure header stays on top
+                    .background(Color.primaryBackground)
                     
-                    Spacer()
+                    // Scrollable content area - this is what adjusts for keyboard
+                    ZStack {
+                        // Custom SocialBrainDialogView with binding to capture content
+                        SocialBrainDialogView(initialPrompt: initialPrompt)
+                            .environmentObject(noteManager)
+                            .onPreferenceChange(NoteContentPreferenceKey.self) { value in
+                                messageContent = value
+                            }
+                            .background(
+                                GeometryReader { contentGeometry in
+                                    Color.clear.preference(key: ContentSizePreferenceKey.self, value: contentGeometry.size)
+                                }
+                            )
+                    }
+                    .frame(maxHeight: .infinity)
+                    // Remove the extra spacing between content and keyboard
+                    .padding(.bottom, isKeyboardVisible ? keyboardHeight : 0)
                 }
                 .background(Color.primaryBackground)
                 .cornerRadius(20, corners: [.topLeft, .topRight])
                 .offset(y: max(0, dragOffset))
-                // Calculate dynamic keyboard offset with response preparation
-                .offset(y: calculateKeyboardOffset(
-                    geometryHeight: geometry.size.height,
-                    keyboardHeight: keyboardHeight,
-                    isKeyboardVisible: isKeyboardVisible,
-                    contentSize: contentSize,
-                    isPreparingForResponse: isPreparingForResponse
-                ))
                 .frame(height: geometry.size.height * 0.93)
                 .frame(maxWidth: .infinity)
                 .position(x: geometry.size.width / 2, y: geometry.size.height * 0.5)
@@ -136,32 +134,6 @@ struct SocialNoteModalView: View {
         }
     }
     
-    // Calculate the appropriate keyboard offset based on content vs available space
-    private func calculateKeyboardOffset(geometryHeight: CGFloat, keyboardHeight: CGFloat, isKeyboardVisible: Bool, contentSize: CGSize, isPreparingForResponse: Bool) -> CGFloat {
-        guard isKeyboardVisible, dragOffset == 0, keyboardHeight > 0 else { return 0 }
-        
-        let modalHeight = geometryHeight * 0.93
-        let visibleHeight = modalHeight - keyboardHeight
-        
-        // If preparing for a response, always provide extra space to ensure visibility
-        if isPreparingForResponse {
-            // Use a more aggressive offset to ensure message appears high in the view
-            return -min(keyboardHeight * 0.9, 350)
-        }
-        
-        // If content fits in the visible area, provide a small offset to ensure input field is properly positioned
-        if contentSize.height < visibleHeight - estimatedInputFieldHeight {
-            // Small offset to ensure proper input field positioning
-            NotificationCenter.default.post(name: Notification.Name("CheckContentVisibility"), object: nil)
-            return -min(45, keyboardHeight * 0.15) // Increased offset to ensure better positioning
-        } else {
-            // Content would be cut off, apply a larger offset to ensure visibility
-            // Increased offset to provide more space for content
-            return -min(keyboardHeight * 0.85, 350) // Increased maximum offset for better visibility
-        }
-    }
-    
-    // Get safe area insets
     private var safeAreaInsets: UIEdgeInsets {
         let scenes = UIApplication.shared.connectedScenes
         let windowScene = scenes.first as? UIWindowScene
@@ -171,17 +143,28 @@ struct SocialNoteModalView: View {
     private func setupKeyboardObservers() {
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
             if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
-               let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
+               let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
+               let curve = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt {
+                
+                let animationCurve = UIView.AnimationOptions(rawValue: curve)
                 
                 withAnimation(.easeOut(duration: duration)) {
+                    // Use exact keyboard height without adjustment to eliminate gap
                     self.keyboardHeight = keyboardFrame.height
                     self.isKeyboardVisible = true
+                    
+                    // Scroll content to ensure visibility of input field
+                    NotificationCenter.default.post(name: Notification.Name("KeyboardWillShow"), object: nil)
                 }
             }
         }
         
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { notification in
-            if let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
+            if let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
+               let curve = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt {
+                
+                let animationCurve = UIView.AnimationOptions(rawValue: curve)
+                
                 withAnimation(.easeOut(duration: duration)) {
                     self.keyboardHeight = 0
                     self.isKeyboardVisible = false
@@ -212,12 +195,6 @@ struct SocialNoteModalView: View {
         NotificationCenter.default.addObserver(forName: Notification.Name("ReserveExtraSpaceForResponse"), object: nil, queue: .main) { _ in
             // Similar to regular space reservation but will position content higher
             self.isPreparingForResponse = true
-            
-            // Apply an additional temporary offset for higher positioning
-            withAnimation(.easeOut(duration: 0.1)) {
-                // Apply a more aggressive offset to provide more room at the top
-                NotificationCenter.default.post(name: Notification.Name("ApplyExtraOffset"), object: nil)
-            }
             
             // Reset after a reasonable time if no response arrives
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {

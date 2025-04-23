@@ -18,6 +18,7 @@ struct SocialBrainDialogView: View {
     @State private var keyboardHeight: CGFloat = 0
     @State private var isKeyboardVisible: Bool = false
     @State private var scrollToBottom: Bool = false
+    @State private var inputBarBottomPadding: CGFloat = 0
     
     // Method to dismiss the view
     func dismiss() {
@@ -159,20 +160,14 @@ struct SocialBrainDialogView: View {
                                 }
                             }
                             
-                            // Spacer at the bottom when keyboard not showing
-                            if !isKeyboardVisible {
-                                Spacer().frame(height: 16)
-                                    .id("bottomID")
-                            } else {
-                                // Significantly increase spacing when keyboard is showing to ensure full message visibility
-                                Spacer().frame(height: 400)
-                                    .id("bottomID")
-                            }
+                            // Spacer at the bottom for content scrolling
+                            Spacer().frame(height: 16)
+                                .id("bottomID")
                         }
                         .padding(.horizontal)
                         .padding(.top, 16)
-                        // Add extra bottom padding when keyboard is showing to push content up
-                        .padding(.bottom, isKeyboardVisible ? 100 : 0)
+                        // Add bottom padding for the input bar plus keyboard height
+                        .padding(.bottom, isKeyboardVisible ? keyboardHeight + 80 : 80)
                     }
                     .onChange(of: messages.count) { _ in
                         // Immediate scroll to the last message with no delay
@@ -278,6 +273,18 @@ struct SocialBrainDialogView: View {
                             NotificationCenter.default.post(name: Notification.Name("ReserveExtraSpaceForResponse"), object: nil)
                         }
                     }
+                    
+                    .onReceive(NotificationCenter.default.publisher(for: Notification.Name("KeyboardWillShow"))) { _ in
+                        // Adjust scroll content when keyboard will show
+                        if !messages.isEmpty {
+                            if let lastIndex = messages.indices.last {
+                                scrollProxy.scrollTo("msg\(lastIndex)", anchor: .bottom)
+                            } else {
+                                scrollProxy.scrollTo("bottomID", anchor: .bottom)
+                            }
+                        }
+                    }
+                    
                     .onAppear {
                         setupKeyboardObservers()
                         
@@ -302,44 +309,48 @@ struct SocialBrainDialogView: View {
                     }
                 }
                 
-                Spacer()
-                
-                // Input bar
-                HStack {
-                    TextField("hint_text".localized, text: $inputText)
-                        .font(.body)
-                        .padding(16)
-                        .background(Color.inputBackground)
-                        .cornerRadius(25)
-                        .onSubmit {
+                // Input bar - fixed at the bottom, positioned above keyboard
+                VStack(spacing: 0) {
+                    HStack(spacing: 8) {
+                        TextField("hint_text".localized, text: $inputText)
+                            .font(.body)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .frame(height: 44) // Standard iOS touch target height
+                            .background(Color.inputBackground)
+                            .cornerRadius(22) // Half of height for consistent circular ends
+                            .onSubmit {
+                                sendMessage()
+                                // Keep focus on the text field
+                                keepKeyboardVisible()
+                            }
+                        
+                        Button(action: {
                             sendMessage()
                             // Keep focus on the text field
                             keepKeyboardVisible()
+                        }) {
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44) // Standard iOS touch target size
+                                .background(Color.primaryAction)
+                                .clipShape(Circle())
+                                .shadow(color: Color.primaryText.opacity(0.1), radius: 2, x: 0, y: 1)
                         }
-                    
-                    Button(action: {
-                        sendMessage()
-                        // Keep focus on the text field
-                        keepKeyboardVisible()
-                    }) {
-                        Image(systemName: "arrow.up")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.primaryAction)
-                            .clipShape(Circle())
-                            .shadow(color: Color.primaryText.opacity(0.1), radius: 2, x: 0, y: 1)
+                        .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8) // Standard 8pt spacing per HIG
+                    .padding(.bottom, 0)
+                    .background(Color.primaryBackground)
+                    .opacity(animationCompleted ? 1 : 0)
+                    .offset(y: animationCompleted ? 0 : 20)
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 0)
-                .padding(.bottom, 0)
+                // Remove extra padding, only use safe area inset when keyboard is not visible
+                .padding(.bottom, isKeyboardVisible ? 0 : safeAreaInsets.bottom)
                 .background(Color.primaryBackground)
-                .opacity(animationCompleted ? 1 : 0)
-                .offset(y: animationCompleted ? 0 : 20)
-                // Position input field directly above keyboard with minimal gap
-                .offset(y: isKeyboardVisible ? -keyboardHeight + 40 : 0)
+                .zIndex(1) // Ensure input bar stays above the scroll content
             }
         }
         .preference(key: NoteContentPreferenceKey.self, value: userMessageContent)
@@ -352,15 +363,31 @@ struct SocialBrainDialogView: View {
     
     private func setupKeyboardObservers() {
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
-            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                self.keyboardHeight = keyboardFrame.height
-                self.isKeyboardVisible = true
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+               let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
+               let curve = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt {
+                
+                let animationCurve = UIView.AnimationOptions(rawValue: curve)
+                
+                withAnimation(.easeOut(duration: duration)) {
+                    // Remove any adjustments to keyboard height to ensure it sits flush with input field
+                    self.keyboardHeight = keyboardFrame.height
+                    self.isKeyboardVisible = true
+                }
             }
         }
         
-        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
-            self.keyboardHeight = 0
-            self.isKeyboardVisible = false
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { notification in
+            if let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
+               let curve = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt {
+                
+                let animationCurve = UIView.AnimationOptions(rawValue: curve)
+                
+                withAnimation(.easeOut(duration: duration)) {
+                    self.keyboardHeight = 0
+                    self.isKeyboardVisible = false
+                }
+            }
         }
     }
     
