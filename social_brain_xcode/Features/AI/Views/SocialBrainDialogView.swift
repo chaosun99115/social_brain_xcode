@@ -165,28 +165,28 @@ struct SocialBrainDialogView: View {
                                     .id("bottomID")
                             } else {
                                 // Significantly increase spacing when keyboard is showing to ensure full message visibility
-                                Spacer().frame(height: 300)
+                                Spacer().frame(height: 400)
                                     .id("bottomID")
                             }
                         }
                         .padding(.horizontal)
                         .padding(.top, 16)
                         // Add extra bottom padding when keyboard is showing to push content up
-                        .padding(.bottom, isKeyboardVisible ? 80 : 0)
+                        .padding(.bottom, isKeyboardVisible ? 100 : 0)
                     }
                     .onChange(of: messages.count) { _ in
-                        // Scroll to the last message with animation
-                        // We use a slight delay to ensure layout is complete
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            withAnimation {
-                                if let lastIndex = messages.indices.last {
-                                    // When keyboard is visible, use .center to ensure message is visible
-                                    let anchor: UnitPoint = isKeyboardVisible ? .center : .bottom
-                                    scrollProxy.scrollTo("msg\(lastIndex)", anchor: anchor)
-                                } else {
-                                    scrollProxy.scrollTo("bottomID", anchor: .bottom)
-                                }
+                        // Immediate scroll to the last message with no delay
+                        if let lastIndex = messages.indices.last {
+                            // For AI responses, position higher in the visible area
+                            if !messages[lastIndex].isFromUser {
+                                // For AI responses, position them higher in the visible area
+                                scrollProxy.scrollTo("msg\(lastIndex)", anchor: UnitPoint(x: 0.5, y: 0.25))
+                            } else {
+                                // For user messages, standard bottom anchor is fine
+                                scrollProxy.scrollTo("msg\(lastIndex)", anchor: .bottom)
                             }
+                        } else {
+                            scrollProxy.scrollTo("bottomID", anchor: .bottom)
                         }
                     }
                     .onChange(of: keyboardHeight) { newHeight in
@@ -204,38 +204,20 @@ struct SocialBrainDialogView: View {
                     .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ScrollToNewestMessage"))) { _ in
                         // This specifically handles scrolling after a new message is added
                         if !messages.isEmpty {
-                            // Add a longer delay to ensure layout is complete
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                withAnimation(.easeInOut(duration: 0.4)) {
-                                    if let lastIndex = messages.indices.last {
-                                        // For better visibility, always use .top to show the full message from the top
-                                        scrollProxy.scrollTo("msg\(lastIndex)", anchor: .top)
-                                        
-                                        // For response messages with action buttons, also scroll a bit more up
-                                        if !messages[lastIndex].isFromUser && messages[lastIndex].actionText != nil {
-                                            // Need to scroll even more to show action buttons
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                                withAnimation(.easeInOut(duration: 0.2)) {
-                                                    // Second scroll to ensure full visibility including buttons
-                                                    scrollProxy.scrollTo("msg\(lastIndex)", anchor: .top)
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                            // No delay, scroll immediately
+                            if let lastIndex = messages.indices.last {
+                                // Use anchor based on message type for best visibility
+                                let anchor: UnitPoint = messages[lastIndex].isFromUser ? .bottom : .top
+                                scrollProxy.scrollTo("msg\(lastIndex)", anchor: anchor)
                             }
                         }
                     }
                     .onReceive(NotificationCenter.default.publisher(for: Notification.Name("CheckContentVisibility"))) { _ in
                         // This is triggered by the parent view to check if content is visible
                         if !messages.isEmpty, isKeyboardVisible {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    // When parent view requests visibility check, ensure last few messages are visible
-                                    if let lastIndex = messages.indices.last {
-                                        scrollProxy.scrollTo("msg\(lastIndex)", anchor: .center)
-                                    }
-                                }
+                            // Immediate scroll without delay
+                            if let lastIndex = messages.indices.last {
+                                scrollProxy.scrollTo("msg\(lastIndex)", anchor: .center)
                             }
                         }
                     }
@@ -243,13 +225,57 @@ struct SocialBrainDialogView: View {
                         // This is triggered just before an AI response will be added
                         // Pre-position the scroll to ensure space is reserved for the upcoming response
                         if !messages.isEmpty, isKeyboardVisible {
-                            withAnimation(.easeOut(duration: 0.2)) {
-                                // Scroll to bottom and add some extra space to reserve room for the response
-                                scrollProxy.scrollTo("bottomID", anchor: .bottom)
+                            // Immediate pre-positioning with no animation delay
+                            // Scroll to bottom and reserve space for the response
+                            scrollProxy.scrollTo("bottomID", anchor: .bottom)
+                            
+                            // Also notify parent view that we need space for a new response
+                            NotificationCenter.default.post(name: Notification.Name("ReserveSpaceForResponse"), object: nil)
+                        }
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ImmediateScrollToLatest"))) { _ in
+                        // Immediate scroll with no delay for second responses
+                        if !messages.isEmpty {
+                            // Get the latest message index
+                            if let lastIndex = messages.indices.last {
+                                // For AI responses, use custom coordinate-based scroll position to ensure visibility
+                                // This ensures the message is positioned higher up in the visible area
+                                let proxy = scrollProxy
                                 
-                                // Also notify parent view that we need space for a new response
-                                NotificationCenter.default.post(name: Notification.Name("ReserveSpaceForResponse"), object: nil)
+                                // First scroll to position with .top anchor to ensure message is in view
+                                proxy.scrollTo("msg\(lastIndex)", anchor: .top)
+                                
+                                // Then do a secondary scroll to position the message higher up in the viewport
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                                    // Using a very slight delay to ensure the first scroll completes
+                                    // This ensures the message is positioned approximately in the upper third of the screen
+                                    proxy.scrollTo("msg\(lastIndex)", anchor: UnitPoint(x: 0.5, y: 0.25))
+                                }
                             }
+                        }
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ImmediateScrollToHighPosition"))) { _ in
+                        // Specifically for positioning responses much higher on screen
+                        if !messages.isEmpty {
+                            if let lastIndex = messages.indices.last {
+                                // First get it in view with .top anchor
+                                scrollProxy.scrollTo("msg\(lastIndex)", anchor: .top)
+                                
+                                // Then immediately reposition to upper quarter of screen
+                                // This positions the message very high in the visible area
+                                scrollProxy.scrollTo("msg\(lastIndex)", anchor: UnitPoint(x: 0.5, y: 0.1))
+                            }
+                        }
+                    }
+                    
+                    .onReceive(NotificationCenter.default.publisher(for: Notification.Name("PrepareForResponseHighPosition"))) { _ in
+                        // This is triggered just before an AI response will be added, with high positioning
+                        if !messages.isEmpty, isKeyboardVisible {
+                            // Reserve more space at top of screen for incoming response
+                            scrollProxy.scrollTo("bottomID", anchor: .bottom)
+                            
+                            // Notify parent view that we need extra space at top for the response
+                            NotificationCenter.default.post(name: Notification.Name("ReserveExtraSpaceForResponse"), object: nil)
                         }
                     }
                     .onAppear {
@@ -354,31 +380,21 @@ struct SocialBrainDialogView: View {
         // Clear input
         inputText = ""
         
-        // Force immediate scroll to show the user message
-        NotificationCenter.default.post(name: Notification.Name("ScrollToNewestMessage"), object: nil)
+        // Immediately reserve space for the response and scroll to user message
+        NotificationCenter.default.post(name: Notification.Name("PrepareForResponseHighPosition"), object: nil)
         
-        // Pre-position the view before the response arrives to reserve space
-        NotificationCenter.default.post(name: Notification.Name("PrepareForResponse"), object: nil)
-        
-        // Simulate AI response after a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // Shorter delay before AI response
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             let response = generateAiResponse(to: trimmedText)
             
-            // Add the response with animation
+            // Add the response with animation and immediately scroll to it
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 self.messages.append(response)
-            }
-            
-            // Ensure visibility immediately as the message is added
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                NotificationCenter.default.post(name: Notification.Name("ScrollToNewestMessage"), object: nil)
                 
-                // For responses with action buttons, do an additional scroll after a bit more time
-                if response.actionText != nil {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        NotificationCenter.default.post(name: Notification.Name("ScrollToNewestMessage"), object: nil)
-                    }
-                }
+                // Immediately scroll to the new message as part of the same animation
+                // This ensures the scroll happens in sync with the message appearance
+                // The special notification indicates we want high positioning
+                NotificationCenter.default.post(name: Notification.Name("ImmediateScrollToHighPosition"), object: nil)
             }
         }
     }

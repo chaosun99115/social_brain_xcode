@@ -145,18 +145,19 @@ struct SocialNoteModalView: View {
         
         // If preparing for a response, always provide extra space to ensure visibility
         if isPreparingForResponse {
-            return -min(keyboardHeight * 0.7, 250) // Use medium offset when preparing for response
+            // Use a more aggressive offset to ensure message appears high in the view
+            return -min(keyboardHeight * 0.9, 350)
         }
         
         // If content fits in the visible area, provide a small offset to ensure input field is properly positioned
         if contentSize.height < visibleHeight - estimatedInputFieldHeight {
             // Small offset to ensure proper input field positioning
             NotificationCenter.default.post(name: Notification.Name("CheckContentVisibility"), object: nil)
-            return -min(30, keyboardHeight * 0.1) // Small offset to improve appearance
+            return -min(45, keyboardHeight * 0.15) // Increased offset to ensure better positioning
         } else {
             // Content would be cut off, apply a larger offset to ensure visibility
             // Increased offset to provide more space for content
-            return -min(keyboardHeight * 0.8, 300)
+            return -min(keyboardHeight * 0.85, 350) // Increased maximum offset for better visibility
         }
     }
     
@@ -196,16 +197,32 @@ struct SocialNoteModalView: View {
     
     private func setupResponseObservers() {
         NotificationCenter.default.addObserver(forName: Notification.Name("ReserveSpaceForResponse"), object: nil, queue: .main) { _ in
-            withAnimation(.easeOut(duration: 0.2)) {
-                self.isPreparingForResponse = true
-                
-                // Reset after a reasonable time if no response arrives
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    if self.isPreparingForResponse {
-                        withAnimation {
-                            self.isPreparingForResponse = false
-                        }
-                    }
+            // Immediate response without animation delay
+            self.isPreparingForResponse = true
+            
+            // Reset after a reasonable time if no response arrives
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                if self.isPreparingForResponse {
+                    self.isPreparingForResponse = false
+                }
+            }
+        }
+        
+        // Listen for extra space request for higher positioning
+        NotificationCenter.default.addObserver(forName: Notification.Name("ReserveExtraSpaceForResponse"), object: nil, queue: .main) { _ in
+            // Similar to regular space reservation but will position content higher
+            self.isPreparingForResponse = true
+            
+            // Apply an additional temporary offset for higher positioning
+            withAnimation(.easeOut(duration: 0.1)) {
+                // Apply a more aggressive offset to provide more room at the top
+                NotificationCenter.default.post(name: Notification.Name("ApplyExtraOffset"), object: nil)
+            }
+            
+            // Reset after a reasonable time if no response arrives
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                if self.isPreparingForResponse {
+                    self.isPreparingForResponse = false
                 }
             }
         }
@@ -213,16 +230,31 @@ struct SocialNoteModalView: View {
         // Listen for message addition to reset the preparation state
         NotificationCenter.default.addObserver(forName: Notification.Name("ScrollToNewestMessage"), object: nil, queue: .main) { _ in
             if self.isPreparingForResponse {
-                withAnimation {
-                    self.isPreparingForResponse = false
-                }
+                self.isPreparingForResponse = false
+            }
+        }
+        
+        // Immediate response to direct scroll requests
+        NotificationCenter.default.addObserver(forName: Notification.Name("ImmediateScrollToLatest"), object: nil, queue: .main) { _ in
+            if self.isPreparingForResponse {
+                self.isPreparingForResponse = false
+            }
+        }
+        
+        // Immediate response to high position scroll requests
+        NotificationCenter.default.addObserver(forName: Notification.Name("ImmediateScrollToHighPosition"), object: nil, queue: .main) { _ in
+            if self.isPreparingForResponse {
+                self.isPreparingForResponse = false
             }
         }
     }
     
     private func removeResponseObservers() {
         NotificationCenter.default.removeObserver(self, name: Notification.Name("ReserveSpaceForResponse"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("ReserveExtraSpaceForResponse"), object: nil)
         NotificationCenter.default.removeObserver(self, name: Notification.Name("ScrollToNewestMessage"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("ImmediateScrollToLatest"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("ImmediateScrollToHighPosition"), object: nil)
     }
     
     private func dismiss() {
