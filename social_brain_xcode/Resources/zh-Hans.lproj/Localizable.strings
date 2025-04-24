@@ -1,0 +1,13 @@
+// General
+"go_back" = "返回";
+
+// Notes
+"no_notes" = "没有可用的笔记";
+"search_notes" = "搜索笔记";
+"edit_note" = "编辑笔记";
+"view_note" = "查看笔记";
+
+// AI Suggestions
+"ai_suggestions" = "AI 建议";
+"loading_suggestions" = "正在加载建议...";
+"no_suggestions_available" = "暂无此笔记的建议，请稍后再试。"; 

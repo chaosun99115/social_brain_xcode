@@ -8,7 +8,7 @@ struct SocialNotesList: View {
     var body: some View {
         VStack(spacing: 0) {
             if notes.isEmpty {
-                Text("no_notes".localized)
+                Text("没有可用的笔记")
                     .font(.subheadline)
                     .foregroundColor(.tertiaryText)
                     .padding(.vertical, 20)
@@ -65,10 +65,8 @@ struct SocialNotesList_Previews: PreviewProvider {
     static var previews: some View {
         SocialNotesList(notes: SocialNote.mockNotes)
             .environment(\.colorScheme, .light)
-            .environmentObject(LocalizationManager())
         
         SocialNotesList(notes: SocialNote.mockNotes)
             .environment(\.colorScheme, .dark)
-            .environmentObject(LocalizationManager())
     }
 } 

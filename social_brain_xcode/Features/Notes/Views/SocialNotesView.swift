@@ -4,7 +4,8 @@ struct SocialNotesView: View {
     @State private var searchText = ""
     @State private var showingNoteModal = false
     @State private var showingSimpleNoteModal = false
-    @EnvironmentObject var localizationManager: LocalizationManager
+    @State private var selectedNote: SocialNote? = nil
+    @State private var showingNoteDetail = false
     @EnvironmentObject var noteManager: NoteManager
     
     var filteredNotes: [SocialNote] {
@@ -23,8 +24,11 @@ struct SocialNotesView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    SocialNotesList(notes: filteredNotes)
-                        .padding(.top, 10)
+                    SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
+                        selectedNote = note
+                        showingNoteDetail = true
+                    })
+                    .padding(.top, 10)
                     
                     // Add space at the bottom for better scrolling and to avoid FAB overlap
                     Spacer().frame(height: 80)
@@ -52,16 +56,24 @@ struct SocialNotesView: View {
                 }
             }
             .navigationTitle("笔记")
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_notes".localized)
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索笔记")
             .sheet(isPresented: $showingNoteModal) {
-                SocialNoteModalView(initialPrompt: "What would you like to take a note about today?")
+                SocialNoteModalView(initialPrompt: "今天你想记录什么？")
                     .environmentObject(noteManager)
-                    .environmentObject(localizationManager)
             }
             .sheet(isPresented: $showingSimpleNoteModal) {
                 SimpleNoteModalView()
                     .environmentObject(noteManager)
             }
+            .background(
+                NavigationLink(
+                    destination: selectedNote.map { note in
+                        SocialNoteDetailView(note: note)
+                    },
+                    isActive: $showingNoteDetail,
+                    label: { EmptyView() }
+                )
+            )
         }
     }
     
@@ -79,10 +91,10 @@ struct SocialNotesView_Previews: PreviewProvider {
     static var previews: some View {
         SocialNotesView()
             .environment(\.colorScheme, .light)
-            .environmentObject(LocalizationManager())
+            .environmentObject(NoteManager.shared)
         
         SocialNotesView()
             .environment(\.colorScheme, .dark)
-            .environmentObject(LocalizationManager())
+            .environmentObject(NoteManager.shared)
     }
 } 

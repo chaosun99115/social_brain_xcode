@@ -1,0 +1,13 @@
+// General
+"go_back" = "Go Back";
+
+// Notes
+"no_notes" = "No notes available";
+"search_notes" = "Search Notes";
+"edit_note" = "Edit Note";
+"view_note" = "View Note";
+
+// AI Suggestions
+"ai_suggestions" = "AI Suggestions";
+"loading_suggestions" = "Loading suggestions...";
+"no_suggestions_available" = "No suggestions available for this note. Try again later."; 
