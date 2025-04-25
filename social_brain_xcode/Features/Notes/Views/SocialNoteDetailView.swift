@@ -7,28 +7,137 @@ struct SocialNoteDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // Note content
-                noteDetailSection
+        ZStack {
+            // Background color for the entire screen
+            Color.primaryBackground
+                .ignoresSafeArea()
+            
+            // Content area
+            VStack(spacing: 0) {
+                // Scrollable content
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Note content section with padding
+                        VStack(alignment: .leading) {
+                            noteDetailSection
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                        
+                        // Full-width divider (12pt height, edge-to-edge)
+                        Color(.systemGray5)
+                            .frame(height: 12)
+                            .padding(.vertical, 8)
+                        
+                        // AI Suggestions section with padding
+                        VStack(alignment: .leading) {
+                            aiSuggestionsSection
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+                        
+                        // Extra bottom padding to ensure content isn't covered by the bottom toolbar
+                        Spacer(minLength: 80)
+                    }
+                    .padding(.top, 16)
+                }
                 
-                Divider()
-                    .padding(.vertical, 8)
-                
-                // AI Suggestions
-                aiSuggestionsSection
+                // Fixed bottom toolbar that respects safe areas
+                VStack(spacing: 0) {
+                    Divider()
+                    
+                    // Bottom toolbar content
+                    ZStack {
+                        // Full width background
+                        Color.clear
+                        
+                        // Right-aligned button
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                // Handle edit note action
+                            }) {
+                                Text("编辑笔记")
+                                    .font(.system(size: 21, weight: .regular))
+                                    .foregroundColor(.accentColor)
+                                    .padding(.top, 10)
+                            }
+                            .padding(.trailing, 16)
+                        }
+                    }
+                    .frame(height: 44) // Fixed height for consistent touch target
+                }
+                .padding(.bottom, safeAreaPadding) // Dynamic padding based on device
+                .background(
+                    VisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+                        .ignoresSafeArea()
+                )
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
         }
         .navigationBarTitle(formattedTimestamp(date: note.date), displayMode: .inline)
         .navigationBarBackButtonHidden(true)
         .navigationBarItems(leading: backButton)
         .onAppear {
             loadAISuggestions()
+            // Hide the tab bar
+            hideTabBar(true)
+        }
+        .onDisappear {
+            // Show the tab bar again when leaving this view
+            hideTabBar(false)
         }
         .refreshable {
             await refreshSuggestions()
+        }
+        .edgesIgnoringSafeArea(.bottom)
+    }
+    
+    // Dynamic safe area padding for different devices
+    private var safeAreaPadding: CGFloat {
+        // Get the bottom safe area inset
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+            
+        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
+        
+        // Add padding based on whether device has home indicator
+        return bottomInset > 0 ? bottomInset + 8 : 8
+    }
+    
+    // UIViewRepresentable wrapper for UIVisualEffectView to use blur effects
+    struct VisualEffectView: UIViewRepresentable {
+        var effect: UIVisualEffect?
+        
+        func makeUIView(context: UIViewRepresentableContext<Self>) -> UIVisualEffectView {
+            UIVisualEffectView()
+        }
+        
+        func updateUIView(_ uiView: UIVisualEffectView, context: UIViewRepresentableContext<Self>) {
+            uiView.effect = effect
+        }
+    }
+    
+    // Function to hide/show the tab bar
+    private func hideTabBar(_ hidden: Bool) {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .map { $0 as? UIWindowScene }
+            .compactMap { $0 }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+            
+        if let keyWindow = keyWindow {
+            keyWindow.rootViewController?.children.forEach { child in
+                // Find the UITabBarController and hide its tabBar
+                if let tabBarController = child as? UITabBarController {
+                    tabBarController.tabBar.isHidden = hidden
+                }
+            }
         }
     }
     
@@ -50,14 +159,7 @@ struct SocialNoteDetailView: View {
                 .foregroundColor(.primaryText)
                 .lineSpacing(4)
             
-            HStack {
-                Spacer()
-                Button("编辑笔记") {
-                    // Handle edit note action
-                }
-                .font(.headline)
-                .foregroundColor(.accentColor)
-            }
+            // "Edit Note" button has been moved to the bottom toolbar
         }
         .padding(.bottom, 8)
     }
@@ -122,15 +224,21 @@ struct SocialNoteDetailView: View {
                 .foregroundColor(.primaryText)
                 .lineSpacing(4)
             
-            Divider()
+            // Custom divider with same specifications as the main one
+            Rectangle()
+                .fill(Color(.systemGray5))
+                .frame(height: 2)
+                .padding(.vertical, 8)
             
+            // Centered button container
             HStack {
                 Spacer()
                 Button("查看笔记") {
                     // Handle view note action
                 }
-                .font(.headline)
+                .font(.system(size: 18, weight: .regular))
                 .foregroundColor(.accentColor)
+                Spacer()
             }
         }
         .padding(16)
