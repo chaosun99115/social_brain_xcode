@@ -37,6 +37,7 @@ struct SocialNotesList: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: Color.primaryText.opacity(0.05), radius: 2, x: 0, y: 1)
