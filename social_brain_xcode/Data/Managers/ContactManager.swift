@@ -51,6 +51,23 @@ class ContactManager {
         }
     }
     
+    func fetchContact(withName name: String) -> Contact? {
+        let request: NSFetchRequest<Contact> = Contact.fetchRequest()
+        request.predicate = NSPredicate(format: "name == %@", name)
+        request.fetchLimit = 1
+        
+        do {
+            return try context.fetch(request).first
+        } catch {
+            print("Error fetching contact by name: \(error)")
+            return nil
+        }
+    }
+    
+    func contactExists(withName name: String) -> Bool {
+        return fetchContact(withName: name) != nil
+    }
+    
     // MARK: - Update
     func updateContact(contactId: UUID, name: String) -> Bool {
         guard let contact = fetchContact(withId: contactId) else { return false }

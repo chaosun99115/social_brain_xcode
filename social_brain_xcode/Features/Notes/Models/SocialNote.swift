@@ -1,9 +1,31 @@
 import Foundation
+import CoreData
 
 struct SocialNote: Identifiable {
-    let id = UUID()
+    let id: UUID
     let date: Date
     let content: String
+    let type: NoteType
+    let updateCompleted: Bool
+    
+    // Initialize from Core Data Note entity
+    init(from note: NSManagedObject) {
+        let note = note as! Note
+        self.id = note.noteId ?? UUID()
+        self.date = note.createdAt ?? Date()
+        self.content = note.content ?? ""
+        self.type = NoteType(rawValue: Int(note.type)) ?? .general
+        self.updateCompleted = note.updateCompleted == 1
+    }
+    
+    // Initialize with default values
+    init(id: UUID = UUID(), date: Date = Date(), content: String, type: NoteType = .social, updateCompleted: Bool = false) {
+        self.id = id
+        self.date = date
+        self.content = content
+        self.type = type
+        self.updateCompleted = updateCompleted
+    }
     
     var formattedDate: String {
         let day = Calendar.current.component(.day, from: date)
@@ -34,4 +56,15 @@ struct SocialNote: Identifiable {
             content: "今天在接佳佳的路上遇到了 @彤彤妈妈 。她提到学校下周日有「亲子阅读日」，但她可能因工作原因无法参加。她还提到自己喜欢烘焙，经常在周末做蛋糕给孩子们吃。另外，她最近想给彤彤报一个编程班，但不知道哪家机构比较好。"
         )
     ]
+}
+
+// MARK: - Preview Data
+extension SocialNote {
+    static var previewData: [SocialNote] {
+        [
+            SocialNote(content: "Sample note 1"),
+            SocialNote(content: "Sample note 2"),
+            SocialNote(content: "Sample note 3")
+        ]
+    }
 } 

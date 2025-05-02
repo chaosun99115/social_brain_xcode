@@ -137,9 +137,9 @@ class NoteManager: ObservableObject {
         
         let relationship = NoteContactRelationship(context: context)
         relationship.relationshipId = UUID()
-//        relationship.note = note
-//        relationship.contact = contact
-//        relationship.createdAt = Date()
+        relationship.notes = note
+        relationship.contacts = contact
+        relationship.createdAt = Date()
         
         do {
             try context.save()
@@ -152,7 +152,7 @@ class NoteManager: ObservableObject {
     
     func removeContactFromNote(noteId: UUID, contactId: UUID) -> Bool {
         let request: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
-        request.predicate = NSPredicate(format: "note.noteId == %@ AND contact.contactId == %@",
+        request.predicate = NSPredicate(format: "notes.noteId == %@ AND contacts.contactId == %@",
                                       noteId as CVarArg, contactId as CVarArg)
         
         do {
@@ -165,6 +165,48 @@ class NoteManager: ObservableObject {
         } catch {
             print("Error removing contact from note: \(error)")
             return false
+        }
+    }
+    
+    // MARK: - Mention Handling
+    func createNoteWithMentions(content: String, type: NoteType = .social, mentions: [String]) -> Note? {
+        let note = Note(context: context)
+        note.noteId = UUID()
+        note.content = content
+        note.createdAt = Date()
+        note.updatedAt = Date()
+        note.recordStatus = 0 // unsynced
+        note.type = Int16(type.rawValue)
+        note.updateCompleted = 0 // false
+        
+        // Add contacts
+        for mention in mentions {
+            if let contact = ContactManager.shared.fetchContact(withName: mention) {
+                let relationship = NoteContactRelationship(context: context)
+                relationship.relationshipId = UUID()
+                relationship.notes = note
+                relationship.contacts = contact
+                relationship.createdAt = Date()
+            }
+        }
+        
+        do {
+            try context.save()
+            note.updateCompleted = 1 // true
+            return note
+        } catch {
+            print("Error creating note with mentions: \(error)")
+            return nil
+        }
+    }
+    
+    func getMentionsFromNote(_ note: Note) -> [String] {
+        guard let relationships = note.contacts as? Set<NoteContactRelationship> else {
+            return []
+        }
+        
+        return relationships.compactMap { relationship in
+            relationship.contacts?.name
         }
     }
 } 

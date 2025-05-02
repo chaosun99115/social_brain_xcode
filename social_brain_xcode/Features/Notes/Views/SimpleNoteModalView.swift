@@ -1,8 +1,49 @@
 import SwiftUI
 import UIKit
 
-
-
+// Add this new view before SimpleNoteModalView
+struct MentionConfirmationModal: View {
+    let unmatchedMentions: [String]
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("创建新联系人")
+                .font(.headline)
+                .padding(.top)
+            
+            Text("以下提及的联系人尚未创建，是否创建？")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            ForEach(unmatchedMentions, id: \.self) { mention in
+                Text(mention)
+                    .font(.body)
+                    .foregroundColor(.primary)
+            }
+            
+            HStack(spacing: 20) {
+                Button("取消") {
+                    onCancel()
+                }
+                .buttonStyle(.bordered)
+                
+                Button("创建") {
+                    onConfirm()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding(.bottom)
+        }
+        .frame(width: 300)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(radius: 10)
+    }
+}
 
 struct SimpleNoteModalView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -19,6 +60,10 @@ struct SimpleNoteModalView: View {
     
     // Reference to text editor for direct keyboard focus
     @State private var textEditorRef: UITextView?
+    
+    @State private var unmatchedMentions: [String] = []
+    @State private var showingMentionConfirmation = false
+    @State private var isSaving = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -93,14 +138,23 @@ struct SimpleNoteModalView: View {
                         Button(action: {
                             saveNote()
                         }) {
-                            Text("保存")
-                                .font(.system(size: 17))
-                                .foregroundColor(.white)
-                                .frame(width: 80, height: 40)
-                                .background(Color.blue)
-                                .cornerRadius(8)
+                            if isSaving {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .frame(width: 80, height: 40)
+                                    .background(Color.blue)
+                                    .cornerRadius(8)
+                            } else {
+                                Text("保存")
+                                    .font(.system(size: 17))
+                                    .foregroundColor(.white)
+                                    .frame(width: 80, height: 40)
+                                    .background(Color.blue)
+                                    .cornerRadius(8)
+                            }
                         }
                         .frame(maxWidth: .infinity)
+                        .disabled(isSaving)
                     }
                     .padding(.vertical, 12)
                 }
@@ -127,6 +181,25 @@ struct SimpleNoteModalView: View {
         }
         .onDisappear {
             removeKeyboardObservers()
+        }
+        .overlay {
+            if showingMentionConfirmation {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .overlay {
+                        MentionConfirmationModal(
+                            unmatchedMentions: unmatchedMentions,
+                            onConfirm: {
+                                showingMentionConfirmation = false
+                                saveNoteWithMentions(mentions: unmatchedMentions)
+                            },
+                            onCancel: {
+                                showingMentionConfirmation = false
+                                saveNoteWithMentions(mentions: [])
+                            }
+                        )
+                    }
+            }
         }
     }
     
@@ -168,10 +241,45 @@ struct SimpleNoteModalView: View {
     }
     
     private func saveNote() {
-        if !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            noteManager.createNote(content: noteText, type: .social)
+        guard !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        
+        // Extract mentions
+        let mentions = extractMentions(from: noteText)
+        
+        // Check for unmatched mentions
+        let unmatched = mentions.filter { mention in
+            !ContactManager.shared.contactExists(withName: mention)
         }
-        dismiss()
+        
+        if !unmatched.isEmpty {
+            unmatchedMentions = unmatched
+            showingMentionConfirmation = true
+        } else {
+            saveNoteWithMentions(mentions: mentions)
+        }
+    }
+    
+    private func extractMentions(from text: String) -> [String] {
+        let words = text.split(separator: " ")
+        return words.compactMap { word in
+            if word.hasPrefix("@") {
+                return String(word.dropFirst()) // Remove @ symbol
+            }
+            return nil
+        }
+    }
+    
+    private func saveNoteWithMentions(mentions: [String]) {
+        isSaving = true
+        
+        // Create note with mentions
+        if let _ = noteManager.createNoteWithMentions(content: noteText, type: .social, mentions: mentions) {
+            isSaving = false
+            dismiss()
+        } else {
+            isSaving = false
+            // TODO: Show error alert
+        }
     }
 }
 

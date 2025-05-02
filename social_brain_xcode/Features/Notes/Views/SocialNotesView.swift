@@ -6,13 +6,15 @@ struct SocialNotesView: View {
     @State private var showingSimpleNoteModal = false
     @State private var selectedNote: SocialNote? = nil
     @State private var showingNoteDetail = false
+    @State private var refreshTrigger = false
     @EnvironmentObject var noteManager: NoteManager
     
     var filteredNotes: [SocialNote] {
+        let notes = noteManager.fetchNotes().map { SocialNote(from: $0) }
         if searchText.isEmpty {
-            return SocialNote.mockNotes
+            return notes
         }
-        return SocialNote.mockNotes.filter { note in
+        return notes.filter { note in
             note.content.localizedCaseInsensitiveContains(searchText)
         }
     }
@@ -29,6 +31,7 @@ struct SocialNotesView: View {
                         showingNoteDetail = true
                     })
                     .padding(.top, 10)
+                    .id(refreshTrigger)
                     
                     // Add space at the bottom for better scrolling and to avoid FAB overlap
                     Spacer().frame(height: 80)
@@ -60,10 +63,16 @@ struct SocialNotesView: View {
             .sheet(isPresented: $showingNoteModal) {
                 SocialNoteModalView(initialPrompt: "今天你想记录什么？")
                     .environmentObject(noteManager)
+                    .onDisappear {
+                        refreshTrigger.toggle()
+                    }
             }
             .sheet(isPresented: $showingSimpleNoteModal) {
                 SimpleNoteModalView()
                     .environmentObject(noteManager)
+                    .onDisappear {
+                        refreshTrigger.toggle()
+                    }
             }
             .background(
                 NavigationLink(
