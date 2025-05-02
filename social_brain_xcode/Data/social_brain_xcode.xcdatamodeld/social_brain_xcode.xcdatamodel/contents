@@ -1,28 +1,80 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="21513" systemVersion="21H1320" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" userDefinedModelVersionIdentifier="">
+    <entity name="Circle" representedClassName="Circle" syncable="YES" codeGenerationType="class">
+        <attribute name="circleId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="contacts" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleContactRelationship" inverseName="circles" inverseEntity="CircleContactRelationship"/>
+        <relationship name="insights" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InsightCircleRelationship" inverseName="circles" inverseEntity="InsightCircleRelationship"/>
+    </entity>
+    <entity name="CircleContactRelationship" representedClassName="CircleContactRelationship" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="relationshipId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Circle" inverseName="contacts" inverseEntity="Circle"/>
+        <relationship name="contacts" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contact" inverseName="circles" inverseEntity="Contact"/>
+    </entity>
+    <entity name="CircleInsight" representedClassName="CircleInsight" syncable="YES" codeGenerationType="class">
+        <attribute name="category" optional="YES" attributeType="String"/>
+        <attribute name="content" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="insightId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="order" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="subCategory" optional="YES" attributeType="String"/>
+        <attribute name="subOrder" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="type" optional="YES" attributeType="String"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InsightCircleRelationship" inverseName="insights" inverseEntity="InsightCircleRelationship"/>
+    </entity>
     <entity name="Contact" representedClassName="Contact" syncable="YES" codeGenerationType="class">
         <attribute name="contactId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
-        <attribute name="noteToContactRelationships" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="relationship" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="relationship" inverseEntity="NoteContactRelationship"/>
+        <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleContactRelationship" inverseName="contacts" inverseEntity="CircleContactRelationship"/>
+        <relationship name="insights" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InsightContactRelationship" inverseName="contacts" inverseEntity="InsightContactRelationship"/>
+        <relationship name="notes" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="contacts" inverseEntity="NoteContactRelationship"/>
+    </entity>
+    <entity name="ContactInsight" representedClassName="ContactInsight" syncable="YES" codeGenerationType="class">
+        <attribute name="category" optional="YES" attributeType="String"/>
+        <attribute name="content" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="insightId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="order" optional="YES" attributeType="String"/>
+        <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="type" optional="YES" attributeType="String"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="contacts" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InsightContactRelationship" inverseName="insights" inverseEntity="InsightContactRelationship"/>
+    </entity>
+    <entity name="InsightCircleRelationship" representedClassName="InsightCircleRelationship" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="relationshipId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Circle" inverseName="insights" inverseEntity="Circle"/>
+        <relationship name="insights" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleInsight" inverseName="circles" inverseEntity="CircleInsight"/>
+    </entity>
+    <entity name="InsightContactRelationship" representedClassName="InsightContactRelationship" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="relationshipId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="contacts" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contact" inverseName="insights" inverseEntity="Contact"/>
+        <relationship name="insights" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ContactInsight" inverseName="contacts" inverseEntity="ContactInsight"/>
     </entity>
     <entity name="Note" representedClassName="Note" syncable="YES" codeGenerationType="class">
+        <attribute name="content" optional="YES" attributeType="String"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="noteId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="noteType" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
-        <attribute name="text" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="updateCompleted" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="relationship" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="relationship1" inverseEntity="NoteContactRelationship"/>
+        <relationship name="contacts" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="notes" inverseEntity="NoteContactRelationship"/>
     </entity>
     <entity name="NoteContactRelationship" representedClassName="NoteContactRelationship" syncable="YES" codeGenerationType="class">
-        <attribute name="contact" optional="YES" attributeType="String"/>
-        <attribute name="note" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="relationshipId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <relationship name="relationship" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contact" inverseName="relationship" inverseEntity="Contact"/>
-        <relationship name="relationship1" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Note" inverseName="relationship" inverseEntity="Note"/>
+        <relationship name="contacts" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contact" inverseName="notes" inverseEntity="Contact"/>
+        <relationship name="notes" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Note" inverseName="contacts" inverseEntity="Note"/>
     </entity>
 </model>

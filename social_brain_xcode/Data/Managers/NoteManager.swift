@@ -19,7 +19,7 @@ class NoteManager: ObservableObject {
     func createNote(text: String) -> Note? {
         let note = Note(context: context)
         note.noteId = UUID()
-        note.text = text
+        note.content = text
         note.createdAt = Date()
         note.updatedAt = Date()
         note.recordStatus = 0 // unsynced
@@ -37,11 +37,11 @@ class NoteManager: ObservableObject {
     func createNote(content: String, type: NoteType = .general) -> Note? {
         let note = Note(context: context)
         note.noteId = UUID()
-        note.text = content
+        note.content = content
         note.createdAt = Date()
         note.updatedAt = Date()
         note.recordStatus = 0 // unsynced
-        note.noteType = Int16(type.rawValue)
+        note.type = Int16(type.rawValue)
         
         do {
             try context.save()
@@ -82,7 +82,7 @@ class NoteManager: ObservableObject {
     func updateNote(noteId: UUID, text: String) -> Bool {
         guard let note = fetchNote(withId: noteId) else { return false }
         
-        note.text = text
+        note.content = text
         note.updatedAt = Date()
         note.recordStatus = 0 // mark as unsynced
         

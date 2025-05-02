@@ -279,8 +279,8 @@ struct ContactSummaryRow: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 16) {
                 // Bullet point
-                Circle()
-                    .fill(Color.tertiaryText)
+                SwiftUI.Circle()
+                    .foregroundColor(Color.tertiaryText)
                     .frame(width: 6, height: 6)
                     .padding(.top, 8)
                 

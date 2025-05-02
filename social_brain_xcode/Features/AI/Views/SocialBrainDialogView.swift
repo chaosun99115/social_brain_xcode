@@ -335,7 +335,7 @@ struct SocialBrainDialogView: View {
                                 .foregroundColor(.white)
                                 .frame(width: 44, height: 44) // Standard iOS touch target size
                                 .background(Color.primaryAction)
-                                .clipShape(Circle())
+                                .clipShape(SwiftUI.Circle())
                                 .shadow(color: Color.primaryText.opacity(0.1), radius: 2, x: 0, y: 1)
                         }
                         .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

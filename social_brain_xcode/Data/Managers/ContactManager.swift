@@ -106,12 +106,12 @@ class ContactManager {
         // Hardcoded notes for testing
         let note1 = Note(context: context)
         note1.noteId = UUID()
-        note1.text = "Had a great conversation about AI and machine learning"
+        note1.content = "Had a great conversation about AI and machine learning"
         note1.createdAt = Date()
         
         let note2 = Note(context: context)
         note2.noteId = UUID()
-        note2.text = "Discussed potential collaboration on a new project"
+        note2.content = "Discussed potential collaboration on a new project"
         note2.createdAt = Date()
         
         return [note1, note2]

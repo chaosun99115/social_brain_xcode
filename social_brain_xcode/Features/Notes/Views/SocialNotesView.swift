@@ -47,7 +47,7 @@ struct SocialNotesView: View {
                                 .foregroundColor(.white)
                                 .frame(width: 56, height: 56)
                                 .background(Color.primaryAction)
-                                .clipShape(Circle())
+                                .clipShape(SwiftUI.Circle())
                                 .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
                         }
                         .padding(.trailing, 20)
