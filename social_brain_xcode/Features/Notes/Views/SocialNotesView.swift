@@ -7,6 +7,7 @@ struct SocialNotesView: View {
     @State private var selectedNote: SocialNote? = nil
     @State private var showingNoteDetail = false
     @State private var refreshTrigger = false
+    @State private var showingDebugMenu = false
     @EnvironmentObject var noteManager: NoteManager
     
     var filteredNotes: [SocialNote] {
@@ -60,6 +61,16 @@ struct SocialNotesView: View {
             }
             .navigationTitle("笔记")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索笔记")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showingDebugMenu = true
+                    }) {
+                        Image(systemName: "ladybug")
+                            .foregroundColor(.primaryAction)
+                    }
+                }
+            }
             .sheet(isPresented: $showingNoteModal) {
                 SocialNoteModalView(initialPrompt: "今天你想记录什么？")
                     .environmentObject(noteManager)
@@ -73,6 +84,9 @@ struct SocialNotesView: View {
                     .onDisappear {
                         refreshTrigger.toggle()
                     }
+            }
+            .sheet(isPresented: $showingDebugMenu) {
+                DebugMenuView()
             }
             .background(
                 NavigationLink(
