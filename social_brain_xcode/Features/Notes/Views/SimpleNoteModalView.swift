@@ -1,6 +1,9 @@
 import SwiftUI
 import UIKit
 
+
+
+
 struct SimpleNoteModalView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
