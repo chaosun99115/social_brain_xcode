@@ -1,8 +1,6 @@
 import SwiftUI
 import UIKit
 
-// this is testing backward
-
 // Add this new view before SimpleNoteModalView
 struct MentionConfirmationModal: View {
     let unmatchedMentions: [String]
