@@ -3,7 +3,7 @@
 //  social_brain_xcode
 //
 //  Created by chao sun on 2025-04-04.
-//
+//  this is for debug
 
 import CoreData
 
