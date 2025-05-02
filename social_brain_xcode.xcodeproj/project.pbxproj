@@ -13,6 +13,10 @@
 		AF6D11272DB00A330071D444 /* SocialNoteModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11262DB00A320071D444 /* SocialNoteModalView.swift */; };
 		AF8398952DB98E9600382EA6 /* SimpleNoteModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8398942DB98E9600382EA6 /* SimpleNoteModalView.swift */; };
 		AF8398972DBAC6AD00382EA6 /* SocialNoteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8398962DBAC6AA00382EA6 /* SocialNoteDetailView.swift */; };
+		AF84F40E2DC57EFB00BD66D5 /* CircleDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F40A2DC57EFA00BD66D5 /* CircleDebugView.swift */; };
+		AF84F40F2DC57EFB00BD66D5 /* ContactDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F40B2DC57EFA00BD66D5 /* ContactDebugView.swift */; };
+		AF84F4102DC57EFB00BD66D5 /* NoteDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F40C2DC57EFA00BD66D5 /* NoteDebugView.swift */; };
+		AF84F4112DC57EFB00BD66D5 /* CoreDataDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F40D2DC57EFA00BD66D5 /* CoreDataDebugView.swift */; };
 		AFA2761A2DB0349C00C29B81 /* SocialNotesList.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA276192DB0349C00C29B81 /* SocialNotesList.swift */; };
 		AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA2761B2DB0362C00C29B81 /* MentionTextView.swift */; };
 		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
@@ -43,6 +47,10 @@
 		AF6D11262DB00A320071D444 /* SocialNoteModalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNoteModalView.swift; sourceTree = "<group>"; };
 		AF8398942DB98E9600382EA6 /* SimpleNoteModalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SimpleNoteModalView.swift; sourceTree = "<group>"; };
 		AF8398962DBAC6AA00382EA6 /* SocialNoteDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNoteDetailView.swift; sourceTree = "<group>"; };
+		AF84F40A2DC57EFA00BD66D5 /* CircleDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleDebugView.swift; sourceTree = "<group>"; };
+		AF84F40B2DC57EFA00BD66D5 /* ContactDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactDebugView.swift; sourceTree = "<group>"; };
+		AF84F40C2DC57EFA00BD66D5 /* NoteDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteDebugView.swift; sourceTree = "<group>"; };
+		AF84F40D2DC57EFA00BD66D5 /* CoreDataDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataDebugView.swift; sourceTree = "<group>"; };
 		AFA276192DB0349C00C29B81 /* SocialNotesList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNotesList.swift; sourceTree = "<group>"; };
 		AFA2761B2DB0362C00C29B81 /* MentionTextView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MentionTextView.swift; sourceTree = "<group>"; };
 		AFBD50E32DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
@@ -87,6 +95,17 @@
 				AF6D111D2DADA98E0071D444 /* NoteManager.swift */,
 			);
 			path = Managers;
+			sourceTree = "<group>";
+		};
+		AF84F4092DC57EFA00BD66D5 /* CoreDataDebug */ = {
+			isa = PBXGroup;
+			children = (
+				AF84F40A2DC57EFA00BD66D5 /* CircleDebugView.swift */,
+				AF84F40B2DC57EFA00BD66D5 /* ContactDebugView.swift */,
+				AF84F40C2DC57EFA00BD66D5 /* NoteDebugView.swift */,
+				AF84F40D2DC57EFA00BD66D5 /* CoreDataDebugView.swift */,
+			);
+			path = CoreDataDebug;
 			sourceTree = "<group>";
 		};
 		AFA2761D2DB03BAF00C29B81 /* Features */ = {
@@ -272,6 +291,7 @@
 		AFF98BB52DA075720001DD70 /* social_brain_xcode */ = {
 			isa = PBXGroup;
 			children = (
+				AF84F4092DC57EFA00BD66D5 /* CoreDataDebug */,
 				AFA276272DB03E6400C29B81 /* App */,
 				AFA2762C2DB03F4200C29B81 /* Components */,
 				AFA2762A2DB03ED900C29B81 /* Data */,
@@ -371,15 +391,19 @@
 				AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */,
 				AFF98BC32DA075730001DD70 /* social_brain_xcode.xcdatamodeld in Sources */,
 				AF6D11272DB00A330071D444 /* SocialNoteModalView.swift in Sources */,
+				AF84F4102DC57EFB00BD66D5 /* NoteDebugView.swift in Sources */,
 				AF8398972DBAC6AD00382EA6 /* SocialNoteDetailView.swift in Sources */,
 				AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */,
+				AF84F4112DC57EFB00BD66D5 /* CoreDataDebugView.swift in Sources */,
 				AFF98BCE2DA0772F0001DD70 /* MainTabView.swift in Sources */,
 				AFBD50FD2DA739660066907B /* SocialContactDetailView.swift in Sources */,
 				AFF98BD52DA4496C0001DD70 /* SocialBrainMessage.swift in Sources */,
 				AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */,
+				AF84F40E2DC57EFB00BD66D5 /* CircleDebugView.swift in Sources */,
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
 				AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */,
+				AF84F40F2DC57EFB00BD66D5 /* ContactDebugView.swift in Sources */,
 				AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */,
 				AFA2761A2DB0349C00C29B81 /* SocialNotesList.swift in Sources */,
 				AF8398952DB98E9600382EA6 /* SimpleNoteModalView.swift in Sources */,
