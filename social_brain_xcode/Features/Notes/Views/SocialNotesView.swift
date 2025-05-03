@@ -11,7 +11,10 @@ struct SocialNotesView: View {
     @EnvironmentObject var noteManager: NoteManager
     
     var filteredNotes: [SocialNote] {
-        let notes = noteManager.fetchNotes().map { SocialNote(from: $0) }
+        let notes = noteManager.fetchNotes()
+            .filter { !$0.isArchived } // Filter out archived notes
+            .map { SocialNote(from: $0) }
+        
         if searchText.isEmpty {
             return notes
         }

@@ -128,6 +128,23 @@ class NoteManager: ObservableObject {
         }
     }
     
+    // MARK: - Archive
+    func archiveNote(noteId: UUID) -> Bool {
+        guard let note = fetchNote(withId: noteId) else { return false }
+        
+        note.isArchived = true
+        note.updatedAt = Date()
+        note.recordStatus = 0 // mark as unsynced
+        
+        do {
+            try context.save()
+            return true
+        } catch {
+            print("Error archiving note: \(error)")
+            return false
+        }
+    }
+    
     // MARK: - Relationships
     func addContactToNote(noteId: UUID, contactId: UUID) -> Bool {
         guard let note = fetchNote(withId: noteId),

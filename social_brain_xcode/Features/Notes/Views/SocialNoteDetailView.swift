@@ -5,7 +5,9 @@ struct SocialNoteDetailView: View {
     @State private var aiSuggestions: [AISuggestion] = []
     @State private var isLoadingSuggestions: Bool = true
     @State private var showingEditModal: Bool = false
+    @State private var showingArchiveConfirmation: Bool = false
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var noteManager: NoteManager
     
     var body: some View {
         ZStack {
@@ -48,27 +50,40 @@ struct SocialNoteDetailView: View {
                     Divider()
                     
                     // Bottom toolbar content
-                    ZStack {
-                        // Full width background
-                        Color.clear
+                    HStack(spacing: 0) {
+                        // Archive button
+                        Button(action: {
+                            showingArchiveConfirmation = true
+                        }) {
+                            Image(systemName: "archivebox")
+                                .font(.system(size: 24))
+                                .foregroundColor(.accentColor)
+                                .frame(maxWidth: .infinity)
+                        }
                         
-                        // Right-aligned button
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                showingEditModal = true
-                            }) {
-                                Text("编辑笔记")
-                                    .font(.system(size: 21, weight: .regular))
-                                    .foregroundColor(.accentColor)
-                                    .padding(.top, 10)
-                            }
-                            .padding(.trailing, 16)
+                        // AI button
+                        Button(action: {
+                            // AI action
+                        }) {
+                            Image(systemName: "brain")
+                                .font(.system(size: 24))
+                                .foregroundColor(.accentColor)
+                                .frame(maxWidth: .infinity)
+                        }
+                        
+                        // Edit button
+                        Button(action: {
+                            showingEditModal = true
+                        }) {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 24))
+                                .foregroundColor(.accentColor)
+                                .frame(maxWidth: .infinity)
                         }
                     }
-                    .frame(height: 44) // Fixed height for consistent touch target
+                    .frame(height: 44)
+                    .padding(.bottom, safeAreaPadding)
                 }
-                .padding(.bottom, safeAreaPadding) // Dynamic padding based on device
                 .background(
                     VisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
                         .ignoresSafeArea()
@@ -94,6 +109,18 @@ struct SocialNoteDetailView: View {
         .sheet(isPresented: $showingEditModal) {
             // Present the SimpleNoteModalView with existing note content
             EditNoteModalView(initialText: note.content, noteId: note.id)
+        }
+        .alert(isPresented: $showingArchiveConfirmation) {
+            Alert(
+                title: Text("归档笔记"),
+                message: Text("确定要归档这条笔记吗？归档后可以在归档列表中查看。"),
+                primaryButton: .destructive(Text("归档")) {
+                    if noteManager.archiveNote(noteId: note.id) {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                },
+                secondaryButton: .cancel(Text("取消"))
+            )
         }
     }
     
