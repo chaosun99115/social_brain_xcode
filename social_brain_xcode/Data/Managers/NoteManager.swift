@@ -181,12 +181,33 @@ class NoteManager: ObservableObject {
         
         // Add contacts
         for mention in mentions {
-            if let contact = ContactManager.shared.fetchContact(withName: mention) {
-                let relationship = NoteContactRelationship(context: context)
-                relationship.relationshipId = UUID()
-                relationship.notes = note
-                relationship.contacts = contact
-                relationship.createdAt = Date()
+            // Get or create contact
+            let contact: Contact
+            if let existingContact = ContactManager.shared.fetchContact(withName: mention) {
+                contact = existingContact
+            } else {
+                // Create new contact if it doesn't exist
+                guard let newContact = ContactManager.shared.createContact(name: mention) else {
+                    continue
+                }
+                contact = newContact
+            }
+            
+            // Create relationship in the same context
+            let relationship = NoteContactRelationship(context: context)
+            relationship.relationshipId = UUID()
+            relationship.createdAt = Date()
+            
+            // Set up both sides of the relationship
+            relationship.notes = note
+            relationship.contacts = contact
+            
+            // Save immediately to ensure relationships are established
+            do {
+                try context.save()
+            } catch {
+                print("Error saving relationship: \(error)")
+                continue
             }
         }
         
@@ -196,6 +217,7 @@ class NoteManager: ObservableObject {
             return note
         } catch {
             print("Error creating note with mentions: \(error)")
+            context.delete(note) // Clean up if save fails
             return nil
         }
     }
