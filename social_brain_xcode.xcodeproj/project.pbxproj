@@ -18,6 +18,8 @@
 		AF84F41C2DC582C600BD66D5 /* ContactDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4172DC582C600BD66D5 /* ContactDebugView.swift */; };
 		AF84F41D2DC582C600BD66D5 /* NoteDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4182DC582C600BD66D5 /* NoteDebugView.swift */; };
 		AF84F41E2DC582C600BD66D5 /* CoreDataDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4192DC582C600BD66D5 /* CoreDataDebugView.swift */; };
+		AF84F4242DC942D200BD66D5 /* ContactInsightDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4232DC942D200BD66D5 /* ContactInsightDebugView.swift */; };
+		AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4252DC942E500BD66D5 /* ContactInsightManager.swift */; };
 		AFA2761A2DB0349C00C29B81 /* SocialNotesList.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA276192DB0349C00C29B81 /* SocialNotesList.swift */; };
 		AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA2761B2DB0362C00C29B81 /* MentionTextView.swift */; };
 		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
@@ -53,6 +55,8 @@
 		AF84F4172DC582C600BD66D5 /* ContactDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactDebugView.swift; sourceTree = "<group>"; };
 		AF84F4182DC582C600BD66D5 /* NoteDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteDebugView.swift; sourceTree = "<group>"; };
 		AF84F4192DC582C600BD66D5 /* CoreDataDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataDebugView.swift; sourceTree = "<group>"; };
+		AF84F4232DC942D200BD66D5 /* ContactInsightDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactInsightDebugView.swift; sourceTree = "<group>"; };
+		AF84F4252DC942E500BD66D5 /* ContactInsightManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactInsightManager.swift; sourceTree = "<group>"; };
 		AFA276192DB0349C00C29B81 /* SocialNotesList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNotesList.swift; sourceTree = "<group>"; };
 		AFA2761B2DB0362C00C29B81 /* MentionTextView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MentionTextView.swift; sourceTree = "<group>"; };
 		AFBD50E32DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
@@ -94,6 +98,7 @@
 			children = (
 				AF6D11222DADA9B20071D444 /* CoreDataManager.swift */,
 				AF6D111E2DADA98E0071D444 /* ContactManager.swift */,
+				AF84F4252DC942E500BD66D5 /* ContactInsightManager.swift */,
 				AF6D111D2DADA98E0071D444 /* NoteManager.swift */,
 			);
 			path = Managers;
@@ -105,6 +110,7 @@
 				AF84F4152DC582C600BD66D5 /* DebugMenuView.swift */,
 				AF84F4162DC582C600BD66D5 /* CircleDebugView.swift */,
 				AF84F4172DC582C600BD66D5 /* ContactDebugView.swift */,
+				AF84F4232DC942D200BD66D5 /* ContactInsightDebugView.swift */,
 				AF84F4182DC582C600BD66D5 /* NoteDebugView.swift */,
 				AF84F4192DC582C600BD66D5 /* CoreDataDebugView.swift */,
 			);
@@ -402,10 +408,12 @@
 				AFBD50FD2DA739660066907B /* SocialContactDetailView.swift in Sources */,
 				AFF98BD52DA4496C0001DD70 /* SocialBrainMessage.swift in Sources */,
 				AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */,
+				AF84F4242DC942D200BD66D5 /* ContactInsightDebugView.swift in Sources */,
 				AF84F41B2DC582C600BD66D5 /* CircleDebugView.swift in Sources */,
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
 				AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */,
+				AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */,
 				AF84F41A2DC582C600BD66D5 /* DebugMenuView.swift in Sources */,
 				AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */,
 				AFA2761A2DB0349C00C29B81 /* SocialNotesList.swift in Sources */,

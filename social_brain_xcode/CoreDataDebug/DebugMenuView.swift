@@ -17,6 +17,10 @@ struct DebugMenuView: View {
                 NavigationLink("Circles Debug") {
                     CircleDebugView()
                 }
+                
+                NavigationLink("Contact Insights Debug") {
+                    ContactInsightDebugView()
+                }
             }
             .navigationTitle("Core Data Debug")
             .toolbar {
