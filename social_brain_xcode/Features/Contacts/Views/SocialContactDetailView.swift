@@ -7,10 +7,16 @@ struct SocialContactDetailView: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var localizationManager: LocalizationManager
     @StateObject private var contactManager = ContactManager.shared
+    @StateObject private var insightManager = ContactInsightManager.shared
     @State private var activeTab: TabType = .summary
     @State private var notes: [Note] = []
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
+    @State private var contactInsights: [ContactInsight] = []
+    @State private var isLoadingInsights = true
+    @State private var selectedInsight: ContactInsight?
+    @State private var selectedContacts: Set<UUID> = []
+    @State private var showingEditSheet = false
     
     enum TabType: String, CaseIterable {
         case summary = "汇总"
@@ -87,6 +93,7 @@ struct SocialContactDetailView: View {
         }
         .onAppear {
             loadContactNotes()
+            loadContactInsights()
         }
     }
     
@@ -103,59 +110,86 @@ struct SocialContactDetailView: View {
         }
     }
     
+    private func loadContactInsights() {
+        isLoadingInsights = true
+        guard let contactId = contact.contactId else { contactInsights = []; isLoadingInsights = false; return }
+        
+        // Fetch insights directly for this contact
+        contactInsights = insightManager.getInsightsForContact(contactId: contactId)
+        
+        // Sort by order
+        contactInsights.sort { (a, b) in
+            (Int(a.order ?? "0") ?? 0) < (Int(b.order ?? "0") ?? 0)
+        }
+        
+        print("\n--- ContactInsight Debug Log ---")
+        print("Current Contact ID: \(contactId)")
+        print("Related insights count: \(contactInsights.count)")
+        for insight in contactInsights {
+            print("Insight [id: \(insight.insightId?.uuidString ?? "nil")] category: \(insight.category ?? "nil") content: \(insight.content ?? "nil")")
+        }
+        print("--- End ContactInsight Debug Log ---\n")
+        
+        isLoadingInsights = false
+    }
+    
     // MARK: - Summary Section
     private var summarySectionView: some View {
         VStack(spacing: 0) {
-            
-            // Group and display items by type
-            Group {
-                // Update section
-                if !contactSummaries.filter({ $0.type == .update }).isEmpty {
-                    SummarySectionHeader(title: "最新动态")
-                    
+            if isLoadingInsights {
+                ProgressView().padding()
+            } else {
+                // 最新近况
+                let updates = contactInsights.filter { $0.category?.lowercased() == "update" }
+                if !updates.isEmpty {
                     SectionContentWrapper {
-                        let updateItems = contactSummaries.filter({ $0.type == .update })
-                        ForEach(Array(updateItems.enumerated()), id: \.element.id) { index, item in
-                            ContactSummaryRow(
-                                item: item,
-                                isLast: index == updateItems.count - 1
-                            )
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("最新近况")
+                                .font(.headline)
+                                .foregroundColor(.primaryText)
+                                .padding(.bottom, 16)
+                            ForEach(Array(updates.enumerated()), id: \.element.insightId) { idx, insight in
+                                ContactDetailInsightRow(
+                                    insight: insight,
+                                    isLast: idx == updates.count - 1,
+                                    onTap: {
+                                        selectedInsight = insight
+                                        if let insightId = insight.insightId {
+                                            selectedContacts = Set(insightManager.getContactsForInsight(insightId: insightId).compactMap { $0.contactId })
+                                        }
+                                        showingEditSheet = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }
-                
-                // Topic section
-                if !contactSummaries.filter({ $0.type == .topic }).isEmpty {
-                    SummarySectionHeader(title: "互动话题")
-                
+                // 关系回顾
+                let reviews = contactInsights.filter { $0.category?.lowercased() == "review" }
+                if !reviews.isEmpty {
                     SectionContentWrapper {
-                        let topicItems = contactSummaries.filter({ $0.type == .topic })
-                        ForEach(Array(topicItems.enumerated()), id: \.element.id) { index, item in
-                            ContactSummaryRow(
-                                item: item,
-                                isLast: index == topicItems.count - 1
-                            )
-                        }
-                    }
-                }
-                
-                // Connection section
-                if !contactSummaries.filter({ $0.type == .connection }).isEmpty {
-                    SummarySectionHeader(title: "关系备忘录")
-                    
-                    SectionContentWrapper {
-                        let connectionItems = contactSummaries.filter({ $0.type == .connection })
-                        ForEach(Array(connectionItems.enumerated()), id: \.element.id) { index, item in
-                            ContactSummaryRow(
-                                item: item,
-                                isLast: index == connectionItems.count - 1
-                            )
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("关系回顾")
+                                .font(.headline)
+                                .foregroundColor(.primaryText)
+                                .padding(.bottom, 16)
+                            ForEach(Array(reviews.enumerated()), id: \.element.insightId) { idx, insight in
+                                ContactDetailInsightRow(
+                                    insight: insight,
+                                    isLast: idx == reviews.count - 1,
+                                    onTap: {
+                                        selectedInsight = insight
+                                        if let insightId = insight.insightId {
+                                            selectedContacts = Set(insightManager.getContactsForInsight(insightId: insightId).compactMap { $0.contactId })
+                                        }
+                                        showingEditSheet = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
-            
-            // Spacer at the bottom for better scrolling
             Spacer().frame(height: 40)
         }
         .padding(.top, 16)
@@ -454,5 +488,63 @@ struct SectionContentWrapper<Content: View>: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .padding(.bottom, 12)
+    }
+}
+
+// MARK: - Supporting Views
+struct ContactDetailInsightRow: View {
+    let insight: ContactInsight
+    let isLast: Bool
+    let onTap: (() -> Void)?
+
+    init(insight: ContactInsight, isLast: Bool = false, onTap: (() -> Void)? = nil) {
+        self.insight = insight
+        self.isLast = isLast
+        self.onTap = onTap
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 16) {
+                SwiftUI.Circle()
+                    .foregroundColor(Color.tertiaryText)
+                    .frame(width: 6, height: 6)
+                    .padding(.top, 8)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(insight.content ?? "")
+                        .font(.system(size: 16))
+                        .foregroundColor(.primaryText)
+                        .lineSpacing(4)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if let contacts = insight.contacts as? Set<InsightContactRelationship>, !contacts.isEmpty {
+                        HStack {
+                            ForEach(Array(contacts), id: \.relationshipId) { relationship in
+                                if let contact = relationship.contacts {
+                                    Text(contact.name ?? "Unknown")
+                                        .font(.caption)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            Capsule()
+                                                .fill(Color.primaryAction.opacity(0.15))
+                                        )
+                                        .foregroundColor(.primaryAction)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if !isLast {
+                Divider()
+                    .padding(.leading, 22)
+                    .padding(.vertical, 16)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .onTapGesture {
+            onTap?()
+        }
     }
 }

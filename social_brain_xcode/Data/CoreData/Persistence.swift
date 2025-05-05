@@ -24,18 +24,18 @@ struct PersistenceController {
             
             // Create sample social notes for each contact
             let note = NSEntityDescription.insertNewObject(forEntityName: "Note", into: viewContext) as! Note
-            note.setValue(UUID(), forKey: "noteId")
-            note.setValue("Sample note for \(contact.name ?? "")", forKey: "text")
-            note.setValue(Date(), forKey: "createdAt")
-            note.setValue(Date(), forKey: "updatedAt")
-            note.setValue(0, forKey: "recordStatus")
+            note.noteId = UUID()
+            note.content = "Sample note for \(contact.name ?? "")"
+            note.createdAt = Date()
+            note.updatedAt = Date()
+            note.recordStatus = 0
             
             // Create relationship between note and contact
             let relationship = NSEntityDescription.insertNewObject(forEntityName: "NoteContactRelationship", into: viewContext) as! NoteContactRelationship
             relationship.relationshipId = UUID()
-//            relationship.note = note
-//            relationship.contact = contact
-//            relationship.createdAt = Date()
+            relationship.createdAt = Date()
+            relationship.notes = note
+            relationship.contacts = contact
         }
         
         do {
@@ -50,26 +50,33 @@ struct PersistenceController {
     let container: NSPersistentCloudKitContainer
 
     init(inMemory: Bool = false) {
+        // Create a single instance of the container
         container = NSPersistentCloudKitContainer(name: "social_brain_xcode")
+        
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }
-        container.loadPersistentStores(completionHandler: { (storeDescription, error) in
+        
+        // Configure the container
+        container.persistentStoreDescriptions.first?.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+        container.persistentStoreDescriptions.first?.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+        
+        // Load the persistent stores
+        container.loadPersistentStores { (storeDescription, error) in
             if let error = error as NSError? {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-
-                /*
-                 Typical reasons for an error here include:
-                 * The parent directory does not exist, cannot be created, or disallows writing.
-                 * The persistent store is not accessible, due to permissions or data protection when the device is locked.
-                 * The device is out of space.
-                 * The store could not be migrated to the current model version.
-                 Check the error message to determine what the actual problem was.
-                 */
-                fatalError("Unresolved error \(error), \(error.userInfo)")
+                // Handle the error appropriately
+                print("Core Data store failed to load with error: \(error.localizedDescription)")
+                print("Detailed error: \(error.userInfo)")
+                
+                // For development, you might want to delete the store and try again
+                if let storeURL = storeDescription.url {
+                    try? FileManager.default.removeItem(at: storeURL)
+                }
             }
-        })
+        }
+        
+        // Configure the view context
         container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
     }
 }

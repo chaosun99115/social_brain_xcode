@@ -6,28 +6,18 @@ class CoreDataManager {
     
     private init() {}
     
-    lazy var persistentContainer: NSPersistentContainer = {
-        let container = NSPersistentContainer(name: "social_brain_xcode")
-        container.loadPersistentStores { description, error in
-            if let error = error {
-                fatalError("Unable to load persistent stores: \(error)")
-            }
-        }
-        return container
-    }()
-    
     var viewContext: NSManagedObjectContext {
-        return persistentContainer.viewContext
+        return PersistenceController.shared.container.viewContext
     }
     
     func saveContext() {
-        let context = persistentContainer.viewContext
+        let context = viewContext
         if context.hasChanges {
             do {
                 try context.save()
             } catch {
                 let nserror = error as NSError
-                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
+                print("Unresolved error \(nserror), \(nserror.userInfo)")
             }
         }
     }

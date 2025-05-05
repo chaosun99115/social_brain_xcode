@@ -111,6 +111,7 @@ struct ContactInsightDebugView: View {
         
         // Add selected contacts
         for contactId in selectedContacts {
+            print("[DEBUG] Linking contactId to insight: \(contactId)")
             _ = insightManager.addContactToInsight(
                 insightId: insight.insightId!,
                 contactId: contactId
@@ -138,6 +139,7 @@ struct ContactInsightDebugView: View {
         // Remove contacts that are no longer selected
         for contactId in currentContacts {
             if !selectedContacts.contains(contactId) {
+                print("[DEBUG] Removing link: contactId=\(contactId)")
                 _ = insightManager.removeContactFromInsight(
                     insightId: insightId,
                     contactId: contactId
@@ -148,6 +150,7 @@ struct ContactInsightDebugView: View {
         // Add newly selected contacts
         for contactId in selectedContacts {
             if !currentContacts.contains(contactId) {
+                print("[DEBUG] Adding link: contactId=\(contactId)")
                 _ = insightManager.addContactToInsight(
                     insightId: insightId,
                     contactId: contactId
@@ -224,7 +227,7 @@ struct InsightFormView: View {
             Section("Related Contacts") {
                 ForEach(contacts, id: \.contactId) { contact in
                     if let contactId = contact.contactId {
-                        Toggle(contact.name ?? "Unknown", isOn: Binding(
+                        let isOnBinding = Binding<Bool>(
                             get: { selectedContacts.contains(contactId) },
                             set: { isSelected in
                                 if isSelected {
@@ -233,7 +236,8 @@ struct InsightFormView: View {
                                     selectedContacts.remove(contactId)
                                 }
                             }
-                        ))
+                        )
+                        Toggle(contact.name ?? "Unknown", isOn: isOnBinding)
                     }
                 }
             }

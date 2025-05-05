@@ -11,6 +11,9 @@ struct SocialNoteDetailView: View {
     @State private var shouldScrollToTop = false
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
+    @StateObject private var insightManager = ContactInsightManager.shared
+    @State private var contactInsights: [ContactInsight] = []
+    @State private var isLoadingInsights = true
     
     // Add namespace for scroll position control
     private let topID = "top"
@@ -38,6 +41,47 @@ struct SocialNoteDetailView: View {
                             }
                             .padding(.horizontal, 16)
                             .padding(.bottom, 16)
+                            
+                            // Contact Insights sections
+                            if !isLoadingInsights {
+                                // Latest Updates section
+                                if !updateInsights.isEmpty {
+                                    SectionContentWrapper {
+                                        VStack(alignment: .leading, spacing: 0) {
+                                            Text("最新近况")
+                                                .font(.headline)
+                                                .foregroundColor(.primaryText)
+                                                .padding(.bottom, 16)
+                                            
+                                            ForEach(Array(updateInsights.enumerated()), id: \.element.insightId) { index, insight in
+                                                ContactInsightRow(
+                                                    insight: insight,
+                                                    isLast: index == updateInsights.count - 1
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Relationship Review section
+                                if !reviewInsights.isEmpty {
+                                    SectionContentWrapper {
+                                        VStack(alignment: .leading, spacing: 0) {
+                                            Text("关系回顾")
+                                                .font(.headline)
+                                                .foregroundColor(.primaryText)
+                                                .padding(.bottom, 16)
+                                            
+                                            ForEach(Array(reviewInsights.enumerated()), id: \.element.insightId) { index, insight in
+                                                ContactInsightRow(
+                                                    insight: insight,
+                                                    isLast: index == reviewInsights.count - 1
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             
                             // Full-width divider (12pt height, edge-to-edge)
                             Color(.systemGray5)
@@ -117,6 +161,7 @@ struct SocialNoteDetailView: View {
         .navigationBarItems(leading: backButton)
         .onAppear {
             loadAISuggestions()
+            loadContactInsights()
             // Hide the tab bar
             hideTabBar(true)
         }
@@ -368,6 +413,30 @@ struct SocialNoteDetailView: View {
         }
     }
     
+    private func loadContactInsights() {
+        isLoadingInsights = true
+        
+        // Get all insights and filter by category
+        let allInsights = insightManager.fetchInsights()
+        
+        // Sort insights by order
+        contactInsights = allInsights.sorted { insight1, insight2 in
+            let order1 = Int(insight1.order ?? "0") ?? 0
+            let order2 = Int(insight2.order ?? "0") ?? 0
+            return order1 < order2
+        }
+        
+        isLoadingInsights = false
+    }
+    
+    private var updateInsights: [ContactInsight] {
+        contactInsights.filter { $0.category == "update" }
+    }
+    
+    private var reviewInsights: [ContactInsight] {
+        contactInsights.filter { $0.category == "review" }
+    }
+    
     private func refreshSuggestions() async {
         isLoadingSuggestions = true
         
@@ -600,5 +669,65 @@ struct EditNoteModalView: View {
             noteManager.updateNote(noteId: noteId, text: noteText)
         }
         dismiss()
+    }
+}
+
+// MARK: - Supporting Views
+struct ContactInsightRow: View {
+    let insight: ContactInsight
+    let isLast: Bool
+    
+    init(insight: ContactInsight, isLast: Bool = false) {
+        self.insight = insight
+        self.isLast = isLast
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 16) {
+                // Bullet point
+                SwiftUI.Circle()
+                    .foregroundColor(Color.tertiaryText)
+                    .frame(width: 6, height: 6)
+                    .padding(.top, 8)
+                
+                // Content
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(insight.content ?? "")
+                        .font(.system(size: 16))
+                        .foregroundColor(.primaryText)
+                        .lineSpacing(4)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    // Show associated contacts if any
+                    if let contacts = insight.contacts as? Set<InsightContactRelationship>,
+                       !contacts.isEmpty {
+                        HStack {
+                            ForEach(Array(contacts), id: \.relationshipId) { relationship in
+                                if let contact = relationship.contacts {
+                                    Text(contact.name ?? "Unknown")
+                                        .font(.caption)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            Capsule()
+                                                .fill(Color.primaryAction.opacity(0.15))
+                                        )
+                                        .foregroundColor(.primaryAction)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if !isLast {
+                Divider()
+                    .padding(.leading, 22)
+                    .padding(.vertical, 16)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
     }
 } 

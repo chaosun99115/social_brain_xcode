@@ -120,9 +120,9 @@
 		AFA2761D2DB03BAF00C29B81 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				AFA2761E2DB03BC900C29B81 /* Notes */,
 				AFA276242DB03D2600C29B81 /* Contacts */,
 				AFA276212DB03C8200C29B81 /* AI */,
-				AFA2761E2DB03BC900C29B81 /* Notes */,
 			);
 			path = Features;
 			sourceTree = "<group>";

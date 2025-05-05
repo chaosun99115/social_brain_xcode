@@ -7,7 +7,7 @@
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="contacts" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleContactRelationship" inverseName="circles" inverseEntity="CircleContactRelationship"/>
-        <relationship name="insights" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InsightCircleRelationship" inverseName="circles" inverseEntity="InsightCircleRelationship"/>
+        <relationship name="insights" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsightCircleRelationship" inverseName="circles" inverseEntity="InsightCircleRelationship"/>
     </entity>
     <entity name="CircleContactRelationship" representedClassName="CircleContactRelationship" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
@@ -35,7 +35,7 @@
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleContactRelationship" inverseName="contacts" inverseEntity="CircleContactRelationship"/>
-        <relationship name="insights" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InsightContactRelationship" inverseName="contacts" inverseEntity="InsightContactRelationship"/>
+        <relationship name="insights" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsightContactRelationship" inverseName="contacts" inverseEntity="InsightContactRelationship"/>
         <relationship name="notes" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="contacts" inverseEntity="NoteContactRelationship"/>
     </entity>
     <entity name="ContactInsight" representedClassName="ContactInsight" syncable="YES" codeGenerationType="class">
