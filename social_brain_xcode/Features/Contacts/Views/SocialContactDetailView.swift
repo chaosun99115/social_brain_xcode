@@ -142,12 +142,9 @@ struct SocialContactDetailView: View {
                 // 最新近况
                 let updates = contactInsights.filter { $0.category?.lowercased() == "update" }
                 if !updates.isEmpty {
+                    SummarySectionHeader(title: "最新近况")
                     SectionContentWrapper {
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("最新近况")
-                                .font(.headline)
-                                .foregroundColor(.primaryText)
-                                .padding(.bottom, 16)
                             ForEach(Array(updates.enumerated()), id: \.element.insightId) { idx, insight in
                                 ContactDetailInsightRow(
                                     insight: insight,
@@ -167,12 +164,9 @@ struct SocialContactDetailView: View {
                 // 关系回顾
                 let reviews = contactInsights.filter { $0.category?.lowercased() == "review" }
                 if !reviews.isEmpty {
+                    SummarySectionHeader(title: "关系回顾")
                     SectionContentWrapper {
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("关系回顾")
-                                .font(.headline)
-                                .foregroundColor(.primaryText)
-                                .padding(.bottom, 16)
                             ForEach(Array(reviews.enumerated()), id: \.element.insightId) { idx, insight in
                                 ContactDetailInsightRow(
                                     insight: insight,
