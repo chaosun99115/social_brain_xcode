@@ -116,6 +116,8 @@ struct SocialNoteDetailView: View {
                 message: Text("确定要归档这条笔记吗？归档后可以在归档列表中查看。"),
                 primaryButton: .destructive(Text("归档")) {
                     if noteManager.archiveNote(noteId: note.id) {
+                        // Post notification to refresh the notes list
+                        NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
                         presentationMode.wrappedValue.dismiss()
                     }
                 },

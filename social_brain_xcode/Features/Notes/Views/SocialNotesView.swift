@@ -8,6 +8,8 @@ struct SocialNotesView: View {
     @State private var showingNoteDetail = false
     @State private var refreshTrigger = false
     @State private var showingDebugMenu = false
+    @State private var scrollOffset: CGFloat = 0
+    @State private var scrollViewProxy: ScrollViewProxy? = nil
     @EnvironmentObject var noteManager: NoteManager
     
     var filteredNotes: [SocialNote] {
@@ -29,16 +31,30 @@ struct SocialNotesView: View {
                 Color.primaryBackground
                     .ignoresSafeArea()
                 
-                ScrollView {
-                    SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
-                        selectedNote = note
-                        showingNoteDetail = true
-                    })
-                    .padding(.top, 10)
-                    .id(refreshTrigger)
-                    
-                    // Add space at the bottom for better scrolling and to avoid FAB overlap
-                    Spacer().frame(height: 80)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        // Add an ID at the top for scroll-to-top functionality
+                        Color.clear
+                            .frame(height: 0)
+                            .id("top")
+                        
+                        SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
+                            selectedNote = note
+                            showingNoteDetail = true
+                        })
+                        .padding(.top, 10)
+                        .id(refreshTrigger)
+                        
+                        // Add space at the bottom for better scrolling and to avoid FAB overlap
+                        Spacer().frame(height: 80)
+                    }
+                    .refreshable {
+                        // Trigger refresh when pulled down
+                        await refreshNotes()
+                    }
+                    .onAppear {
+                        scrollViewProxy = proxy
+                    }
                 }
                 
                 // Floating Action Button
@@ -100,6 +116,36 @@ struct SocialNotesView: View {
                     label: { EmptyView() }
                 )
             )
+        }
+        .onAppear {
+            setupNotificationObservers()
+        }
+        .onDisappear {
+            removeNotificationObservers()
+        }
+    }
+    
+    private func setupNotificationObservers() {
+        NotificationCenter.default.addObserver(forName: Notification.Name("RefreshNotesList"), object: nil, queue: .main) { _ in
+            refreshTrigger.toggle()
+        }
+    }
+    
+    private func removeNotificationObservers() {
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshNotesList"), object: nil)
+    }
+    
+    private func refreshNotes() async {
+        // Simulate a small delay to show the refresh animation
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        
+        // Update on main thread
+        await MainActor.run {
+            refreshTrigger.toggle()
+            // Reset scroll position after refresh
+            withAnimation {
+                scrollViewProxy?.scrollTo("top", anchor: .top)
+            }
         }
     }
     

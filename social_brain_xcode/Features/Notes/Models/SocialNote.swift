@@ -7,6 +7,7 @@ struct SocialNote: Identifiable {
     let content: String
     let type: NoteType
     let updateCompleted: Bool
+    let isArchived: Bool
     
     // Initialize from Core Data Note entity
     init(from note: NSManagedObject) {
@@ -16,15 +17,17 @@ struct SocialNote: Identifiable {
         self.content = note.content ?? ""
         self.type = NoteType(rawValue: Int(note.type)) ?? .general
         self.updateCompleted = note.updateCompleted == 1
+        self.isArchived = note.isArchived
     }
     
     // Initialize with default values
-    init(id: UUID = UUID(), date: Date = Date(), content: String, type: NoteType = .social, updateCompleted: Bool = false) {
+    init(id: UUID = UUID(), date: Date = Date(), content: String, type: NoteType = .social, updateCompleted: Bool = false, isArchived: Bool = false) {
         self.id = id
         self.date = date
         self.content = content
         self.type = type
         self.updateCompleted = updateCompleted
+        self.isArchived = isArchived
     }
     
     var formattedDate: String {
