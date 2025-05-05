@@ -7,22 +7,56 @@ struct SocialContactView: View {
     @StateObject private var contactManager = ContactManager.shared
     @State private var contacts: [Contact] = []
     @State private var isLoading = true
+    @State private var isRefreshing = false
     @State private var errorMessage: String? = nil
     
-    // Fetch contacts from CoreData
-    private func loadContacts() {
-        isLoading = true
+    // Fetch contacts from CoreData (initial load)
+    private func loadContacts() async {
+        // Only set isLoading for initial load
+        if !isRefreshing {
+            await MainActor.run { isLoading = true }
+        }
         errorMessage = nil
-        
-        DispatchQueue.main.async {
-            do {
-                self.contacts = contactManager.fetchContacts()
-                self.isLoading = false
-            } catch {
-                self.errorMessage = "Failed to load contacts: \(error.localizedDescription)"
-                self.isLoading = false
+        defer {
+            Task { @MainActor in
+                isLoading = false
+                isRefreshing = false
             }
         }
+        do {
+            let fetchedContacts = await MainActor.run {
+                contactManager.fetchContacts()
+            }
+            // Validate relationships before updating UI
+            let validContacts = fetchedContacts.filter { contact in
+                do {
+                    try contactManager.validateContactRelationships(contact)
+                    return true
+                } catch {
+                    print("Invalid relationships for contact: \(contact.name ?? "Unknown")")
+                    return false
+                }
+            }
+            await MainActor.run {
+                self.contacts = validContacts
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Failed to load contacts: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    // Pull-to-refresh
+    private func refreshContacts() async {
+        await MainActor.run { isRefreshing = true }
+        // Provide haptic feedback
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(.success)
+        // Add a small delay to ensure the refresh control is in the correct state
+        try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+        await loadContacts()
     }
     
     var filteredContacts: [Contact] {
@@ -75,16 +109,24 @@ struct SocialContactView: View {
                         .padding(.bottom, 20)
                     }
                 }
+                // Show overlay spinner only during refresh (not initial load)
+                if isRefreshing && !isLoading {
+                    Color.primaryBackground.opacity(0.3)
+                        .ignoresSafeArea()
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .scaleEffect(1.5)
+                }
             }
             .navigationTitle("联系人")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_contacts".localized)
+            .refreshable {
+                await refreshContacts()
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
-        .onAppear {
-            loadContacts()
-        }
-        .refreshable {
-            loadContacts()
+        .task {
+            await loadContacts()
         }
     }
     
@@ -103,7 +145,9 @@ struct SocialContactView: View {
                 .padding(.horizontal)
             
             Button("Retry") {
-                loadContacts()
+                Task {
+                    await loadContacts()
+                }
             }
             .padding()
             .background(Color.primaryAction)

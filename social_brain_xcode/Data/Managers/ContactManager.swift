@@ -123,10 +123,7 @@ class ContactManager: ObservableObject {
         guard let contact = fetchContact(withId: contactId) else { return [] }
         
         // Get the relationships
-        guard let relationships = contact.notes as? Set<NoteContactRelationship> else {
-            print("Error: Unable to access relationships for contact")
-            return []
-        }
+        let relationships = contact.notes as? Set<NoteContactRelationship> ?? []
         
         // Extract notes from relationships
         var notes: [Note] = []
@@ -143,5 +140,69 @@ class ContactManager: ObservableObject {
     // MARK: - Note Count
     func getNotesCount(forContactId contactId: UUID) -> Int {
         return getNotesForContact(contactId: contactId).count
+    }
+    
+    func validateContactRelationships(_ contact: Contact) throws {
+        // If contact has no relationships, that's valid
+        guard let relationships = contact.notes as? Set<NoteContactRelationship> else {
+            return // No relationships is valid
+        }
+        
+        // Check for any invalid relationships
+        for relationship in relationships {
+            if relationship.notes == nil {
+                // Clean up invalid relationship
+                context.delete(relationship)
+            }
+        }
+        
+        // Save any changes made during validation
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                print("Error cleaning up invalid relationships: \(error)")
+            }
+        }
+    }
+    
+    // MARK: - Relationship Management
+    func addNoteToContact(contactId: UUID, noteId: UUID) -> Bool {
+        guard let contact = fetchContact(withId: contactId),
+              let note = NoteManager.shared.fetchNote(withId: noteId) else {
+            return false
+        }
+        
+        let relationship = NoteContactRelationship(context: context)
+        relationship.relationshipId = UUID()
+        relationship.contacts = contact
+        relationship.notes = note
+        relationship.createdAt = Date()
+        
+        do {
+            try context.save()
+            return true
+        } catch {
+            print("Error adding note to contact: \(error)")
+            return false
+        }
+    }
+    
+    func removeNoteFromContact(contactId: UUID, noteId: UUID) -> Bool {
+        let request: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
+        request.predicate = NSPredicate(format: "contacts.contactId == %@ AND notes.noteId == %@",
+                                      contactId as CVarArg, noteId as CVarArg)
+        
+        do {
+            let relationships = try context.fetch(request)
+            for relationship in relationships {
+                context.delete(relationship)
+            }
+            try context.save()
+            return true
+        } catch {
+            print("Error removing note from contact: \(error)")
+            return false
+        }
     }
 } 
