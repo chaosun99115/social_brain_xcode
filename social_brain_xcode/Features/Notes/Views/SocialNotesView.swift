@@ -30,20 +30,26 @@ struct SocialNotesView: View {
                 Color.primaryBackground
                     .ignoresSafeArea()
                 
-                ScrollView {
-                    SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
-                        selectedNote = note
-                        showingNoteDetail = true
-                    })
-                    .padding(.top, 10)
-                    .id(refreshTrigger)
-                    
-                    // Add space at the bottom for better scrolling and to avoid FAB overlap
-                    Spacer().frame(height: 80)
-                }
-                .refreshable {
-                    // Trigger refresh when pulled down
-                    await refreshNotes()
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
+                            selectedNote = note
+                            showingNoteDetail = true
+                        })
+                        .padding(.top, 10)
+                        .id(refreshTrigger)
+                        
+                        // Add space at the bottom for better scrolling and to avoid FAB overlap
+                        Spacer().frame(height: 80)
+                    }
+                    .refreshable {
+                        // Trigger refresh when pulled down
+                        await refreshNotes()
+                        // Reset scroll position to top
+                        withAnimation {
+                            proxy.scrollTo("top", anchor: .top)
+                        }
+                    }
                 }
                 
                 // Floating Action Button
