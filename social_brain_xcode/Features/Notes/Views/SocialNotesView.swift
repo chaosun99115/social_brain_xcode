@@ -8,14 +8,13 @@ struct SocialNotesView: View {
     @State private var showingNoteDetail = false
     @State private var refreshTrigger = false
     @State private var showingDebugMenu = false
-    @State private var scrollOffset: CGFloat = 0
-    @State private var scrollViewProxy: ScrollViewProxy? = nil
     @EnvironmentObject var noteManager: NoteManager
     
     var filteredNotes: [SocialNote] {
         let notes = noteManager.fetchNotes()
-            .filter { !$0.isArchived } // Filter out archived notes
+            .filter { !$0.isArchived }
             .map { SocialNote(from: $0) }
+            .filter { !$0.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } // Filter out empty notes
         
         if searchText.isEmpty {
             return notes
@@ -31,30 +30,20 @@ struct SocialNotesView: View {
                 Color.primaryBackground
                     .ignoresSafeArea()
                 
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        // Add an ID at the top for scroll-to-top functionality
-                        Color.clear
-                            .frame(height: 0)
-                            .id("top")
-                        
-                        SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
-                            selectedNote = note
-                            showingNoteDetail = true
-                        })
-                        .padding(.top, 10)
-                        .id(refreshTrigger)
-                        
-                        // Add space at the bottom for better scrolling and to avoid FAB overlap
-                        Spacer().frame(height: 80)
-                    }
-                    .refreshable {
-                        // Trigger refresh when pulled down
-                        await refreshNotes()
-                    }
-                    .onAppear {
-                        scrollViewProxy = proxy
-                    }
+                ScrollView {
+                    SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
+                        selectedNote = note
+                        showingNoteDetail = true
+                    })
+                    .padding(.top, 10)
+                    .id(refreshTrigger)
+                    
+                    // Add space at the bottom for better scrolling and to avoid FAB overlap
+                    Spacer().frame(height: 80)
+                }
+                .refreshable {
+                    // Trigger refresh when pulled down
+                    await refreshNotes()
                 }
                 
                 // Floating Action Button
@@ -142,10 +131,6 @@ struct SocialNotesView: View {
         // Update on main thread
         await MainActor.run {
             refreshTrigger.toggle()
-            // Reset scroll position after refresh
-            withAnimation {
-                scrollViewProxy?.scrollTo("top", anchor: .top)
-            }
         }
     }
     

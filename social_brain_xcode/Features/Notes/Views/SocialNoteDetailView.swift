@@ -6,8 +6,13 @@ struct SocialNoteDetailView: View {
     @State private var isLoadingSuggestions: Bool = true
     @State private var showingEditModal: Bool = false
     @State private var showingArchiveConfirmation: Bool = false
+    @State private var scrollResetID = UUID()
+    @State private var shouldScrollToTop = false
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
+    
+    // Add namespace for scroll position control
+    private let topID = "top"
     
     var body: some View {
         ZStack {
@@ -18,31 +23,47 @@ struct SocialNoteDetailView: View {
             // Content area
             VStack(spacing: 0) {
                 // Scrollable content
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Note content section with padding
-                        VStack(alignment: .leading) {
-                            noteDetailSection
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            // Add an anchor view at the top
+                            Color.clear
+                                .frame(height: 0)
+                                .id(topID)
+                            
+                            // Note content section with padding
+                            VStack(alignment: .leading) {
+                                noteDetailSection
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
+                            
+                            // Full-width divider (12pt height, edge-to-edge)
+                            Color(.systemGray5)
+                                .frame(height: 12)
+                                .padding(.vertical, 8)
+                            
+                            // AI Suggestions section with padding
+                            VStack(alignment: .leading) {
+                                aiSuggestionsSection
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                            
+                            // Extra bottom padding to ensure content isn't covered by the bottom toolbar
+                            Spacer(minLength: 80)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-                        
-                        // Full-width divider (12pt height, edge-to-edge)
-                        Color(.systemGray5)
-                            .frame(height: 12)
-                            .padding(.vertical, 8)
-                        
-                        // AI Suggestions section with padding
-                        VStack(alignment: .leading) {
-                            aiSuggestionsSection
-                        }
-                        .padding(.horizontal, 16)
                         .padding(.top, 16)
-                        
-                        // Extra bottom padding to ensure content isn't covered by the bottom toolbar
-                        Spacer(minLength: 80)
                     }
-                    .padding(.top, 16)
+                    .id(scrollResetID)
+                    .onChange(of: shouldScrollToTop) { newValue in
+                        guard newValue else { return }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            withAnimation {
+                                proxy.scrollTo(topID, anchor: .top)
+                            }
+                        }
+                    }
                 }
                 
                 // Fixed bottom toolbar that respects safe areas
@@ -102,9 +123,6 @@ struct SocialNoteDetailView: View {
             // Show the tab bar again when leaving this view
             hideTabBar(false)
         }
-        .refreshable {
-            await refreshSuggestions()
-        }
         .edgesIgnoringSafeArea(.bottom)
         .sheet(isPresented: $showingEditModal) {
             // Present the SimpleNoteModalView with existing note content
@@ -123,6 +141,14 @@ struct SocialNoteDetailView: View {
                 },
                 secondaryButton: .cancel(Text("取消"))
             )
+        }
+        .refreshable {
+            await refreshSuggestions()
+            scrollResetID = UUID()
+            shouldScrollToTop = true
+        }
+        .onChange(of: scrollResetID) { _ in
+            shouldScrollToTop = false
         }
     }
     

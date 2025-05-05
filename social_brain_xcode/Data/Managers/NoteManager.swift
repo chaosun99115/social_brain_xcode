@@ -17,9 +17,11 @@ class NoteManager: ObservableObject {
     
     // MARK: - Create
     func createNote(text: String) -> Note? {
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedText.isEmpty else { return nil }
         let note = Note(context: context)
         note.noteId = UUID()
-        note.content = text
+        note.content = trimmedText
         note.createdAt = Date()
         note.updatedAt = Date()
         note.recordStatus = 0 // unsynced
@@ -35,9 +37,11 @@ class NoteManager: ObservableObject {
     
     // New method to create a note with content and type
     func createNote(content: String, type: NoteType = .general) -> Note? {
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedContent.isEmpty else { return nil }
         let note = Note(context: context)
         note.noteId = UUID()
-        note.content = content
+        note.content = trimmedContent
         note.createdAt = Date()
         note.updatedAt = Date()
         note.recordStatus = 0 // unsynced
