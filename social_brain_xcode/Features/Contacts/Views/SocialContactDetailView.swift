@@ -71,6 +71,40 @@ struct SocialContactDetailView: View {
                         notesSectionView
                     }
                 }
+                
+                // Fixed bottom toolbar that respects safe areas
+                VStack(spacing: 0) {
+                    Divider()
+                    
+                    // Bottom toolbar content
+                    HStack(spacing: 0) {
+                        // Add Note button
+                        Button(action: {
+                            // Add note action
+                        }) {
+                            Image(systemName: "square.and.pencil")
+                                .font(.system(size: 24))
+                                .foregroundColor(.accentColor)
+                                .frame(maxWidth: .infinity)
+                        }
+                        
+                        // AI Insights button
+                        Button(action: {
+                            // AI insights action
+                        }) {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 24))
+                                .foregroundColor(.accentColor)
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .frame(height: 44)
+                    .padding(.bottom, safeAreaPadding)
+                }
+                .background(
+                    VisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+                        .ignoresSafeArea()
+                )
             }
         }
         .navigationTitle(contact.name ?? "Contact")
@@ -94,6 +128,62 @@ struct SocialContactDetailView: View {
         .onAppear {
             loadContactNotes()
             loadContactInsights()
+            // Hide the tab bar
+            hideTabBar(true)
+        }
+        .onDisappear {
+            // Show the tab bar again when leaving this view
+            hideTabBar(false)
+        }
+        .edgesIgnoringSafeArea(.bottom)
+    }
+    
+    // Dynamic safe area padding for different devices
+    private var safeAreaPadding: CGFloat {
+        // Get the bottom safe area inset
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+            
+        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
+        
+        // Add padding based on whether device has home indicator
+        return bottomInset > 0 ? bottomInset + 8 : 8
+    }
+    
+    // UIViewRepresentable wrapper for UIVisualEffectView to use blur effects
+    struct VisualEffectView: UIViewRepresentable {
+        var effect: UIVisualEffect?
+        
+        func makeUIView(context: UIViewRepresentableContext<Self>) -> UIVisualEffectView {
+            UIVisualEffectView()
+        }
+        
+        func updateUIView(_ uiView: UIVisualEffectView, context: UIViewRepresentableContext<Self>) {
+            uiView.effect = effect
+        }
+    }
+    
+    // Function to hide/show the tab bar
+    private func hideTabBar(_ hidden: Bool) {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .map { $0 as? UIWindowScene }
+            .compactMap { $0 }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+            
+        if let keyWindow = keyWindow {
+            keyWindow.rootViewController?.children.forEach { child in
+                // Find the UITabBarController and hide its tabBar
+                if let tabBarController = child as? UITabBarController {
+                    tabBarController.tabBar.isHidden = hidden
+                }
+            }
         }
     }
     

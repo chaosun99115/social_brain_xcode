@@ -127,21 +127,21 @@ struct SocialNoteDetailView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         
-                        // AI button
+                        // Add Note button
                         Button(action: {
-                            // AI action
+                            // Add note action
                         }) {
-                            Image(systemName: "brain")
+                            Image(systemName: "square.and.pencil")
                                 .font(.system(size: 24))
                                 .foregroundColor(.accentColor)
                                 .frame(maxWidth: .infinity)
                         }
                         
-                        // Edit button
+                        // AI button
                         Button(action: {
-                            showingEditModal = true
+                            // AI action
                         }) {
-                            Image(systemName: "pencil")
+                            Image(systemName: "sparkles")
                                 .font(.system(size: 24))
                                 .foregroundColor(.accentColor)
                                 .frame(maxWidth: .infinity)
