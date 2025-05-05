@@ -1,7 +1,8 @@
 import SwiftUI
+import CoreData
 
 struct SocialNoteDetailView: View {
-    let note: SocialNote
+    let note: Note
     @State private var aiSuggestions: [AISuggestion] = []
     @State private var isLoadingSuggestions: Bool = true
     @State private var showingEditModal: Bool = false
@@ -111,7 +112,7 @@ struct SocialNoteDetailView: View {
                 )
             }
         }
-        .navigationBarTitle(formattedTimestamp(date: note.date), displayMode: .inline)
+        .navigationBarTitle(formattedTimestamp(date: note.createdAt ?? Date()), displayMode: .inline)
         .navigationBarBackButtonHidden(true)
         .navigationBarItems(leading: backButton)
         .onAppear {
@@ -125,15 +126,16 @@ struct SocialNoteDetailView: View {
         }
         .edgesIgnoringSafeArea(.bottom)
         .sheet(isPresented: $showingEditModal) {
-            // Present the SimpleNoteModalView with existing note content
-            EditNoteModalView(initialText: note.content, noteId: note.id)
+            // Present the EditNoteModalView with existing note content
+            EditNoteModalView(initialText: note.content ?? "", noteId: note.noteId ?? UUID())
         }
         .alert(isPresented: $showingArchiveConfirmation) {
             Alert(
                 title: Text("归档笔记"),
                 message: Text("确定要归档这条笔记吗？归档后可以在归档列表中查看。"),
                 primaryButton: .destructive(Text("归档")) {
-                    if noteManager.archiveNote(noteId: note.id) {
+                    guard let noteId = note.noteId else { return }
+                    if noteManager.archiveNote(noteId: noteId) {
                         // Post notification to refresh the notes list
                         NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
                         presentationMode.wrappedValue.dismiss()
@@ -214,14 +216,53 @@ struct SocialNoteDetailView: View {
     
     private var noteDetailSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            MentionTextView(text: note.content)
+            MentionTextView(text: note.content ?? "")
                 .font(.body)
                 .foregroundColor(.primaryText)
                 .lineSpacing(4)
             
-            // "Edit Note" button has been moved to the bottom toolbar
+            // Show contacts if available
+            mentionsView
         }
         .padding(.bottom, 8)
+    }
+    
+    // Helper to display contact mentions
+    private var mentionsView: some View {
+        Group {
+            if let contacts = getContactsForNote(), !contacts.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("提及的联系人")
+                        .font(.subheadline)
+                        .foregroundColor(.secondaryText)
+                    
+                    HStack {
+                        ForEach(contacts, id: \.contactId) { contact in
+                            Text(contact.name ?? "Unnamed")
+                                .font(.caption)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.primaryAction.opacity(0.15))
+                                )
+                                .foregroundColor(.primaryAction)
+                        }
+                    }
+                }
+            } else {
+                EmptyView()
+            }
+        }
+    }
+    
+    // Helper function to get contacts for the note
+    private func getContactsForNote() -> [Contact]? {
+        guard let relationships = note.contacts as? Set<NoteContactRelationship> else {
+            return nil
+        }
+        
+        return relationships.compactMap { $0.contacts }
     }
     
     private var aiSuggestionsSection: some View {
@@ -362,18 +403,19 @@ struct AISuggestion: Identifiable {
     }
 }
 
+// Updated preview to use CoreData
 struct SocialNoteDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationView {
-            SocialNoteDetailView(note: SocialNote.mockNotes[0])
+        let context = CoreDataManager.shared.viewContext
+        let note = Note(context: context)
+        note.noteId = UUID()
+        note.content = "Sample note content with @Contact mention"
+        note.createdAt = Date()
+        
+        return NavigationView {
+            SocialNoteDetailView(note: note)
         }
         .environment(\.colorScheme, .light)
-        .environmentObject(NoteManager.shared)
-        
-        NavigationView {
-            SocialNoteDetailView(note: SocialNote.mockNotes[0])
-        }
-        .environment(\.colorScheme, .dark)
         .environmentObject(NoteManager.shared)
     }
 }

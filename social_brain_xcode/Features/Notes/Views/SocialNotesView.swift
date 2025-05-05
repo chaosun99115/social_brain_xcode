@@ -98,8 +98,13 @@ struct SocialNotesView: View {
             }
             .background(
                 NavigationLink(
-                    destination: selectedNote.map { note in
-                        SocialNoteDetailView(note: note)
+                    destination: Group {
+                        if let socialNote = selectedNote,
+                           let note = noteManager.fetchNote(withId: socialNote.id) {
+                            SocialNoteDetailView(note: note)
+                        } else {
+                            EmptyView()
+                        }
                     },
                     isActive: $showingNoteDetail,
                     label: { EmptyView() }

@@ -1,30 +1,37 @@
 import SwiftUI
-
-// Mock data structure
-struct MockContact: Identifiable {
-    let id = UUID()
-    let name: String
-    let createdAt: Date
-    let notesCount: Int
-}
+import CoreData
 
 struct SocialContactView: View {
     @State private var searchText = ""
     @EnvironmentObject var localizationManager: LocalizationManager
+    @StateObject private var contactManager = ContactManager.shared
+    @State private var contacts: [Contact] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String? = nil
     
-    // Mock data
-    let mockContacts = [
-        MockContact(name: "Chao", createdAt: Date().addingTimeInterval(-86400), notesCount: 3),
-        MockContact(name: "李经理", createdAt: Date().addingTimeInterval(-172800), notesCount: 5),
-        MockContact(name: "彤彤妈妈", createdAt: Date().addingTimeInterval(-259200), notesCount: 2)
-    ]
-    
-    var filteredContacts: [MockContact] {
-        if searchText.isEmpty {
-            return mockContacts
+    // Fetch contacts from CoreData
+    private func loadContacts() {
+        isLoading = true
+        errorMessage = nil
+        
+        DispatchQueue.main.async {
+            do {
+                self.contacts = contactManager.fetchContacts()
+                self.isLoading = false
+            } catch {
+                self.errorMessage = "Failed to load contacts: \(error.localizedDescription)"
+                self.isLoading = false
+            }
         }
-        return mockContacts.filter { contact in
-            contact.name.localizedCaseInsensitiveContains(searchText)
+    }
+    
+    var filteredContacts: [Contact] {
+        if searchText.isEmpty {
+            return contacts
+        }
+        return contacts.filter { contact in
+            guard let name = contact.name else { return false }
+            return name.localizedCaseInsensitiveContains(searchText)
         }
     }
     
@@ -35,7 +42,13 @@ struct SocialContactView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    if filteredContacts.isEmpty {
+                    if isLoading {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .scaleEffect(1.5)
+                    } else if let error = errorMessage {
+                        errorView(message: error)
+                    } else if filteredContacts.isEmpty {
                         emptySearchView
                     } else {
                         contactListView
@@ -67,6 +80,38 @@ struct SocialContactView: View {
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_contacts".localized)
         }
         .navigationViewStyle(StackNavigationViewStyle())
+        .onAppear {
+            loadContacts()
+        }
+        .refreshable {
+            loadContacts()
+        }
+    }
+    
+    private func errorView(message: String) -> some View {
+        VStack(spacing: 16) {
+            Spacer()
+            
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 48))
+                .foregroundColor(Color.tertiaryText)
+            
+            Text(message)
+                .font(.headline)
+                .foregroundColor(Color.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            Button("Retry") {
+                loadContacts()
+            }
+            .padding()
+            .background(Color.primaryAction)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+                
+            Spacer()
+        }
     }
     
     private var emptySearchView: some View {
@@ -91,7 +136,7 @@ struct SocialContactView: View {
     
     private var contactListView: some View {
         List {
-            ForEach(filteredContacts) { contact in
+            ForEach(filteredContacts, id: \.contactId) { contact in
                 NavigationLink(destination: SocialContactDetailView(contact: contact)) {
                     ContactCardView(contact: contact)
                         .contentShape(Rectangle())
@@ -106,124 +151,21 @@ struct SocialContactView: View {
     }
 }
 
-struct ContactDetailView: View {
-    let contact: MockContact
-    @Environment(\.presentationMode) var presentationMode
-    @EnvironmentObject var localizationManager: LocalizationManager
-    
-    var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Contact Details
-                    contactInfoView
-                    
-                    Divider()
-                    
-                    // Related Notes Summary
-                    relatedNotesView
-                    
-                    Spacer()
-                }
-                .padding()
-            }
-            .navigationTitle("contact_details".localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        // Edit contact
-                    } label: {
-                        Text("edit".localized)
-                    }
-                }
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        presentationMode.wrappedValue.dismiss()
-                    } label: {
-                        Text("done".localized)
-                    }
-                }
-            }
-        }
-    }
-    
-    private var contactInfoView: some View {
-        VStack(spacing: 10) {
-            Text(contact.name)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.primaryText)
-            
-            Text("Added: \(formatDate(contact.createdAt))")
-                .font(.subheadline)
-                .foregroundColor(.tertiaryText)
-        }
-    }
-    
-    private var relatedNotesView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Related Notes")
-                    .font(.headline)
-                    .foregroundColor(.primaryText)
-                
-                Spacer()
-                
-                if contact.notesCount > 0 {
-                    Text("\(contact.notesCount)")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(Color.primaryAction.opacity(0.15))
-                        )
-                        .foregroundColor(Color.primaryAction)
-                }
-            }
-            
-            if contact.notesCount == 0 {
-                Text("No notes related to this contact")
-                    .font(.subheadline)
-                    .foregroundColor(.tertiaryText)
-                    .padding(.vertical, 10)
-            } else {
-                Button(action: {
-                    // View all notes action
-                }) {
-                    Text("View all notes")
-                        .font(.subheadline)
-                        .foregroundColor(.primaryAction)
-                        .padding(.vertical, 10)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    private func formatDate(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
-}
-
 struct ContactCardView: View {
-    let contact: MockContact
+    let contact: Contact
+    @StateObject private var contactManager = ContactManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(contact.name)
+            Text(contact.name ?? "Unnamed Contact")
                 .font(.title3)
                 .fontWeight(.medium)
                 .foregroundColor(.primaryText)
             
             HStack {
-                Text(formatDate(contact.createdAt))
+                Text(formatDate(contact.createdAt ?? Date()))
                 Text("|")
-                Text("\(contact.notesCount) " + "note".localized)
+                Text("\(getNotesCount()) " + "note".localized)
             }
             .font(.footnote)
             .foregroundColor(.secondary)
@@ -231,6 +173,11 @@ struct ContactCardView: View {
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
+    }
+    
+    private func getNotesCount() -> Int {
+        guard let contactId = contact.contactId else { return 0 }
+        return contactManager.getNotesCount(forContactId: contactId)
     }
     
     private func formatDate(_ date: Date) -> String {

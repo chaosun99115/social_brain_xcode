@@ -1,11 +1,16 @@
 import SwiftUI
+import CoreData
 
 struct SocialContactDetailView: View {
-    let contact: MockContact
+    let contact: Contact
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var localizationManager: LocalizationManager
+    @StateObject private var contactManager = ContactManager.shared
     @State private var activeTab: TabType = .summary
+    @State private var notes: [Note] = []
+    @State private var isLoading = false
+    @State private var errorMessage: String? = nil
     
     enum TabType: String, CaseIterable {
         case summary = "汇总"
@@ -62,7 +67,7 @@ struct SocialContactDetailView: View {
                 }
             }
         }
-        .navigationTitle(contact.name)
+        .navigationTitle(contact.name ?? "Contact")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -79,6 +84,22 @@ struct SocialContactDetailView: View {
                     .foregroundColor(.primaryAction)
                 }
             }
+        }
+        .onAppear {
+            loadContactNotes()
+        }
+    }
+    
+    private func loadContactNotes() {
+        guard let contactId = contact.contactId else { return }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        // Load notes using ContactManager
+        DispatchQueue.main.async {
+            self.notes = contactManager.getNotesForContact(contactId: contactId)
+            self.isLoading = false
         }
     }
     
@@ -143,7 +164,34 @@ struct SocialContactDetailView: View {
     // MARK: - Notes Section
     private var notesSectionView: some View {
         VStack {
-            SocialNotesList(notes: contactNotes, showFullContent: true)
+            if isLoading {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.5)
+                    .padding()
+            } else if let error = errorMessage {
+                Text(error)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .padding()
+                
+                Button("Retry") {
+                    loadContactNotes()
+                }
+                .padding()
+            } else if notes.isEmpty {
+                Text("No notes for this contact")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .padding()
+            } else {
+                ForEach(notes, id: \.noteId) { note in
+                    NavigationLink(destination: SocialNoteDetailView(note: note)) {
+                        NoteCardView(note: note)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
             
             // Spacer at the bottom for better scrolling
             Spacer().frame(height: 40)
@@ -153,12 +201,16 @@ struct SocialContactDetailView: View {
     
     // MARK: - Mock Data
     private var contactSummaries: [ContactSummaryEntity] {
-        [
+        // For now, we'll keep using mock data for the summaries
+        // In a real implementation, this would come from CoreData or an API
+        let name = contact.name ?? "this contact"
+        
+        return [
             // Updates
             ContactSummaryEntity(
                 id: UUID(),
                 type: .update,
-                content: "你和Chao两天之前聊过，他正在开发自己的一款移动应用，叫做社交大脑。",
+                content: "你和\(name)两天之前聊过，他正在开发自己的一款移动应用，叫做社交大脑。",
                 actionText: "查看相关笔记"
             ),
             
@@ -166,13 +218,13 @@ struct SocialContactDetailView: View {
             ContactSummaryEntity(
                 id: UUID(),
                 type: .topic,
-                content: "Chao之前做过一次针对App的demo演示，下次遇见可以问问app的开发进展如何了",
+                content: "\(name)之前做过一次针对App的demo演示，下次遇见可以问问app的开发进展如何了",
                 actionText: nil
             ),
             ContactSummaryEntity(
                 id: UUID(),
                 type: .topic,
-                content: "Chao喜欢阅读，可以问问他有新读了哪些书",
+                content: "\(name)喜欢阅读，可以问问他有新读了哪些书",
                 actionText: nil
             ),
             
@@ -180,7 +232,7 @@ struct SocialContactDetailView: View {
             ContactSummaryEntity(
                 id: UUID(),
                 type: .connection,
-                content: "你与Chao是通过灵买的平台认识的",
+                content: "你与\(name)是通过灵买的平台认识的",
                 actionText: nil
             ),
             ContactSummaryEntity(
@@ -192,21 +244,11 @@ struct SocialContactDetailView: View {
             ContactSummaryEntity(
                 id: UUID(),
                 type: .connection,
-                content: "你在三个月前与 李经理 聊过职业转型的想法，下次遇见Chao，也许你可以了解下他的转型经历，看看会不会给自己带来启发",
+                content: "你在三个月前与 李经理 聊过职业转型的想法，下次遇见\(name)，也许你可以了解下他的转型经历，看看会不会给自己带来启发",
                 actionText: nil
             )
         ]
     }
-    
-    private var contactNotes: [SocialNote] {
-        [
-            SocialNote(
-                date: Calendar.current.date(from: DateComponents(year: 2023, month: 11, day: 25))!,
-                content: "在灵买的平台上与Chao互动过。Chao分享他正在开发一款叫做社交大脑的移动应用。"
-            )
-        ]
-    }
-    
     
     private var relatedNotesView: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -217,8 +259,8 @@ struct SocialContactDetailView: View {
                 
                 Spacer()
                 
-                if contact.notesCount > 0 {
-                    Text("\(contact.notesCount)")
+                if !notes.isEmpty {
+                    Text("\(notes.count)")
                         .font(.caption)
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
@@ -231,7 +273,7 @@ struct SocialContactDetailView: View {
                 }
             }
             
-            if contact.notesCount == 0 {
+            if notes.isEmpty {
                 Text("no_notes".localized)
                     .font(.subheadline)
                     .foregroundColor(.tertiaryText)
@@ -252,6 +294,45 @@ struct SocialContactDetailView: View {
 }
 
 // MARK: - Supporting Views
+struct NoteCardView: View {
+    let note: Note
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(formattedDate(for: note.createdAt ?? Date()))
+                .font(.headline)
+                .foregroundColor(.secondaryText)
+            
+            Text(note.content ?? "")
+                .font(.body)
+                .foregroundColor(.primaryText)
+                .lineLimit(4)
+                .multilineTextAlignment(.leading)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: Color.primaryText.opacity(0.05), radius: 2, x: 0, y: 1)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.divider, lineWidth: 0.5)
+        )
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+    }
+    
+    // iOS standard date formatting
+    private func formattedDate(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        formatter.doesRelativeDateFormatting = true
+        return formatter.string(from: date)
+    }
+}
+
 struct SummarySectionHeader: View {
     let title: String
     
@@ -338,25 +419,15 @@ struct ContactSummaryEntity: Identifiable {
 // MARK: - Previews
 struct SocialContactDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        SocialContactDetailView(
-            contact: MockContact(
-                name: "Chao", 
-                createdAt: Date().addingTimeInterval(-86400), 
-                notesCount: 3
-            )
-        )
-        .environmentObject(LocalizationManager())
-        .environment(\.colorScheme, .light)
+        let previewContext = CoreDataManager.shared.viewContext
+        let contact = Contact(context: previewContext)
+        contact.name = "Preview Contact"
+        contact.contactId = UUID()
+        contact.createdAt = Date()
         
-        SocialContactDetailView(
-            contact: MockContact(
-                name: "Jane", 
-                createdAt: Date().addingTimeInterval(-172800), 
-                notesCount: 2
-            )
-        )
-        .environmentObject(LocalizationManager())
-        .environment(\.colorScheme, .dark)
+        return SocialContactDetailView(contact: contact)
+            .environmentObject(LocalizationManager())
+            .environment(\.colorScheme, .light)
     }
 }
 

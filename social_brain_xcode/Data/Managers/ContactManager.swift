@@ -1,7 +1,7 @@
 import CoreData
 import Foundation
 
-class ContactManager {
+class ContactManager: ObservableObject {
     static let shared = ContactManager()
     private let context = CoreDataManager.shared.viewContext
     
@@ -120,17 +120,28 @@ class ContactManager {
     
     // MARK: - Relationships
     func getNotesForContact(contactId: UUID) -> [Note] {
-        // Hardcoded notes for testing
-        let note1 = Note(context: context)
-        note1.noteId = UUID()
-        note1.content = "Had a great conversation about AI and machine learning"
-        note1.createdAt = Date()
+        guard let contact = fetchContact(withId: contactId) else { return [] }
         
-        let note2 = Note(context: context)
-        note2.noteId = UUID()
-        note2.content = "Discussed potential collaboration on a new project"
-        note2.createdAt = Date()
+        // Get the relationships
+        guard let relationships = contact.notes as? Set<NoteContactRelationship> else {
+            print("Error: Unable to access relationships for contact")
+            return []
+        }
         
-        return [note1, note2]
+        // Extract notes from relationships
+        var notes: [Note] = []
+        for relationship in relationships {
+            if let note = relationship.notes {
+                notes.append(note)
+            }
+        }
+        
+        // Sort notes by creation date (newest first)
+        return notes.sorted { ($0.createdAt ?? Date()) > ($1.createdAt ?? Date()) }
+    }
+    
+    // MARK: - Note Count
+    func getNotesCount(forContactId contactId: UUID) -> Int {
+        return getNotesForContact(contactId: contactId).count
     }
 } 
