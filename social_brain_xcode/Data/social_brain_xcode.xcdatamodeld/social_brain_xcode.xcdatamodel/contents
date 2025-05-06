@@ -47,7 +47,7 @@
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="type" optional="YES" attributeType="String"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="contacts" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InsightContactRelationship" inverseName="insights" inverseEntity="InsightContactRelationship"/>
+        <relationship name="contacts" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsightContactRelationship" inverseName="insights" inverseEntity="InsightContactRelationship"/>
     </entity>
     <entity name="InsightCircleRelationship" representedClassName="InsightCircleRelationship" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
