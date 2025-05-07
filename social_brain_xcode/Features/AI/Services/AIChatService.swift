@@ -61,7 +61,7 @@ protocol AIChatServiceProtocol {
 
 // MARK: - Service Errors
 
-enum AIChatServiceError: Error {
+enum AIChatServiceError: Error, LocalizedError {
     case invalidURL
     case invalidResponse
     case networkError(Error)
@@ -71,7 +71,7 @@ enum AIChatServiceError: Error {
     case rateLimitExceeded
     case serverError(Int)
     
-    var localizedDescription: String {
+    var errorDescription: String? {
         switch self {
         case .invalidURL:
             return "Invalid API URL"

@@ -234,8 +234,9 @@ struct SocialBrainView: View {
                 }
             } catch {
                 await MainActor.run {
-            isLoading = false
-                    errorMessage = error.localizedDescription
+                    isLoading = false
+                    print("[SocialBrainView] Error caught: \(error) (\(type(of: error)))")
+                    errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     showError = true
                 }
             }

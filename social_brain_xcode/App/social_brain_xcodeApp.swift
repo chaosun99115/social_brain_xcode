@@ -14,6 +14,10 @@ struct social_brain_xcodeApp: App {
     @StateObject private var localizationManager = LocalizationManager()
     @StateObject private var noteManager = NoteManager.shared
     
+    init() {
+        AIConfig.configure()
+    }
+    
     var body: some Scene {
         WindowGroup {
             MainTabView()
