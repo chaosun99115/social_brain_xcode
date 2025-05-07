@@ -15,7 +15,8 @@ struct SocialNote: Identifiable {
         self.id = note.noteId ?? UUID()
         self.date = note.createdAt ?? Date()
         self.content = note.content ?? ""
-        self.type = NoteType(rawValue: Int(note.type)) ?? .general
+        let rawType = Int(truncatingIfNeeded: note.type)
+        self.type = NoteType(rawValue: rawType) ?? .general
         self.updateCompleted = note.updateCompleted == 1
         self.isArchived = note.isArchived
     }

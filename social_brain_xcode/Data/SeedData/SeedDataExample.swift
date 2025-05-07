@@ -3,22 +3,16 @@ import UIKit
 import CoreData
 
 class SeedDataExample {
-    static func importSeedDataExample() async {
-        // Get the managed object context from your Core Data stack
-        guard let context = await (UIApplication.shared.delegate as? AppDelegate)?.persistentContainer.viewContext else {
-            print("Failed to get managed object context")
-            return
-        }
-        
-        do {
-            // Configure the data source (local or remote)
-            SeedDataManager.shared.setDataSource(.local) // or .remote
-            
-            // Import the seed data
-            try await SeedDataManager.shared.importSeedData(into: context)
-            print("Successfully imported seed data")
-        } catch {
-            print("Failed to import seed data: \(error)")
+    static func importSeedDataExample() {
+        Task {
+            do {
+                try await SeedDataManager.shared.importSeedData(into: PersistenceController.shared.container.viewContext)
+                print("[SeedDataExample] Seed data import completed successfully.")
+                // Force UI refresh
+                NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
+            } catch {
+                print("[SeedDataExample] Failed to import seed data: \(error)")
+            }
         }
     }
     
