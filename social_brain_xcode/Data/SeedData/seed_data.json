@@ -1,7 +1,7 @@
 {
     "notes": [
         {
-            "noteId": "550e8400-e29b-41d4-a716-446655440000",
+            "uniqueIdentifier": "note_1",
             "content": "帮 @小赵 修改竞品分析报告，她的分析很细致，但结构不够清晰。帮她调整了框架后，张总对这个分析评价很高，看得出她很感激。",
             "type": 0,
             "updateCompleted": 1,
@@ -12,7 +12,7 @@
     ],
     "contacts": [
         {
-            "contactId": "550e8400-e29b-41d4-a716-446655440001",
+            "uniqueIdentifier": "contact_1",
             "name": "小赵",
             "createdAt": "2024-03-20T10:00:00Z",
             "updatedAt": "2024-03-20T10:00:00Z",
@@ -21,7 +21,7 @@
     ],
     "contactInsights": [
         {
-            "insightId": "550e8400-e29b-41d4-a716-446655440003",
+            "uniqueIdentifier": "insight_1",
             "type": "memo",
             "category": "update",
             "order": 0,
@@ -31,7 +31,7 @@
             "recordStatus": 1
         },
         {
-            "insightId": "550e8400-e29b-41d4-a716-446655440004",
+            "uniqueIdentifier": "insight_2",
             "type": "memo",
             "category": "review",
             "order": 0,
@@ -45,22 +45,22 @@
         {
             "relationshipId": "550e8400-e29b-41d4-a716-446655440002",
             "createdAt": "2024-03-20T10:00:00Z",
-            "noteId": "550e8400-e29b-41d4-a716-446655440000",
-            "contactId": "550e8400-e29b-41d4-a716-446655440001"
+            "contactIdentifier": "contact_1",
+            "noteIdentifier": "note_1"
         }
     ],
     "insightContactRelationships": [
         {
             "relationshipId": "550e8400-e29b-41d4-a716-446655440005",
             "createdAt": "2024-03-20T10:00:00Z",
-            "contactId": "550e8400-e29b-41d4-a716-446655440001",
-            "insightId": "550e8400-e29b-41d4-a716-446655440003"
+            "contactIdentifier": "contact_1",
+            "insightIdentifier": "insight_1"
         },
         {
             "relationshipId": "550e8400-e29b-41d4-a716-446655440006",
             "createdAt": "2024-03-20T10:00:00Z",
-            "contactId": "550e8400-e29b-41d4-a716-446655440001",
-            "insightId": "550e8400-e29b-41d4-a716-446655440004"
+            "contactIdentifier": "contact_1",
+            "insightIdentifier": "insight_2"    
         }
     ]
 } 

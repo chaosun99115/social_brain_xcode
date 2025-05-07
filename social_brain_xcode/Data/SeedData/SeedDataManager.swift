@@ -14,8 +14,8 @@ final class SeedDataManager {
     private let localSeedDataURL = Bundle.main.url(forResource: "seed_data", withExtension: "json")!
     private let remoteSeedDataURL = URL(string: "https://your-api-endpoint/seed_data.json")! // Replace with actual remote URL
     
-    // UUID mapping for maintaining relationships
-    private var uuidMapping: [String: UUID] = [:]
+    // Temporary storage for entity relationships
+    private var entityUUIDs: [String: UUID] = [:] // Stores UUIDs for each entity by their unique identifier
     
     private init() {}
     
@@ -47,13 +47,14 @@ final class SeedDataManager {
     
     // MARK: - UUID Management
     
-    private func getOrCreateUUID(for originalId: String) -> UUID {
-        if let existingUUID = uuidMapping[originalId] {
-            return existingUUID
-        }
-        let newUUID = UUID()
-        uuidMapping[originalId] = newUUID
-        return newUUID
+    private func generateAndStoreUUID(for identifier: String) -> UUID {
+        let uuid = UUID()
+        entityUUIDs[identifier] = uuid
+        return uuid
+    }
+    
+    private func getUUID(for identifier: String) -> UUID? {
+        return entityUUIDs[identifier]
     }
     
     // MARK: - Core Data Import
@@ -85,8 +86,8 @@ final class SeedDataManager {
         print("- Note-Contact Relationships: \(seedData.noteContactRelationships.count)")
         print("- Insight-Contact Relationships: \(seedData.insightContactRelationships.count)")
         
-        // Clear previous mapping
-        uuidMapping.removeAll()
+        // Clear previous UUID mapping
+        entityUUIDs.removeAll()
         
         try await context.perform {
             print("\n[SeedDataManager] Starting entity creation...")
@@ -95,7 +96,7 @@ final class SeedDataManager {
             print("\n[SeedDataManager] Importing notes...")
             for noteData in seedData.notes {
                 let note = Note(context: context)
-                let noteUUID = self.getOrCreateUUID(for: noteData.noteId)
+                let noteUUID = self.generateAndStoreUUID(for: noteData.uniqueIdentifier)
                 note.noteId = noteUUID
                 note.content = noteData.content
                 note.type = noteData.type
@@ -111,7 +112,7 @@ final class SeedDataManager {
             print("\n[SeedDataManager] Importing contacts...")
             for contactData in seedData.contacts {
                 let contact = Contact(context: context)
-                let contactUUID = self.getOrCreateUUID(for: contactData.contactId)
+                let contactUUID = self.generateAndStoreUUID(for: contactData.uniqueIdentifier)
                 contact.contactId = contactUUID
                 contact.name = contactData.name
                 contact.createdAt = contactData.createdAt
@@ -124,7 +125,7 @@ final class SeedDataManager {
             print("\n[SeedDataManager] Importing contact insights...")
             for insightData in seedData.contactInsights {
                 let insight = ContactInsight(context: context)
-                let insightUUID = self.getOrCreateUUID(for: insightData.insightId)
+                let insightUUID = self.generateAndStoreUUID(for: insightData.uniqueIdentifier)
                 insight.insightId = insightUUID
                 insight.type = insightData.type
                 insight.category = insightData.category
@@ -141,27 +142,27 @@ final class SeedDataManager {
             try context.save()
             print("[SeedDataManager] Context saved successfully")
             
-            // Import Note-Contact Relationships
+            // Create Note-Contact Relationships
             print("\n[SeedDataManager] Creating note-contact relationships...")
             for relationshipData in seedData.noteContactRelationships {
                 let relationship = NoteContactRelationship(context: context)
-                relationship.relationshipId = self.getOrCreateUUID(for: relationshipData.relationshipId)
+                relationship.relationshipId = UUID()
                 relationship.createdAt = relationshipData.createdAt
                 
                 // Fetch note and contact using their UUIDs
                 let noteRequest: NSFetchRequest<Note> = Note.fetchRequest()
-                noteRequest.predicate = NSPredicate(format: "noteId == %@", self.uuidMapping[relationshipData.noteId]! as CVarArg)
+                noteRequest.predicate = NSPredicate(format: "noteId == %@", self.getUUID(for: relationshipData.noteIdentifier)! as CVarArg)
                 
                 let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
-                contactRequest.predicate = NSPredicate(format: "contactId == %@", self.uuidMapping[relationshipData.contactId]! as CVarArg)
+                contactRequest.predicate = NSPredicate(format: "contactId == %@", self.getUUID(for: relationshipData.contactIdentifier)! as CVarArg)
                 
                 let notes = try context.fetch(noteRequest)
                 let contacts = try context.fetch(contactRequest)
                 
                 guard let note = notes.first, let contact = contacts.first else {
                     print("[SeedDataManager] Warning: Could not find note or contact for relationship")
-                    print("- Note ID: \(relationshipData.noteId)")
-                    print("- Contact ID: \(relationshipData.contactId)")
+                    print("- Note Identifier: \(relationshipData.noteIdentifier)")
+                    print("- Contact Identifier: \(relationshipData.contactIdentifier)")
                     continue
                 }
                 
@@ -170,27 +171,27 @@ final class SeedDataManager {
                 print("- Created relationship between note \(note.noteId?.uuidString ?? "nil") and contact \(contact.name ?? "unnamed")")
             }
             
-            // Import Insight-Contact Relationships
+            // Create Insight-Contact Relationships
             print("\n[SeedDataManager] Creating insight-contact relationships...")
             for relationshipData in seedData.insightContactRelationships {
                 let relationship = InsightContactRelationship(context: context)
-                relationship.relationshipId = self.getOrCreateUUID(for: relationshipData.relationshipId)
+                relationship.relationshipId = UUID()
                 relationship.createdAt = relationshipData.createdAt
                 
                 // Fetch contact and insight using their UUIDs
                 let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
-                contactRequest.predicate = NSPredicate(format: "contactId == %@", self.uuidMapping[relationshipData.contactId]! as CVarArg)
+                contactRequest.predicate = NSPredicate(format: "contactId == %@", self.getUUID(for: relationshipData.contactIdentifier)! as CVarArg)
                 
                 let insightRequest: NSFetchRequest<ContactInsight> = ContactInsight.fetchRequest()
-                insightRequest.predicate = NSPredicate(format: "insightId == %@", self.uuidMapping[relationshipData.insightId]! as CVarArg)
+                insightRequest.predicate = NSPredicate(format: "insightId == %@", self.getUUID(for: relationshipData.insightIdentifier)! as CVarArg)
                 
                 let contacts = try context.fetch(contactRequest)
                 let insights = try context.fetch(insightRequest)
                 
                 guard let contact = contacts.first, let insight = insights.first else {
                     print("[SeedDataManager] Warning: Could not find contact or insight for relationship")
-                    print("- Contact ID: \(relationshipData.contactId)")
-                    print("- Insight ID: \(relationshipData.insightId)")
+                    print("- Contact Identifier: \(relationshipData.contactIdentifier)")
+                    print("- Insight Identifier: \(relationshipData.insightIdentifier)")
                     continue
                 }
                 
@@ -213,8 +214,29 @@ final class SeedDataManager {
                 print("  Content: \(note.content ?? "nil")")
                 print("  Type: \(note.type)")
                 print("  Is Archived: \(note.isArchived)")
-                if let relationship = note.contacts {
-                    print("  Has Contact: \(relationship.contacts?.name ?? "nil")")
+                if let relationships = note.contacts as? Set<NoteContactRelationship> {
+                    for relationship in relationships {
+                        print("  Has Contact: \(relationship.contacts?.name ?? "nil")")
+                    }
+                } else {
+                    print("  No Contact Relationship")
+                }
+            }
+            
+            // Verify Contact Insights
+            print("\n[SeedDataManager] Verifying contact insights...")
+            let finalInsightRequest: NSFetchRequest<ContactInsight> = ContactInsight.fetchRequest()
+            let finalInsights = try context.fetch(finalInsightRequest)
+            print("- Total insights in database: \(finalInsights.count)")
+            for insight in finalInsights {
+                print("- Insight: \(insight.insightId?.uuidString ?? "nil")")
+                print("  Type: \(insight.type ?? "nil")")
+                print("  Category: \(insight.category ?? "nil")")
+                print("  Content: \(insight.content ?? "nil")")
+                if let relationships = insight.contacts as? Set<InsightContactRelationship> {
+                    for relationship in relationships {
+                        print("  Has Contact: \(relationship.contacts?.name ?? "nil")")
+                    }
                 } else {
                     print("  No Contact Relationship")
                 }
@@ -236,7 +258,7 @@ struct SeedData: Codable {
 }
 
 struct NoteData: Codable {
-    let noteId: String
+    let uniqueIdentifier: String  // Used to generate and track UUID
     let content: String
     let type: Int16
     let updateCompleted: Int16
@@ -246,7 +268,7 @@ struct NoteData: Codable {
 }
 
 struct ContactData: Codable {
-    let contactId: String
+    let uniqueIdentifier: String  // Used to generate and track UUID
     let name: String
     let createdAt: Date
     let updatedAt: Date
@@ -254,7 +276,7 @@ struct ContactData: Codable {
 }
 
 struct ContactInsightData: Codable {
-    let insightId: String
+    let uniqueIdentifier: String  // Used to generate and track UUID
     let type: String
     let category: String
     let order: Int16
@@ -265,15 +287,13 @@ struct ContactInsightData: Codable {
 }
 
 struct NoteContactRelationshipData: Codable {
-    let relationshipId: String
     let createdAt: Date
-    let noteId: String
-    let contactId: String
+    let noteIdentifier: String    // References the uniqueIdentifier of the note
+    let contactIdentifier: String // References the uniqueIdentifier of the contact
 }
 
 struct InsightContactRelationshipData: Codable {
-    let relationshipId: String
     let createdAt: Date
-    let contactId: String
-    let insightId: String
+    let contactIdentifier: String // References the uniqueIdentifier of the contact
+    let insightIdentifier: String // References the uniqueIdentifier of the insight
 } 
