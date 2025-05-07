@@ -13,6 +13,10 @@ class AIServiceManager {
             chatService = DeepSeekChatService(apiKey: apiKey)
         case .kimi:
             chatService = KIMIChatService(apiKey: apiKey)
+        case .doubaoLite:
+            chatService = DoubaoChatService(apiKey: apiKey, modelType: .lite)
+        case .doubaoPro:
+            chatService = DoubaoChatService(apiKey: apiKey, modelType: .pro)
         }
     }
     

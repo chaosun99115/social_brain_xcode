@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */; };
+		AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */; };
 		AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111D2DADA98E0071D444 /* NoteManager.swift */; };
 		AF6D11202DADA98E0071D444 /* ContactManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111E2DADA98E0071D444 /* ContactManager.swift */; };
 		AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11222DADA9B20071D444 /* CoreDataManager.swift */; };
@@ -50,6 +51,7 @@
 
 /* Begin PBXFileReference section */
 		AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KIMIChatService.swift; sourceTree = "<group>"; };
+		AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DoubaoChatService.swift; sourceTree = "<group>"; };
 		AF6D111D2DADA98E0071D444 /* NoteManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteManager.swift; sourceTree = "<group>"; };
 		AF6D111E2DADA98E0071D444 /* ContactManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactManager.swift; sourceTree = "<group>"; };
 		AF6D11222DADA9B20071D444 /* CoreDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
@@ -308,6 +310,7 @@
 				AFBF98932DCAA44300AF626E /* AIChatService.swift */,
 				AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */,
 				AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */,
+				AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -450,6 +453,7 @@
 				AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */,
 				AFBF98902DCAA43B00AF626E /* AIConfig.swift in Sources */,
 				AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */,
+				AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */,
 				AF84F41A2DC582C600BD66D5 /* DebugMenuView.swift in Sources */,
 				AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */,
 				AFA2761A2DB0349C00C29B81 /* SocialNotesList.swift in Sources */,
