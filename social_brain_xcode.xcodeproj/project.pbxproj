@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */; };
 		AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111D2DADA98E0071D444 /* NoteManager.swift */; };
 		AF6D11202DADA98E0071D444 /* ContactManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111E2DADA98E0071D444 /* ContactManager.swift */; };
 		AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11222DADA9B20071D444 /* CoreDataManager.swift */; };
@@ -48,6 +49,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KIMIChatService.swift; sourceTree = "<group>"; };
 		AF6D111D2DADA98E0071D444 /* NoteManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteManager.swift; sourceTree = "<group>"; };
 		AF6D111E2DADA98E0071D444 /* ContactManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactManager.swift; sourceTree = "<group>"; };
 		AF6D11222DADA9B20071D444 /* CoreDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
@@ -305,6 +307,7 @@
 				AFBF98922DCAA44300AF626E /* AIServiceManager.swift */,
 				AFBF98932DCAA44300AF626E /* AIChatService.swift */,
 				AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */,
+				AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -443,6 +446,7 @@
 				AF84F41B2DC582C600BD66D5 /* CircleDebugView.swift in Sources */,
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
+				AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */,
 				AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */,
 				AFBF98902DCAA43B00AF626E /* AIConfig.swift in Sources */,
 				AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */,

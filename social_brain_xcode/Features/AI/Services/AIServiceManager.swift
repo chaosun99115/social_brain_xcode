@@ -7,8 +7,13 @@ class AIServiceManager {
     
     private init() {}
     
-    func configure(with apiKey: String) {
-        chatService = DeepSeekChatService(apiKey: apiKey)
+    func configure(with apiKey: String, serviceType: AIServiceType) {
+        switch serviceType {
+        case .deepSeek:
+            chatService = DeepSeekChatService(apiKey: apiKey)
+        case .kimi:
+            chatService = KIMIChatService(apiKey: apiKey)
+        }
     }
     
     func getChatService() -> AIChatServiceProtocol? {
