@@ -174,11 +174,9 @@ struct SocialBrainView: View {
             if loading {
                 // Show the modal when loading starts
                 showLoadingModal = true
-                
-                // Hide the modal after 2 seconds but keep loading state
-                DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-                    showLoadingModal = false
-                }
+            } else {
+                // Hide the modal when loading ends
+                showLoadingModal = false
             }
         }
     }
