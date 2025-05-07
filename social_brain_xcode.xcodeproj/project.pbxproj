@@ -30,6 +30,10 @@
 		AFBD50F52DA70DDC0066907B /* SocialContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F32DA70DDC0066907B /* SocialContact.swift */; };
 		AFBD50F92DA715550066907B /* SocialBrainDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */; };
 		AFBD50FD2DA739660066907B /* SocialContactDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50FC2DA739660066907B /* SocialContactDetailView.swift */; };
+		AFBF98902DCAA43B00AF626E /* AIConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF988F2DCAA43B00AF626E /* AIConfig.swift */; };
+		AFBF98952DCAA44300AF626E /* AIServiceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98922DCAA44300AF626E /* AIServiceManager.swift */; };
+		AFBF98962DCAA44300AF626E /* AIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98932DCAA44300AF626E /* AIChatService.swift */; };
+		AFBF98972DCAA44300AF626E /* DeepSeekChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */; };
 		AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */; };
 		AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBA2DA075730001DD70 /* Assets.xcassets */; };
 		AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBD2DA075730001DD70 /* Preview Assets.xcassets */; };
@@ -67,6 +71,10 @@
 		AFBD50F32DA70DDC0066907B /* SocialContact.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContact.swift; sourceTree = "<group>"; };
 		AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialBrainDialogView.swift; sourceTree = "<group>"; };
 		AFBD50FC2DA739660066907B /* SocialContactDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContactDetailView.swift; sourceTree = "<group>"; };
+		AFBF988F2DCAA43B00AF626E /* AIConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AIConfig.swift; sourceTree = "<group>"; };
+		AFBF98922DCAA44300AF626E /* AIServiceManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AIServiceManager.swift; sourceTree = "<group>"; };
+		AFBF98932DCAA44300AF626E /* AIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AIChatService.swift; sourceTree = "<group>"; };
+		AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeepSeekChatService.swift; sourceTree = "<group>"; };
 		AFF98BB32DA075720001DD70 /* social_brain_xcode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = social_brain_xcode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = social_brain_xcodeApp.swift; sourceTree = "<group>"; };
 		AFF98BBA2DA075730001DD70 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -159,6 +167,8 @@
 		AFA276212DB03C8200C29B81 /* AI */ = {
 			isa = PBXGroup;
 			children = (
+				AFBF988E2DCAA43B00AF626E /* Config */,
+				AFBF98912DCAA44300AF626E /* Services */,
 				AFA276232DB03CAE00C29B81 /* Models */,
 				AFA276222DB03C8C00C29B81 /* Views */,
 			);
@@ -281,6 +291,24 @@
 			path = en.lproj;
 			sourceTree = "<group>";
 		};
+		AFBF988E2DCAA43B00AF626E /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				AFBF988F2DCAA43B00AF626E /* AIConfig.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		AFBF98912DCAA44300AF626E /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				AFBF98922DCAA44300AF626E /* AIServiceManager.swift */,
+				AFBF98932DCAA44300AF626E /* AIChatService.swift */,
+				AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		AFF98BAA2DA075720001DD70 = {
 			isa = PBXGroup;
 			children = (
@@ -395,6 +423,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFF98BC02DA075730001DD70 /* Persistence.swift in Sources */,
+				AFBF98952DCAA44300AF626E /* AIServiceManager.swift in Sources */,
 				AF84F41D2DC582C600BD66D5 /* NoteDebugView.swift in Sources */,
 				AFF98BD92DA45DA00001DD70 /* AppTheme.swift in Sources */,
 				AFBD50F92DA715550066907B /* SocialBrainDialogView.swift in Sources */,
@@ -404,8 +433,10 @@
 				AF6D11272DB00A330071D444 /* SocialNoteModalView.swift in Sources */,
 				AF8398972DBAC6AD00382EA6 /* SocialNoteDetailView.swift in Sources */,
 				AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */,
+				AFBF98972DCAA44300AF626E /* DeepSeekChatService.swift in Sources */,
 				AFF98BCE2DA0772F0001DD70 /* MainTabView.swift in Sources */,
 				AFBD50FD2DA739660066907B /* SocialContactDetailView.swift in Sources */,
+				AFBF98962DCAA44300AF626E /* AIChatService.swift in Sources */,
 				AFF98BD52DA4496C0001DD70 /* SocialBrainMessage.swift in Sources */,
 				AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */,
 				AF84F4242DC942D200BD66D5 /* ContactInsightDebugView.swift in Sources */,
@@ -413,6 +444,7 @@
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
 				AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */,
+				AFBF98902DCAA43B00AF626E /* AIConfig.swift in Sources */,
 				AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */,
 				AF84F41A2DC582C600BD66D5 /* DebugMenuView.swift in Sources */,
 				AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */,
