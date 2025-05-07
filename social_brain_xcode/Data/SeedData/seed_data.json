@@ -1,0 +1,66 @@
+{
+    "notes": [
+        {
+            "noteId": "550e8400-e29b-41d4-a716-446655440000",
+            "content": "帮 @小赵 修改竞品分析报告，她的分析很细致，但结构不够清晰。帮她调整了框架后，张总对这个分析评价很高，看得出她很感激。",
+            "type": 0,
+            "updateCompleted": 1,
+            "createdAt": "2024-03-20T10:00:00Z",
+            "updatedAt": "2024-03-20T10:00:00Z",
+            "recordStatus": 1
+        }
+    ],
+    "contacts": [
+        {
+            "contactId": "550e8400-e29b-41d4-a716-446655440001",
+            "name": "小赵",
+            "createdAt": "2024-03-20T10:00:00Z",
+            "updatedAt": "2024-03-20T10:00:00Z",
+            "recordStatus": 1
+        }
+    ],
+    "contactInsights": [
+        {
+            "insightId": "550e8400-e29b-41d4-a716-446655440003",
+            "type": "memo",
+            "category": "update",
+            "order": 0,
+            "content": "刚毕业入职，经常来问一些基础问题。可以抽一些时间教她一下需求文档的标准流程。",
+            "createdAt": "2024-03-20T10:00:00Z",
+            "updatedAt": "2024-03-20T10:00:00Z",
+            "recordStatus": 1
+        },
+        {
+            "insightId": "550e8400-e29b-41d4-a716-446655440004",
+            "type": "memo",
+            "category": "review",
+            "order": 0,
+            "content": "她入职第一天是我带领的",
+            "createdAt": "2024-03-20T10:00:00Z",
+            "updatedAt": "2024-03-20T10:00:00Z",
+            "recordStatus": 1
+        }
+    ],
+    "noteContactRelationships": [
+        {
+            "relationshipId": "550e8400-e29b-41d4-a716-446655440002",
+            "createdAt": "2024-03-20T10:00:00Z",
+            "noteId": "550e8400-e29b-41d4-a716-446655440000",
+            "contactId": "550e8400-e29b-41d4-a716-446655440001"
+        }
+    ],
+    "insightContactRelationships": [
+        {
+            "relationshipId": "550e8400-e29b-41d4-a716-446655440005",
+            "createdAt": "2024-03-20T10:00:00Z",
+            "contactId": "550e8400-e29b-41d4-a716-446655440001",
+            "insightId": "550e8400-e29b-41d4-a716-446655440003"
+        },
+        {
+            "relationshipId": "550e8400-e29b-41d4-a716-446655440006",
+            "createdAt": "2024-03-20T10:00:00Z",
+            "contactId": "550e8400-e29b-41d4-a716-446655440001",
+            "insightId": "550e8400-e29b-41d4-a716-446655440004"
+        }
+    ]
+} 
