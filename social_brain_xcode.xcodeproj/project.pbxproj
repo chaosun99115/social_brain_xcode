@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */; };
 		AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */; };
+		AF56DC272DCBE13D00F56D6E /* SeedDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC232DCBE13D00F56D6E /* SeedDataManager.swift */; };
+		AF56DC282DCBE13D00F56D6E /* SeedDataExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */; };
+		AF56DC292DCBE13D00F56D6E /* seed_data.json in Resources */ = {isa = PBXBuildFile; fileRef = AF56DC252DCBE13D00F56D6E /* seed_data.json */; };
+		AF56DC2C2DCBE25900F56D6E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC2A2DCBE25900F56D6E /* AppDelegate.swift */; };
 		AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111D2DADA98E0071D444 /* NoteManager.swift */; };
 		AF6D11202DADA98E0071D444 /* ContactManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111E2DADA98E0071D444 /* ContactManager.swift */; };
 		AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11222DADA9B20071D444 /* CoreDataManager.swift */; };
@@ -52,6 +56,10 @@
 /* Begin PBXFileReference section */
 		AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KIMIChatService.swift; sourceTree = "<group>"; };
 		AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DoubaoChatService.swift; sourceTree = "<group>"; };
+		AF56DC232DCBE13D00F56D6E /* SeedDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeedDataManager.swift; sourceTree = "<group>"; };
+		AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeedDataExample.swift; sourceTree = "<group>"; };
+		AF56DC252DCBE13D00F56D6E /* seed_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = seed_data.json; sourceTree = "<group>"; };
+		AF56DC2A2DCBE25900F56D6E /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AF6D111D2DADA98E0071D444 /* NoteManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteManager.swift; sourceTree = "<group>"; };
 		AF6D111E2DADA98E0071D444 /* ContactManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactManager.swift; sourceTree = "<group>"; };
 		AF6D11222DADA9B20071D444 /* CoreDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
@@ -105,6 +113,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AF56DC212DCBE13D00F56D6E /* SeedData */ = {
+			isa = PBXGroup;
+			children = (
+				AF56DC232DCBE13D00F56D6E /* SeedDataManager.swift */,
+				AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */,
+				AF56DC252DCBE13D00F56D6E /* seed_data.json */,
+			);
+			path = SeedData;
+			sourceTree = "<group>";
+		};
 		AF6D11212DADA9B20071D444 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
@@ -225,6 +243,7 @@
 		AFA276272DB03E6400C29B81 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				AF56DC2A2DCBE25900F56D6E /* AppDelegate.swift */,
 				AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */,
 				AFF98BD82DA45DA00001DD70 /* AppTheme.swift */,
 				AFF98BCB2DA0772F0001DD70 /* MainTabView.swift */,
@@ -255,6 +274,7 @@
 			isa = PBXGroup;
 			children = (
 				AFF98BC12DA075730001DD70 /* social_brain_xcode.xcdatamodeld */,
+				AF56DC212DCBE13D00F56D6E /* SeedData */,
 				AFA2762B2DB03EE400C29B81 /* CoreData */,
 				AF6D11212DADA9B20071D444 /* Managers */,
 			);
@@ -418,6 +438,7 @@
 				AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */,
 				AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */,
 				AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */,
+				AF56DC292DCBE13D00F56D6E /* seed_data.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -433,6 +454,7 @@
 				AF84F41D2DC582C600BD66D5 /* NoteDebugView.swift in Sources */,
 				AFF98BD92DA45DA00001DD70 /* AppTheme.swift in Sources */,
 				AFBD50F92DA715550066907B /* SocialBrainDialogView.swift in Sources */,
+				AF56DC272DCBE13D00F56D6E /* SeedDataManager.swift in Sources */,
 				AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */,
 				AF84F41E2DC582C600BD66D5 /* CoreDataDebugView.swift in Sources */,
 				AFF98BC32DA075730001DD70 /* social_brain_xcode.xcdatamodeld in Sources */,
@@ -440,9 +462,11 @@
 				AF8398972DBAC6AD00382EA6 /* SocialNoteDetailView.swift in Sources */,
 				AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */,
 				AFBF98972DCAA44300AF626E /* DeepSeekChatService.swift in Sources */,
+				AF56DC2C2DCBE25900F56D6E /* AppDelegate.swift in Sources */,
 				AFF98BCE2DA0772F0001DD70 /* MainTabView.swift in Sources */,
 				AFBD50FD2DA739660066907B /* SocialContactDetailView.swift in Sources */,
 				AFBF98962DCAA44300AF626E /* AIChatService.swift in Sources */,
+				AF56DC282DCBE13D00F56D6E /* SeedDataExample.swift in Sources */,
 				AFF98BD52DA4496C0001DD70 /* SocialBrainMessage.swift in Sources */,
 				AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */,
 				AF84F4242DC942D200BD66D5 /* ContactInsightDebugView.swift in Sources */,
