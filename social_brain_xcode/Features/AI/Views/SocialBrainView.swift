@@ -11,6 +11,10 @@ struct SocialBrainView: View {
     @FocusState private var isInputFocused: Bool
     @State private var isLoading = false
     @State private var showLoadingModal = false
+    @State private var errorMessage: String?
+    @State private var showError = false
+    
+    private let aiServiceManager = AIServiceManager.shared
     
     var body: some View {
         NavigationView {
@@ -169,6 +173,11 @@ struct SocialBrainView: View {
                         isInputFocused = false
                     }
             )
+            .alert("Error", isPresented: $showError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage ?? "An unknown error occurred")
+            }
         }
         .onChange(of: isLoading) { loading in
             if loading {
@@ -184,33 +193,8 @@ struct SocialBrainView: View {
     }
     
     private func handleSuggestedQuestion(_ question: String) {
-        // Start conversation mode
-        isConversationActive = true
-        
-        // Add user question
-        let userMessage = SocialBrainMessage(
-            content: question,
-            isFromUser: true,
-            timestamp: Date()
-        )
-        messages.append(userMessage)
-        
-        // Show loading state
-        isLoading = true
-        
-        // Generate answer after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-            isLoading = false
-            if question.contains("帮我回顾一下最近的社交互动"){
-//                let response1 = generateAiResponse(to: "chao")
-//                messages.append(response1)
-                let response2 = generateAiResponse(to: "你和李明")
-                messages.append(response2)
-                let response3 = generateAiResponse(to: "你在笔记里")
-                messages.append(response3)
-            }
-            
-        }
+        inputText = question
+        sendMessage()
     }
     
     private func sendMessage() {
@@ -236,12 +220,27 @@ struct SocialBrainView: View {
         // Show loading state
         isLoading = true
         
-        // Simulate AI response after a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+        Task {
+            do {
+                guard let chatService = aiServiceManager.getChatService() else {
+                    throw AIChatServiceError.unauthorized
+                }
+                
+                let chatMessages = aiServiceManager.convertToChatMessages(messages)
+                let response = try await chatService.sendMessage(trimmedText, context: chatMessages)
+                
+                await MainActor.run {
+                    let aiMessage = aiServiceManager.convertToSocialBrainMessage(response)
+                    messages.append(aiMessage)
+                    isLoading = false
+                }
+            } catch {
+                await MainActor.run {
             isLoading = false
-            // Generate mock response based on user input
-            let aiResponse = generateAiResponse(to: trimmedText)
-            messages.append(aiResponse)
+                    errorMessage = error.localizedDescription
+                    showError = true
+                }
+            }
         }
     }
     
@@ -253,46 +252,10 @@ struct SocialBrainView: View {
         }
     }
     
-    private func generateAiResponse(to userInput: String) -> SocialBrainMessage {
-        // Mock AI response generator - in a real app, this would call an actual API
-        let lowercasedInput = userInput.lowercased()
-        
-        // Generate different responses based on input content
-        if lowercasedInput.contains("你和李明") {
-            return SocialBrainMessage(
-                content: "1 你和李明在一起午餐的时候提到了，当时他提到了一个与 去中心化金融(DeFi) 相关的工作机会，但是你完全不熟悉这个领域，想要我帮你搜索一些相关信息吗？",
-                isFromUser: false,
-                timestamp: Date(),
-                suggestedAction: "搜索相关信息"
-            )
-        } else if lowercasedInput.contains("你在笔记里") {
-            return SocialBrainMessage(
-                content: "2 你在笔记里提到了林彤在初次见面的时候显得很抗拒聊天，你也不知道为什么。你想详细聊聊吗？",
-                isFromUser: false, 
-                timestamp: Date(),
-                suggestedAction: "是的"
-            )
-        } else {
-            // Default response
-            let responses = [
-                "默认回复"
-            ]
-            
-            return SocialBrainMessage(
-                content: responses[0],
-                isFromUser: false,
-                timestamp: Date(),
-                suggestedAction: nil
-            )
-        }
-    }
-    
-    private func handleActionButtonTapped(actionText:String) {
+    private func handleActionButtonTapped(actionText: String) {
         // Create a new AI response based on the action
-        
         var question = "1234"
         let text = "是的"
-        
         
         if actionText.contains("搜索相关信息") {
             question = "DeFi是 Decentralized Finance 的缩写，指不依赖传统中心化金融机构(如银行)而运行的金融系统。根据你与李明的对话记录，他可能是提到了币安 binance这家公司。你想进一步了解一这个领域吗？"
@@ -304,10 +267,9 @@ struct SocialBrainView: View {
             content: question,
             isFromUser: false,
             timestamp: Date(),
-            suggestedAction:text
+            suggestedAction: text
         )
         
-        // Add the new message
         messages.append(actionResponse)
     }
 }
