@@ -244,12 +244,12 @@ class NoteManager: ObservableObject {
     }
     
     func getMentionsFromNote(_ note: Note) -> [String] {
-        guard let relationships = note.contacts as? Set<NoteContactRelationship> else {
+        guard let relationship = note.contacts,
+              let contact = relationship.contacts,
+              let name = contact.name else {
             return []
         }
         
-        return relationships.compactMap { relationship in
-            relationship.contacts?.name
-        }
+        return [name]
     }
 } 

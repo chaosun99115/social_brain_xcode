@@ -364,12 +364,9 @@ struct SocialBrainDialogView: View {
     private func setupKeyboardObservers() {
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
             if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
-               let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
-               let curve = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt {
+               let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
                 
-                let animationCurve = UIView.AnimationOptions(rawValue: curve)
-                
-                withAnimation(.easeOut(duration: duration)) {
+                withAnimation(Animation.easeInOut(duration: duration)) {
                     // Remove any adjustments to keyboard height to ensure it sits flush with input field
                     self.keyboardHeight = keyboardFrame.height
                     self.isKeyboardVisible = true
@@ -378,12 +375,9 @@ struct SocialBrainDialogView: View {
         }
         
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { notification in
-            if let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
-               let curve = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt {
+            if let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
                 
-                let animationCurve = UIView.AnimationOptions(rawValue: curve)
-                
-                withAnimation(.easeOut(duration: duration)) {
+                withAnimation(Animation.easeInOut(duration: duration)) {
                     self.keyboardHeight = 0
                     self.isKeyboardVisible = false
                 }

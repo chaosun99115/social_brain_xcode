@@ -120,21 +120,13 @@ class ContactManager: ObservableObject {
     
     // MARK: - Relationships
     func getNotesForContact(contactId: UUID) -> [Note] {
-        guard let contact = fetchContact(withId: contactId) else { return [] }
-        
-        // Get the relationships
-        let relationships = contact.notes as? Set<NoteContactRelationship> ?? []
-        
-        // Extract notes from relationships
-        var notes: [Note] = []
-        for relationship in relationships {
-            if let note = relationship.notes {
-                notes.append(note)
-            }
+        guard let contact = fetchContact(withId: contactId),
+              let relationship = contact.notes,
+              let note = relationship.notes else {
+            return []
         }
         
-        // Sort notes by creation date (newest first)
-        return notes.sorted { ($0.createdAt ?? Date()) > ($1.createdAt ?? Date()) }
+        return [note]
     }
     
     // MARK: - Note Count
@@ -144,24 +136,22 @@ class ContactManager: ObservableObject {
     
     func validateContactRelationships(_ contact: Contact) throws {
         // If contact has no relationships, that's valid
-        guard let relationships = contact.notes as? Set<NoteContactRelationship> else {
-            return // No relationships is valid
+        guard let relationship = contact.notes else {
+            return // No relationship is valid
         }
         
-        // Check for any invalid relationships
-        for relationship in relationships {
-            if relationship.notes == nil {
-                // Clean up invalid relationship
-                context.delete(relationship)
-            }
-        }
-        
-        // Save any changes made during validation
-        if context.hasChanges {
-            do {
-                try context.save()
-            } catch {
-                print("Error cleaning up invalid relationships: \(error)")
+        // Check if the relationship is invalid
+        if relationship.notes == nil {
+            // Clean up invalid relationship
+            context.delete(relationship)
+            
+            // Save changes
+            if context.hasChanges {
+                do {
+                    try context.save()
+                } catch {
+                    print("Error cleaning up invalid relationship: \(error)")
+                }
             }
         }
     }

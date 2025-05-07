@@ -23,27 +23,20 @@ struct SocialContactView: View {
                 isRefreshing = false
             }
         }
-        do {
-            let fetchedContacts = await MainActor.run {
-                contactManager.fetchContacts()
+        
+        let fetchedContacts = contactManager.fetchContacts()
+        let validContacts = fetchedContacts.filter { contact in
+            do {
+                try contactManager.validateContactRelationships(contact)
+                return true
+            } catch {
+                print("Invalid relationships for contact: \(contact.name ?? "Unknown")")
+                return false
             }
-            // Validate relationships before updating UI
-            let validContacts = fetchedContacts.filter { contact in
-                do {
-                    try contactManager.validateContactRelationships(contact)
-                    return true
-                } catch {
-                    print("Invalid relationships for contact: \(contact.name ?? "Unknown")")
-                    return false
-                }
-            }
-            await MainActor.run {
-                self.contacts = validContacts
-            }
-        } catch {
-            await MainActor.run {
-                self.errorMessage = "Failed to load contacts: \(error.localizedDescription)"
-            }
+        }
+        
+        await MainActor.run {
+            self.contacts = validContacts
         }
     }
     

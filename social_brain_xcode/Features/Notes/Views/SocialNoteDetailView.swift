@@ -303,11 +303,12 @@ struct SocialNoteDetailView: View {
     
     // Helper function to get contacts for the note
     private func getContactsForNote() -> [Contact]? {
-        guard let relationships = note.contacts as? Set<NoteContactRelationship> else {
+        guard let relationship = note.contacts as? NoteContactRelationship,
+              let contact = relationship.contacts else {
             return nil
         }
         
-        return relationships.compactMap { $0.contacts }
+        return [contact]
     }
     
     private var aiSuggestionsSection: some View {
@@ -665,8 +666,12 @@ struct EditNoteModalView: View {
     
     private func saveNote() {
         if !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            // Update the existing note instead of creating a new one
-            noteManager.updateNote(noteId: noteId, text: noteText)
+            // Update the existing note and handle the result
+            let success = noteManager.updateNote(noteId: noteId, text: noteText)
+            if !success {
+                // Handle the error case if needed
+                print("Failed to update note")
+            }
         }
         dismiss()
     }
