@@ -260,12 +260,14 @@ struct SimpleNoteModalView: View {
     }
     
     private func extractMentions(from text: String) -> [String] {
-        let words = text.split(separator: " ")
-        return words.compactMap { word in
-            if word.hasPrefix("@") {
-                return String(word.dropFirst()) // Remove @ symbol
-            }
-            return nil
+        // Match @ followed by one or more of: Chinese, English, numbers, underscore, hyphen, full-width parenthesis
+        // Stop at whitespace or common punctuation
+        let pattern = "@([\\u4e00-\\u9fa5A-Za-z0-9_\\-（）()]+)"
+        let regex = try? NSRegularExpression(pattern: pattern)
+        let nsString = text as NSString
+        let results = regex?.matches(in: text, range: NSRange(location: 0, length: nsString.length)) ?? []
+        return results.map { match in
+            return nsString.substring(with: match.range(at: 1))
         }
     }
     
