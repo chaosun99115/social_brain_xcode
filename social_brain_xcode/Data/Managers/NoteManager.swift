@@ -189,7 +189,54 @@ class NoteManager: ObservableObject {
         }
     }
     
-    // MARK: - Mention Handling
+    // MARK: - Background Processing
+    private func processNoteInBackground(note: Note) {
+        Task {
+            do {
+                // 1. Extract contact names from the note
+                let mentions = getMentionsFromNote(note)
+                
+                // 2. Form system prompt and user prompt
+                let systemPrompt = """
+                You are analyzing a social note about the following contacts: \(mentions.joined(separator: ", ")).
+                Please analyze the note content and provide insights about:
+                1. Key topics discussed
+                2. Potential follow-up opportunities
+                3. Relationship building suggestions
+                """
+                
+                let userPrompt = note.content ?? ""
+                
+                // 3. Send request to LLM
+                print("[NoteManager] Sending request to LLM:")
+                print("System Prompt: \(systemPrompt)")
+                print("User Prompt: \(userPrompt)")
+                
+                guard let chatService = AIServiceManager.shared.getChatService() else {
+                    print("[NoteManager] Error: Chat service not available")
+                    return
+                }
+                
+                let messages = [
+                    AIChatMessage(role: .system, content: systemPrompt),
+                    AIChatMessage(role: .user, content: userPrompt)
+                ]
+                
+                let response = try await chatService.sendMessage(userPrompt, context: messages)
+                
+                print("[NoteManager] Received response from LLM:")
+                if let firstChoice = response.choices.first {
+                    print("[NoteManager] \(firstChoice.message.content)")
+                } else {
+                    print("[NoteManager] No content in response")
+                }
+                
+            } catch {
+                print("[NoteManager] Error processing note: \(error)")
+            }
+        }
+    }
+
     func createNoteWithMentions(content: String, type: NoteType = .social, mentions: [String]) -> Note? {
         let note = Note(context: context)
         note.noteId = UUID()
@@ -235,6 +282,10 @@ class NoteManager: ObservableObject {
         do {
             try context.save()
             note.updateCompleted = 1 // true
+            
+            // Process note in background
+            processNoteInBackground(note: note)
+            
             return note
         } catch {
             print("Error creating note with mentions: \(error)")
