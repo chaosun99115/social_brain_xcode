@@ -25,9 +25,9 @@ class AIServiceManager {
     }
     
     // Helper method to convert SocialBrainMessage to ChatMessage
-    func convertToChatMessages(_ messages: [SocialBrainMessage]) -> [ChatMessage] {
+    func convertToChatMessages(_ messages: [SocialBrainMessage]) -> [AIChatMessage] {
         return messages.map { message in
-            ChatMessage(
+            AIChatMessage(
                 role: message.isFromUser ? .user : .assistant,
                 content: message.content
             )

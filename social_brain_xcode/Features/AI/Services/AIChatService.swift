@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Models
 
-struct ChatMessage: Codable {
+struct AIChatMessage: Codable {
     let role: MessageRole
     let content: String
 }
@@ -15,7 +15,7 @@ enum MessageRole: String, Codable {
 
 struct ChatCompletionRequest: Codable {
     let model: String
-    let messages: [ChatMessage]
+    let messages: [AIChatMessage]
     let stream: Bool
 }
 
@@ -29,7 +29,7 @@ struct ChatCompletionResponse: Codable {
     
     struct Choice: Codable {
         let index: Int
-        let message: ChatMessage
+        let message: AIChatMessage
         let finishReason: String?
         
         enum CodingKeys: String, CodingKey {
@@ -55,7 +55,7 @@ struct ChatCompletionResponse: Codable {
 // MARK: - Service Protocol
 
 protocol AIChatServiceProtocol {
-    func sendMessage(_ message: String, context: [ChatMessage]) async throws -> ChatCompletionResponse
+    func sendMessage(_ message: String, context: [AIChatMessage]) async throws -> ChatCompletionResponse
     func sendMessage(_ message: String) async throws -> ChatCompletionResponse
 }
 

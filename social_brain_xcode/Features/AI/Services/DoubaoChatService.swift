@@ -17,13 +17,13 @@ class DoubaoChatService: AIChatServiceProtocol {
     
     func sendMessage(_ message: String) async throws -> ChatCompletionResponse {
         let messages = [
-            ChatMessage(role: .system, content: "You are a helpful assistant."),
-            ChatMessage(role: .user, content: message)
+            AIChatMessage(role: .system, content: "You are a helpful assistant."),
+            AIChatMessage(role: .user, content: message)
         ]
         return try await sendMessage(message, context: messages)
     }
     
-    func sendMessage(_ message: String, context: [ChatMessage]) async throws -> ChatCompletionResponse {
+    func sendMessage(_ message: String, context: [AIChatMessage]) async throws -> ChatCompletionResponse {
         guard let url = URL(string: baseURL) else {
             print("[DoubaoChatService] Invalid URL: \(baseURL)")
             throw AIChatServiceError.invalidURL
