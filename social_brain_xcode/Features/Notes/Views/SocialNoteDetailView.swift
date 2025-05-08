@@ -5,6 +5,7 @@ struct SocialNoteDetailView: View {
     let note: Note
     @State private var aiSuggestions: [AISuggestion] = []
     @State private var isLoadingSuggestions: Bool = true
+    @State private var isSuggestionExpanded: Bool = false
     @State private var showingEditModal: Bool = false
     @State private var showingArchiveConfirmation: Bool = false
     @State private var scrollResetID = UUID()
@@ -45,7 +46,7 @@ struct SocialNoteDetailView: View {
                                 .frame(height: 12)
                                 .padding(.vertical, 8)
                             // AI Suggestions section
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 0) {
                                 aiSuggestionsSection
                             }
                             .padding(.horizontal, 16)
@@ -115,7 +116,14 @@ struct SocialNoteDetailView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarItems(leading: backButton)
         .onAppear {
-            loadAISuggestions()
+            // Start with loading state for 2 seconds, then show collapsed
+            isLoadingSuggestions = true
+            isSuggestionExpanded = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                aiSuggestions = AISuggestion.mockSuggestions
+                isLoadingSuggestions = false
+                isSuggestionExpanded = false
+            }
             loadContactInsights()
             // Hide the tab bar
             hideTabBar(true)
@@ -222,41 +230,64 @@ struct SocialNoteDetailView: View {
     }
     
     private var aiSuggestionsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("AI 建议")
-                .font(.headline)
-                .foregroundColor(.primaryText)
-                .padding(.bottom, 4)
-            
+        VStack(alignment: .leading, spacing: 0) {
             if isLoadingSuggestions {
-                loadingCard
-            } else if aiSuggestions.isEmpty {
-                noSuggestionsCard
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .scaleEffect(0.9)
+                        .padding(.trailing, 2)
+                    Text("笔记建议")
+                        .font(.headline)
+                        .foregroundColor(.secondaryText)
+                }
+                .padding(.vertical, 8)
+                .padding(.leading, 2)
             } else {
-                ForEach(aiSuggestions) { suggestion in
-                    suggestionCard(suggestion: suggestion)
+                // Collapsed/Expanded header
+                Button(action: {
+                    withAnimation(.easeInOut) {
+                        isSuggestionExpanded.toggle()
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: isSuggestionExpanded ? "chevron.down" : "chevron.right")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.blue)
+                        Text("笔记建议")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.blue)
+                        Spacer()
+                    }
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.bottom, 0)
+                // No divider in any state
+                // Expanded state
+                ZStack(alignment: .top) {
+                    if isSuggestionExpanded {
+                        Group {
+                            if aiSuggestions.isEmpty {
+                                noSuggestionsCard
+                            } else {
+                                VStack(spacing: 12) {
+                                    ForEach(aiSuggestions) { suggestion in
+                                        suggestionCard(suggestion: suggestion)
+                                    }
+                                }
+                            }
+                        }
+                        .transition(
+                            .asymmetric(
+                                insertion: .opacity.combined(with: .scale(scale: 0.95, anchor: .top)),
+                                removal: .opacity
+                            )
+                        )
+                    }
                 }
             }
         }
-    }
-    
-    private var loadingCard: some View {
-        HStack {
-            ProgressView()
-                .padding(.trailing, 8)
-            Text("正在加载建议...")
-                .font(.body)
-                .foregroundColor(.secondaryText)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(16)
-        .background(Color.cardBackground)
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.divider, lineWidth: 0.5)
-        )
-        .shadow(color: Color.primaryText.opacity(0.1), radius: 4, x: 0, y: 2)
     }
     
     private var noSuggestionsCard: some View {
@@ -312,16 +343,6 @@ struct SocialNoteDetailView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "MM-dd HH:mm"
         return formatter.string(from: date)
-    }
-    
-    private func loadAISuggestions() {
-        isLoadingSuggestions = true
-        
-        // Simulate network request
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            self.aiSuggestions = AISuggestion.mockSuggestions
-            self.isLoadingSuggestions = false
-        }
     }
     
     private func loadContactInsights() {
