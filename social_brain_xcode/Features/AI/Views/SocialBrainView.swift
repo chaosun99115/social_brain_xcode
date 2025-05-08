@@ -1,10 +1,15 @@
 import SwiftUI
+import CoreData
 
 struct SocialBrainView: View {
     // Context parameters
     let sourceType: String
     let sourceAction: String
     let sourceId: String
+    
+    // Context data
+    @State private var contextContact: Contact?
+    @State private var contextNotes: [Note] = []
     
     @State private var inputText = ""
     @State private var messages = [SocialBrainMessage]()
@@ -21,15 +26,49 @@ struct SocialBrainView: View {
     
     private let aiServiceManager = AIServiceManager.shared
     
+    // Context fetching
+    private func fetchContextInfo() async throws {
+        switch (sourceType, sourceAction) {
+        case ("contact", "general"):
+            // Fetch contact and related notes
+            let context = try await CoreDataManager.shared.viewContext
+            let contactFetchRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
+            contactFetchRequest.predicate = NSPredicate(format: "contactId == %@", sourceId as CVarArg)
+            
+            if let contact = try context.fetch(contactFetchRequest).first {
+                contextContact = contact
+                
+                // Fetch related notes
+                let notesFetchRequest: NSFetchRequest<Note> = Note.fetchRequest()
+                notesFetchRequest.predicate = NSPredicate(format: "contacts.contacts == %@", contact)
+                notesFetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)]
+                
+                contextNotes = try context.fetch(notesFetchRequest)
+            }
+            
+        default:
+            // Handle other cases or do nothing
+            break
+        }
+    }
+    
     // System prompt generation
     private func generateSystemPrompt() -> String {
-        var prompt = "You are a social relationship assistant helping users manage their relationships. "
+        var prompt = "system prompt"
         
         switch (sourceType, sourceAction) {
         case ("contact", "insights"):
             prompt += "You are analyzing a specific contact with ID: \(sourceId). "
             prompt += "Focus on providing insights about this contact's relationship with the user, "
             prompt += "suggesting conversation topics, and identifying opportunities for deeper connection."
+        case ("contact", "general"):
+            if let contact = contextContact {
+                prompt += "Contact is \(contact.name ?? "failed to load contact name"). "
+                prompt += "total notes: \(contextNotes.count)  "
+            } else {
+                prompt += "contact + general (ID: \(sourceId)). "
+                prompt += "Focus on general relationship management, communication strategies, and maintaining healthy connections."
+            }
         default:
             prompt += "You are providing general social relationship advice."
         }
@@ -43,6 +82,11 @@ struct SocialBrainView: View {
         switch (sourceType, sourceAction) {
         case ("contact", "insights"):
             return "Please analyze this contact and provide insights about our relationship."
+        case ("contact", "general"):
+            if let contact = contextContact {
+                return "How can I improve my relationship with \(contact.name ?? "this contact")?"
+            }
+            return "How can I improve my relationship with this contact?"
         default:
             return "How can you help me with my social relationships?"
         }
@@ -211,9 +255,21 @@ struct SocialBrainView: View {
                 Text(errorMessage ?? "An unknown error occurred")
             }
             .onAppear {
-                print("[SocialBrainView] sourceType: \(sourceType), sourceAction: \(sourceAction), sourceId: \(sourceId)")
-                let prompt = generateSystemPrompt()
-                print("[SocialBrainView] (onAppear) Generated System Prompt: \(prompt)")
+                print("- sourceType: \(sourceType)")
+                print("- sourceAction: \(sourceAction)")
+                print("- sourceId: \(sourceId)")
+                
+                // Fetch context information
+                Task {
+                    do {
+                        try await fetchContextInfo()
+                        let prompt = generateSystemPrompt()
+                    } catch {
+                        print("[SocialBrainView] Error fetching context: \(error)")
+                        errorMessage = error.localizedDescription
+                        showError = true
+                    }
+                }
             }
         }
         .onChange(of: isLoading) { loading in

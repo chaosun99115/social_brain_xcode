@@ -23,7 +23,7 @@ struct SocialContactDetailView: View {
     private var socialBrainContext: (sourceType: String, sourceAction: String, sourceId: String) {
         return (
             sourceType: "contact",
-            sourceAction: "insights",
+            sourceAction: "general",
             sourceId: contact.contactId?.uuidString ?? ""
         )
     }
@@ -141,6 +141,9 @@ struct SocialContactDetailView: View {
                 sourceAction: socialBrainContext.sourceAction,
                 sourceId: socialBrainContext.sourceId
             )
+            .onAppear {
+                print("[SocialContactDetailView] Opening SocialBrainView with context: type=\(socialBrainContext.sourceType), action=\(socialBrainContext.sourceAction), id=\(socialBrainContext.sourceId)")
+            }
         }
         .onAppear {
             loadContactNotes()
