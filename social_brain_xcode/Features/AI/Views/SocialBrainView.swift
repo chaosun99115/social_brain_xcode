@@ -1,6 +1,11 @@
 import SwiftUI
 
 struct SocialBrainView: View {
+    // Context parameters
+    let sourceType: String
+    let sourceAction: String
+    let sourceId: String
+    
     @State private var inputText = ""
     @State private var messages = [SocialBrainMessage]()
     @State private var suggestedQuestions = SocialBrainMessage.mockMessages.filter { $0.isFromUser }
@@ -15,6 +20,33 @@ struct SocialBrainView: View {
     @State private var showError = false
     
     private let aiServiceManager = AIServiceManager.shared
+    
+    // System prompt generation
+    private func generateSystemPrompt() -> String {
+        var prompt = "You are a social relationship assistant helping users manage their relationships. "
+        
+        switch (sourceType, sourceAction) {
+        case ("contact", "insights"):
+            prompt += "You are analyzing a specific contact with ID: \(sourceId). "
+            prompt += "Focus on providing insights about this contact's relationship with the user, "
+            prompt += "suggesting conversation topics, and identifying opportunities for deeper connection."
+        default:
+            prompt += "You are providing general social relationship advice."
+        }
+        
+        print("[SocialBrainView] Generated System Prompt: \(prompt)")
+        return prompt
+    }
+    
+    // Initial message based on context
+    private func generateInitialMessage() -> String {
+        switch (sourceType, sourceAction) {
+        case ("contact", "insights"):
+            return "Please analyze this contact and provide insights about our relationship."
+        default:
+            return "How can you help me with my social relationships?"
+        }
+    }
     
     var body: some View {
         NavigationView {
@@ -178,6 +210,11 @@ struct SocialBrainView: View {
             } message: {
                 Text(errorMessage ?? "An unknown error occurred")
             }
+            .onAppear {
+                print("[SocialBrainView] sourceType: \(sourceType), sourceAction: \(sourceAction), sourceId: \(sourceId)")
+                let prompt = generateSystemPrompt()
+                print("[SocialBrainView] (onAppear) Generated System Prompt: \(prompt)")
+            }
         }
         .onChange(of: isLoading) { loading in
             if loading {
@@ -224,8 +261,26 @@ struct SocialBrainView: View {
                     throw AIChatServiceError.unauthorized
                 }
                 
-                let chatMessages = aiServiceManager.convertToChatMessages(messages)
+                // Generate system prompt
+                let systemPrompt = generateSystemPrompt()
+                
+                // Prepare messages with system prompt
+                var chatMessages = aiServiceManager.convertToChatMessages(messages)
+                chatMessages.insert(AIChatMessage(role: .system, content: systemPrompt), at: 0)
+                
+                print("[SocialBrainView] Sending request to LLM with messages:")
+                for message in chatMessages {
+                    print("[SocialBrainView] Role: \(message.role), Content: \(message.content)")
+                }
+                
                 let response = try await chatService.sendMessage(trimmedText, context: chatMessages)
+                
+                print("[SocialBrainView] Received response from LLM:")
+                if let firstChoice = response.choices.first {
+                    print("[SocialBrainView] \(firstChoice.message.content)")
+                } else {
+                    print("[SocialBrainView] No content in response")
+                }
                 
                 await MainActor.run {
                     let aiMessage = aiServiceManager.convertToSocialBrainMessage(response)
@@ -248,6 +303,11 @@ struct SocialBrainView: View {
             isConversationActive = false
             messages.removeAll()
             isLoading = false
+            
+            // Send initial message based on context
+            let initialMessage = generateInitialMessage()
+            inputText = initialMessage
+            sendMessage()
         }
     }
     
@@ -496,12 +556,20 @@ struct AiBubble: View {
 
 struct SocialBrainView_Previews: PreviewProvider {
     static var previews: some View {
-        SocialBrainView()
-            .environment(\.colorScheme, .light)
-            .environmentObject(LocalizationManager())
+        SocialBrainView(
+            sourceType: "contact",
+            sourceAction: "insights",
+            sourceId: "preview-id"
+        )
+        .environment(\.colorScheme, .light)
+        .environmentObject(LocalizationManager())
         
-        SocialBrainView()
-            .environment(\.colorScheme, .dark)
-            .environmentObject(LocalizationManager())
+        SocialBrainView(
+            sourceType: "contact",
+            sourceAction: "insights",
+            sourceId: "preview-id"
+        )
+        .environment(\.colorScheme, .dark)
+        .environmentObject(LocalizationManager())
     }
 }

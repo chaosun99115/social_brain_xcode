@@ -6,11 +6,15 @@ struct MainTabView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            SocialBrainView()
-                .tabItem {
-                    Label("社交大脑", systemImage: "sparkles")
-                }
-                .tag(0)
+            SocialBrainView(
+                sourceType: "general",
+                sourceAction: "chat",
+                sourceId: ""
+            )
+            .tabItem {
+                Label("社交大脑", systemImage: "sparkles")
+            }
+            .tag(0)
             
             SocialNotesView()
                 .tabItem {

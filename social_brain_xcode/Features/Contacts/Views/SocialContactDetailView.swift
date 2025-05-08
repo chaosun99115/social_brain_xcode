@@ -17,6 +17,16 @@ struct SocialContactDetailView: View {
     @State private var selectedInsight: ContactInsight?
     @State private var selectedContacts: Set<UUID> = []
     @State private var showingEditSheet = false
+    @State private var showingSocialBrain = false
+    
+    // Context parameters for SocialBrain
+    private var socialBrainContext: (sourceType: String, sourceAction: String, sourceId: String) {
+        return (
+            sourceType: "contact",
+            sourceAction: "insights",
+            sourceId: contact.contactId?.uuidString ?? ""
+        )
+    }
     
     enum TabType: String, CaseIterable {
         case summary = "汇总"
@@ -90,7 +100,7 @@ struct SocialContactDetailView: View {
                         
                         // AI Insights button
                         Button(action: {
-                            // AI insights action
+                            showingSocialBrain = true
                         }) {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 24))
@@ -124,6 +134,13 @@ struct SocialContactDetailView: View {
                     .foregroundColor(.primaryAction)
                 }
             }
+        }
+        .sheet(isPresented: $showingSocialBrain) {
+            SocialBrainView(
+                sourceType: socialBrainContext.sourceType,
+                sourceAction: socialBrainContext.sourceAction,
+                sourceId: socialBrainContext.sourceId
+            )
         }
         .onAppear {
             loadContactNotes()

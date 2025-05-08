@@ -14,6 +14,7 @@ struct SocialNoteDetailView: View {
     @StateObject private var insightManager = ContactInsightManager.shared
     @State private var contactInsights: [ContactInsight] = []
     @State private var isLoadingInsights = true
+    @State private var showingSocialBrain = false
     
     // Add namespace for scroll position control
     private let topID = "top"
@@ -139,7 +140,7 @@ struct SocialNoteDetailView: View {
                         
                         // AI button
                         Button(action: {
-                            // AI action
+                            showingSocialBrain = true
                         }) {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 24))
@@ -196,6 +197,13 @@ struct SocialNoteDetailView: View {
         }
         .onChange(of: scrollResetID) { _ in
             shouldScrollToTop = false
+        }
+        .sheet(isPresented: $showingSocialBrain) {
+            SocialBrainView(
+                sourceType: "note",
+                sourceAction: "insights",
+                sourceId: note.noteId?.uuidString ?? ""
+            )
         }
     }
     
