@@ -31,71 +31,25 @@ struct SocialNoteDetailView: View {
                 ScrollViewReader { proxy in
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
-                            // Add an anchor view at the top
-                            Color.clear
-                                .frame(height: 0)
-                                .id(topID)
-                            
-                            // Note content section with padding
-                            VStack(alignment: .leading) {
-                                noteDetailSection
+                            // Note details section (content only)
+                            VStack(alignment: .leading, spacing: 16) {
+                                MentionTextView(text: note.content ?? "")
+                                    .font(.body)
+                                    .foregroundColor(.primaryText)
+                                    .lineSpacing(4)
                             }
                             .padding(.horizontal, 16)
                             .padding(.bottom, 16)
-                            
-                            // Contact Insights sections
-                            if !isLoadingInsights {
-                                // Latest Updates section
-                                if !updateInsights.isEmpty {
-                                    SectionContentWrapper {
-                                        VStack(alignment: .leading, spacing: 0) {
-                                            Text("最新近况")
-                                                .font(.headline)
-                                                .foregroundColor(.primaryText)
-                                                .padding(.bottom, 16)
-                                            
-                                            ForEach(Array(updateInsights.enumerated()), id: \.element.insightId) { index, insight in
-                                                ContactInsightRow(
-                                                    insight: insight,
-                                                    isLast: index == updateInsights.count - 1
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                                // Relationship Review section
-                                if !reviewInsights.isEmpty {
-                                    SectionContentWrapper {
-                                        VStack(alignment: .leading, spacing: 0) {
-                                            Text("关系回顾")
-                                                .font(.headline)
-                                                .foregroundColor(.primaryText)
-                                                .padding(.bottom, 16)
-                                            
-                                            ForEach(Array(reviewInsights.enumerated()), id: \.element.insightId) { index, insight in
-                                                ContactInsightRow(
-                                                    insight: insight,
-                                                    isLast: index == reviewInsights.count - 1
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            // Full-width divider (12pt height, edge-to-edge)
+                            // Divider between note and suggestions
                             Color(.systemGray5)
                                 .frame(height: 12)
                                 .padding(.vertical, 8)
-                            
-                            // AI Suggestions section with padding
+                            // AI Suggestions section
                             VStack(alignment: .leading) {
                                 aiSuggestionsSection
                             }
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
-                            
                             // Extra bottom padding to ensure content isn't covered by the bottom toolbar
                             Spacer(minLength: 80)
                         }
@@ -267,58 +221,6 @@ struct SocialNoteDetailView: View {
         }
     }
     
-    private var noteDetailSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            MentionTextView(text: note.content ?? "")
-                .font(.body)
-                .foregroundColor(.primaryText)
-                .lineSpacing(4)
-            
-            // Show contacts if available
-            mentionsView
-        }
-        .padding(.bottom, 8)
-    }
-    
-    // Helper to display contact mentions
-    private var mentionsView: some View {
-        Group {
-            if let contacts = getContactsForNote(), !contacts.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("提及的联系人")
-                        .font(.subheadline)
-                        .foregroundColor(.secondaryText)
-                    
-                    HStack {
-                        ForEach(contacts, id: \.contactId) { contact in
-                            Text(contact.name ?? "Unnamed")
-                                .font(.caption)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.primaryAction.opacity(0.15))
-                                )
-                                .foregroundColor(.primaryAction)
-                        }
-                    }
-                }
-            } else {
-                EmptyView()
-            }
-        }
-    }
-    
-    // Helper function to get contacts for the note
-    private func getContactsForNote() -> [Contact]? {
-        guard let relationship = note.contacts as? NoteContactRelationship,
-              let contact = relationship.contacts else {
-            return nil
-        }
-        
-        return [contact]
-    }
-    
     private var aiSuggestionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("AI 建议")
@@ -435,15 +337,15 @@ struct SocialNoteDetailView: View {
             return order1 < order2
         }
         
+        print("\n--- ContactInsight Debug Log ---")
+        print("Current Note ID: \(note.noteId?.uuidString ?? "nil")")
+        print("Related insights count: \(contactInsights.count)")
+        for insight in contactInsights {
+            print("Insight [id: \(insight.insightId?.uuidString ?? "nil")] category: \(insight.category ?? "nil") content: \(insight.content ?? "nil")")
+        }
+        print("--- End ContactInsight Debug Log ---\n")
+        
         isLoadingInsights = false
-    }
-    
-    private var updateInsights: [ContactInsight] {
-        contactInsights.filter { $0.category == "update" }
-    }
-    
-    private var reviewInsights: [ContactInsight] {
-        contactInsights.filter { $0.category == "review" }
     }
     
     private func refreshSuggestions() async {
