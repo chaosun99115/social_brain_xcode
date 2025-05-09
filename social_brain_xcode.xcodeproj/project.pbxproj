@@ -41,6 +41,7 @@
 		AFBF98962DCAA44300AF626E /* AIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98932DCAA44300AF626E /* AIChatService.swift */; };
 		AFBF98972DCAA44300AF626E /* DeepSeekChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */; };
 		AFDDDC8F2DCE7B0900425764 /* SystemPrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */; };
+		AFDDDC922DCEA93E00425764 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = AFDDDC912DCEA93E00425764 /* MarkdownUI */; };
 		AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */; };
 		AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBA2DA075730001DD70 /* Assets.xcassets */; };
 		AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBD2DA075730001DD70 /* Preview Assets.xcassets */; };
@@ -109,6 +110,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFDDDC922DCEA93E00425764 /* MarkdownUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -400,6 +402,9 @@
 			dependencies = (
 			);
 			name = social_brain_xcode;
+			packageProductDependencies = (
+				AFDDDC912DCEA93E00425764 /* MarkdownUI */,
+			);
 			productName = social_brain_xcode;
 			productReference = AFF98BB32DA075720001DD70 /* social_brain_xcode.app */;
 			productType = "com.apple.product-type.application";
@@ -429,6 +434,9 @@
 				"zh-Hans",
 			);
 			mainGroup = AFF98BAA2DA075720001DD70;
+			packageReferences = (
+				AFDDDC902DCEA93E00425764 /* XCRemoteSwiftPackageReference "MarkdownUI" */,
+			);
 			productRefGroup = AFF98BB42DA075720001DD70 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -735,6 +743,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AFDDDC902DCEA93E00425764 /* XCRemoteSwiftPackageReference "MarkdownUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/MarkdownUI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AFDDDC912DCEA93E00425764 /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AFDDDC902DCEA93E00425764 /* XCRemoteSwiftPackageReference "MarkdownUI" */;
+			productName = MarkdownUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCVersionGroup section */
 		AFF98BC12DA075730001DD70 /* social_brain_xcode.xcdatamodeld */ = {
