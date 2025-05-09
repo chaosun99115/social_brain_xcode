@@ -566,20 +566,37 @@ struct MessageBubble: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(text)
-                .font(.body)
-                .foregroundColor(.primaryText)
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.inputBackground, Color.secondaryBackground]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+            if #available(iOS 15.0, *) {
+                Text(.init(text))
+                    .font(.body)
+                    .foregroundColor(.primaryText)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.inputBackground, Color.secondaryBackground]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .cornerRadius(10)
-                .shadow(color: Color.primaryText.opacity(0.05), radius: 1, x: 0, y: 1)
+                    .cornerRadius(10)
+                    .shadow(color: Color.primaryText.opacity(0.05), radius: 1, x: 0, y: 1)
+            } else {
+                Text(text)
+                    .font(.body)
+                    .foregroundColor(.primaryText)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.inputBackground, Color.secondaryBackground]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .cornerRadius(10)
+                    .shadow(color: Color.primaryText.opacity(0.05), radius: 1, x: 0, y: 1)
+            }
         }
         .padding(.horizontal, 0)
         .opacity(0.95)
@@ -629,12 +646,19 @@ struct AiBubble: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
                 // Message text
-                Text(text)
-                    .font(.body)
-                    .foregroundColor(.primaryText)
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
+                if #available(iOS 15.0, *) {
+                    Text(.init(text))
+                        .font(.body)
+                        .foregroundColor(.primaryText)
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Text(text)
+                        .font(.body)
+                        .foregroundColor(.primaryText)
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 // Action button
                 if let actionText = actionText {
                     // Divider with proper padding
