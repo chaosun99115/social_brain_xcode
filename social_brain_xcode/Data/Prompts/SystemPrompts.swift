@@ -1,17 +1,13 @@
 import Foundation
+import CoreData
 
 /// A collection of system prompts used throughout the app
 enum SystemPrompts {
     
     /// Base prompt that's common to all interactions
     static let basePrompt = """
-    You are an AI assistant for the Social Brain app, designed to help users enhance their social relationships.
-    Your responses should be:
-    - Empathetic and understanding
-    - Actionable and practical
-    - Focused on long-term relationship building
-    - Respectful of privacy and boundaries
-    """
+                            Follow the instructions strictly. Return the result in JSON format.
+                            """
     
     /// Contact-specific prompts
     enum Contact {
@@ -49,31 +45,41 @@ enum SystemPrompts {
     
     /// General social relationship prompts
     enum General {
-        /// Prompt for general social advice
-        static let socialAdvice = """
-        \(SystemPrompts.basePrompt)
+        static func noteUpdateSytemPrompt() -> String {
+            """
+            Follow the instructions strictly. Return the result in following JSON format.
+            {
+                "action": "improve",
+                "actionExplain": "你的笔记内容需要优化"
+            },
+            {
+                "action": "topic",
+                "actionExplain": "你可以探索相关话题"
+            },
+            {
+                "action": "followup",
+                "actionExplain": "这是行动建议"
+            }
+            """
+        }
         
-        You are providing general social relationship advice.
-        
-        Focus on:
-        - Building meaningful connections
-        - Developing social skills
-        - Maintaining healthy boundaries
-        - Creating value in relationships
-        """
-        
-        /// Prompt for conversation preparation
-        static let conversationPrep = """
-        \(SystemPrompts.basePrompt)
-        
-        You are helping prepare for social interactions.
-        
-        Focus on:
-        - Generating relevant conversation topics
-        - Identifying potential discussion points
-        - Suggesting follow-up questions
-        - Creating engaging dialogue opportunities
-        """
+        static func noteupdateUserPrompt(noteText: String, relatedNotes: [Note]) -> String {
+            """
+            \(SystemPrompts.basePrompt)
+            
+            You are analyzing a new note with the following content:
+            \(noteText)
+            
+            Related notes context:
+            \(relatedNotes.map { "- \($0.content ?? "No content")" }.joined(separator: "\n"))
+            
+            Focus on:
+            - Identifying patterns in interactions
+            - Suggesting conversation topics based on shared interests
+            - Providing insights about communication style
+            - Recommending ways to strengthen the relationship
+            """
+        }
     }
     
     /// Memory and follow-up prompts

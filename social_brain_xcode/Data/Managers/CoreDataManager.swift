@@ -10,6 +10,12 @@ class CoreDataManager {
         return PersistenceController.shared.container.viewContext
     }
     
+    func newBackgroundContext() -> NSManagedObjectContext {
+        let context = PersistenceController.shared.container.newBackgroundContext()
+        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        return context
+    }
+    
     func saveContext() {
         let context = viewContext
         if context.hasChanges {

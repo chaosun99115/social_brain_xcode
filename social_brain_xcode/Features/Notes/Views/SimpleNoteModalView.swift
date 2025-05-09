@@ -260,27 +260,35 @@ struct SimpleNoteModalView: View {
     }
     
     private func extractMentions(from text: String) -> [String] {
+        print("[SimpleNoteModalView] Starting mention extraction from text: \(text)")
+        
         // Match @ followed by one or more of: Chinese, English, numbers, underscore, hyphen, full-width parenthesis
         // Stop at whitespace or common punctuation
         let pattern = "@([\\u4e00-\\u9fa5A-Za-z0-9_\\-（）()]+)"
         let regex = try? NSRegularExpression(pattern: pattern)
         let nsString = text as NSString
         let results = regex?.matches(in: text, range: NSRange(location: 0, length: nsString.length)) ?? []
-        return results.map { match in
+        
+        let mentions = results.map { match in
             return nsString.substring(with: match.range(at: 1))
         }
+        
+        print("[SimpleNoteModalView] Found \(mentions.count) mentions: \(mentions)")
+        return mentions
     }
     
     private func saveNoteWithMentions(mentions: [String]) {
         isSaving = true
         
-        // Create note with mentions
-        if let _ = noteManager.createNoteWithMentions(content: noteText, type: .social, mentions: mentions) {
-            isSaving = false
-            dismiss()
-        } else {
-            isSaving = false
-            // TODO: Show error alert
+        Task {
+            // Create note with mentions
+            if let _ = await noteManager.createNoteWithMentions(content: noteText, type: .social, mentions: mentions) {
+                isSaving = false
+                dismiss()
+            } else {
+                isSaving = false
+                // TODO: Show error alert
+            }
         }
     }
 }

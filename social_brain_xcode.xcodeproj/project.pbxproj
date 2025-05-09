@@ -40,6 +40,7 @@
 		AFBF98952DCAA44300AF626E /* AIServiceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98922DCAA44300AF626E /* AIServiceManager.swift */; };
 		AFBF98962DCAA44300AF626E /* AIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98932DCAA44300AF626E /* AIChatService.swift */; };
 		AFBF98972DCAA44300AF626E /* DeepSeekChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */; };
+		AFDDDC8F2DCE7B0900425764 /* SystemPrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */; };
 		AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */; };
 		AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBA2DA075730001DD70 /* Assets.xcassets */; };
 		AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBD2DA075730001DD70 /* Preview Assets.xcassets */; };
@@ -87,6 +88,7 @@
 		AFBF98922DCAA44300AF626E /* AIServiceManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AIServiceManager.swift; sourceTree = "<group>"; };
 		AFBF98932DCAA44300AF626E /* AIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AIChatService.swift; sourceTree = "<group>"; };
 		AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeepSeekChatService.swift; sourceTree = "<group>"; };
+		AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemPrompts.swift; sourceTree = "<group>"; };
 		AFF98BB32DA075720001DD70 /* social_brain_xcode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = social_brain_xcode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = social_brain_xcodeApp.swift; sourceTree = "<group>"; };
 		AFF98BBA2DA075730001DD70 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -274,6 +276,7 @@
 			isa = PBXGroup;
 			children = (
 				AFF98BC12DA075730001DD70 /* social_brain_xcode.xcdatamodeld */,
+				AFDDDC8D2DCE7B0900425764 /* Prompts */,
 				AF56DC212DCBE13D00F56D6E /* SeedData */,
 				AFA2762B2DB03EE400C29B81 /* CoreData */,
 				AF6D11212DADA9B20071D444 /* Managers */,
@@ -333,6 +336,14 @@
 				AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		AFDDDC8D2DCE7B0900425764 /* Prompts */ = {
+			isa = PBXGroup;
+			children = (
+				AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */,
+			);
+			path = Prompts;
 			sourceTree = "<group>";
 		};
 		AFF98BAA2DA075720001DD70 = {
@@ -475,6 +486,7 @@
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
 				AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */,
 				AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */,
+				AFDDDC8F2DCE7B0900425764 /* SystemPrompts.swift in Sources */,
 				AFBF98902DCAA43B00AF626E /* AIConfig.swift in Sources */,
 				AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */,
 				AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */,

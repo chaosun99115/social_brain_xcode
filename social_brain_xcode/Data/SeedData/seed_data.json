@@ -139,35 +139,35 @@
     "contacts": [
         {
             "uniqueIdentifier": "contact_1",
-            "name": "张总（直属领导，产品部总监）",
+            "name": "张总",
             "createdAt": "2024-03-20T10:00:00Z",
             "updatedAt": "2024-03-20T10:00:00Z",
             "recordStatus": 1
         },
         {
             "uniqueIdentifier": "contact_2",
-            "name": "小周（同部门产品经理）",
+            "name": "小周",
             "createdAt": "2024-03-20T10:00:00Z",
             "updatedAt": "2024-03-20T10:00:00Z",
             "recordStatus": 1
         },
         {
             "uniqueIdentifier": "contact_3",
-            "name": "小赵（产品部实习生）",
+            "name": "小赵",
             "createdAt": "2024-03-20T10:00:00Z",    
             "updatedAt": "2024-03-20T10:00:00Z",
             "recordStatus": 1
         },
         {
             "uniqueIdentifier": "contact_4",
-            "name": "李总（技术部总监）",
+            "name": "李总",
             "createdAt": "2024-03-20T10:00:00Z",
             "updatedAt": "2024-03-20T10:00:00Z",
             "recordStatus": 1
         },
         {
             "uniqueIdentifier": "contact_5",
-            "name": "陈总（市场部总监）",
+            "name": "陈总",
             "createdAt": "2024-03-20T10:00:00Z",
             "updatedAt": "2024-03-20T10:00:00Z",
             "recordStatus": 1
