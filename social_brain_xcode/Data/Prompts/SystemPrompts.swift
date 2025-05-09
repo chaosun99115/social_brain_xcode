@@ -73,11 +73,6 @@ enum SystemPrompts {
             Related notes context:
             \(relatedNotes.map { "- \($0.content ?? "No content")" }.joined(separator: "\n"))
             
-            Focus on:
-            - Identifying patterns in interactions
-            - Suggesting conversation topics based on shared interests
-            - Providing insights about communication style
-            - Recommending ways to strengthen the relationship
             """
         }
     }

@@ -198,7 +198,8 @@ class NoteManager: ObservableObject {
     
     // MARK: - Background Processing
     private func processNoteInBackground(note: Note) async {
-        print("📝 Starting background processing for note: \(note.noteId?.uuidString ?? "unknown")")
+        
+        print("==== Starting background processing for note: \(note.noteId?.uuidString ?? "unknown") ====")
         print("📝 Note content: \(note.content ?? "")")
         
         // Create a background context
@@ -217,37 +218,41 @@ class NoteManager: ObservableObject {
                 return
             }
             
-            // Fetch all notes for context in background
-            print("📚 Fetching all notes for context...")
-            let allNotes = try await backgroundContext.perform {
+            // Extract mentions from note text
+            print("🔍 Extracting mentions from note...")
+            let mentions = try await backgroundContext.perform {
+                guard let content = backgroundNote.content else { return [] }
+                // Match @ followed by one or more of: Chinese, English, numbers, underscore, hyphen, full-width parenthesis
+                // Stop at whitespace or common punctuation
+                let pattern = "@([\\u4e00-\\u9fa5A-Za-z0-9_\\-（）()]+)"
+                let regex = try NSRegularExpression(pattern: pattern)
+                let nsString = content as NSString
+                let results = regex.matches(in: content, range: NSRange(location: 0, length: nsString.length))
+                
+                return results.map { match in
+                    return nsString.substring(with: match.range(at: 1))
+                }
+            }
+            print("🔍 Found mentions in text: \(mentions)")
+            
+            // Fetch contacts based on mentions
+            print("👥 Fetching contacts for mentions...")
+            let relatedContacts = try await backgroundContext.perform {
+                let request: NSFetchRequest<Contact> = Contact.fetchRequest()
+                request.predicate = NSPredicate(format: "name IN %@", mentions)
+                return try backgroundContext.fetch(request)
+            }
+            print("👥 Found related contacts: \(relatedContacts)")
+            
+            // Fetch notes related to these contacts
+            print("📚 Fetching notes related to contacts...")
+            let relatedNotes = try await backgroundContext.perform {
                 let request: NSFetchRequest<Note> = Note.fetchRequest()
+                request.predicate = NSPredicate(format: "ANY contacts.contacts IN %@", relatedContacts)
                 request.sortDescriptors = [NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false)]
                 return try backgroundContext.fetch(request)
             }
-            print("📚 Found \(allNotes.count) total notes")
-            
-            // Get related contacts from the note in background
-            print("👥 Extracting contacts from note...")
-            let relationships = try await backgroundContext.perform {
-                let request: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
-                request.predicate = NSPredicate(format: "notes == %@", backgroundNote)
-                return try backgroundContext.fetch(request)
-            }
-            
-            let relatedContacts = relationships.compactMap { $0.contacts }
-            let contactNames = relatedContacts.compactMap { $0.name }.joined(separator: ", ")
-            print("👥 Found \(relatedContacts.count) related contacts: \(contactNames)")
-            
-            // Fetch notes related to these contacts in background
-            print("🔍 Fetching notes related to contacts...")
-            let relatedNotes = try await backgroundContext.perform {
-                allNotes.filter { note in
-                    let noteRequest: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
-                    noteRequest.predicate = NSPredicate(format: "notes == %@ AND contacts IN %@", note, relatedContacts)
-                    return (try? backgroundContext.count(for: noteRequest)) ?? 0 > 0
-                }
-            }
-            print("🔍 Found \(relatedNotes.count) related notes for contacts: \(contactNames)")
+            print("📚 Found \(relatedNotes.count) related notes")
             
             // Generate system and user prompts
             let systemPrompt = SystemPrompts.General.noteUpdateSytemPrompt()
