@@ -52,11 +52,38 @@ struct ChatCompletionResponse: Codable {
     }
 }
 
+// Add streaming response models
+struct ChatCompletionStreamResponse: Codable {
+    let id: String
+    let object: String
+    let created: Int
+    let model: String
+    let choices: [StreamChoice]
+    
+    struct StreamChoice: Codable {
+        let index: Int
+        let delta: StreamDelta
+        let finishReason: String?
+        
+        enum CodingKeys: String, CodingKey {
+            case index
+            case delta
+            case finishReason = "finish_reason"
+        }
+    }
+    
+    struct StreamDelta: Codable {
+        let content: String?
+        let role: MessageRole?
+    }
+}
+
 // MARK: - Service Protocol
 
 protocol AIChatServiceProtocol {
     func sendMessage(_ message: String, context: [AIChatMessage]) async throws -> ChatCompletionResponse
     func sendMessage(_ message: String) async throws -> ChatCompletionResponse
+    func sendStreamingMessage(_ message: String, context: [AIChatMessage], onChunk: @escaping (String) -> Void) async throws
 }
 
 // MARK: - Service Errors

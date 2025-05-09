@@ -10,10 +10,11 @@ struct SocialBrainView: View {
     // Context data
     @State private var contextContact: Contact?
     @State private var contextNotes: [Note] = []
+    @State private var systemPrompt: String = ""
     
     @State private var inputText = ""
     @State private var messages = [SocialBrainMessage]()
-    @State private var suggestedQuestions = SocialBrainMessage.mockMessages.filter { $0.isFromUser }
+    @State private var suggestedQuestions: [SocialBrainMessage] = []
     @EnvironmentObject var localizationManager: LocalizationManager
     @State private var isConversationActive = false
     @State private var scrollToBottomID = UUID()
@@ -24,18 +25,25 @@ struct SocialBrainView: View {
     @State private var errorMessage: String?
     @State private var showError = false
     
+    @State private var currentStreamingMessage: String = ""
+    @State private var isStreaming = false
+    
     private let aiServiceManager = AIServiceManager.shared
     
-    // Context fetching
-    private func fetchContextInfo() async throws {
+    // System prompt generation
+    private func generateSystemPrompt() async throws {
+        print("==== Generating system prompt for sourceType: \(sourceType), sourceAction: \(sourceAction) ====")
+        var prompt = "system prompt"
+        
         switch (sourceType, sourceAction) {
         case ("contact", "general"):
-            // Fetch contact and related notes
+            print("[SocialBrainView] Fetching contact context for ID: \(sourceId)")
             let context = try await CoreDataManager.shared.viewContext
             let contactFetchRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
             contactFetchRequest.predicate = NSPredicate(format: "contactId == %@", sourceId as CVarArg)
             
             if let contact = try context.fetch(contactFetchRequest).first {
+                print("[SocialBrainView] Found contact: \(contact.name ?? "unnamed")")
                 contextContact = contact
                 
                 // Fetch related notes
@@ -44,231 +52,264 @@ struct SocialBrainView: View {
                 notesFetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)]
                 
                 contextNotes = try context.fetch(notesFetchRequest)
+                print("[SocialBrainView] Found \(contextNotes.count) related notes")
+                
+                prompt += "Contact is \(contact.name ?? "failed to load contact name"). "
+                
+                // Concatenate all notes
+                if !contextNotes.isEmpty {
+                    print("[SocialBrainView] Concatenating notes content...")
+                    let notesContent = contextNotes.compactMap { note -> String? in
+                        guard let content = note.content else { return nil }
+                        let dateFormatter = DateFormatter()
+                        dateFormatter.dateStyle = .medium
+                        let dateStr = note.createdAt.map { dateFormatter.string(from: $0) } ?? "unknown date"
+                        return "[\(dateStr)] \(content)"
+                    }.joined(separator: "\n")
+                    
+                    prompt += "Here are the notes about this contact:\n\(notesContent)\n"
+                    print("[SocialBrainView] Successfully concatenated \(contextNotes.count) notes")
+                } else {
+                    prompt += "No notes found for this contact. "
+                }
+            } else {
+                print("[SocialBrainView] No contact found for ID: \(sourceId)")
+                prompt += "contact + general (ID: \(sourceId)). "
+                prompt += "Focus on general relationship management, communication strategies, and maintaining healthy connections."
             }
-            
-        default:
-            // Handle other cases or do nothing
-            break
-        }
-    }
-    
-    // System prompt generation
-    private func generateSystemPrompt() -> String {
-        var prompt = "system prompt"
-        
-        switch (sourceType, sourceAction) {
+
         case ("contact", "insights"):
             prompt += "You are analyzing a specific contact with ID: \(sourceId). "
             prompt += "Focus on providing insights about this contact's relationship with the user, "
             prompt += "suggesting conversation topics, and identifying opportunities for deeper connection."
-        case ("contact", "general"):
-            if let contact = contextContact {
-                prompt += "Contact is \(contact.name ?? "failed to load contact name"). "
-                prompt += "total notes: \(contextNotes.count)  "
-            } else {
-                prompt += "contact + general (ID: \(sourceId)). "
-                prompt += "Focus on general relationship management, communication strategies, and maintaining healthy connections."
-            }
+            
         default:
             prompt += "You are providing general social relationship advice."
         }
         
         print("[SocialBrainView] Generated System Prompt: \(prompt)")
-        return prompt
+        systemPrompt = prompt
     }
     
     // Initial message based on context
     private func generateInitialMessage() -> String {
         switch (sourceType, sourceAction) {
-        case ("contact", "insights"):
-            return "Please analyze this contact and provide insights about our relationship."
         case ("contact", "general"):
             if let contact = contextContact {
-                return "How can I improve my relationship with \(contact.name ?? "this contact")?"
+                return "关于 \(contact.name ?? "这个联系人")，你想问什么"
             }
-            return "How can I improve my relationship with this contact?"
+            return "关于这个联系人，你想问什么"
+        case ("contact", "insights"):
+            return "Please analyze this contact and provide insights about our relationship."
         default:
             return "How can you help me with my social relationships?"
         }
     }
     
+    // Initialize suggested questions based on navigation source
+    private func initializeSuggestedQuestions() {
+        if sourceType == "contact" && sourceAction == "general" {
+            // Single question for contact navigation
+            if let contact = contextContact {
+                suggestedQuestions = [
+                    SocialBrainMessage(
+                        content: "关于 \(contact.name ?? "这个联系人")，你想问什么",
+                        isFromUser: true,
+                        timestamp: Date()
+                    )
+                ]
+            }
+        } else {
+            // Three questions for direct tab access
+            suggestedQuestions = [
+                SocialBrainMessage(
+                    content: "如何与这个联系人建立更深层次的关系？",
+                    isFromUser: true,
+                    timestamp: Date()
+                ),
+                SocialBrainMessage(
+                    content: "有什么话题可以增进我们的交流？",
+                    isFromUser: true,
+                    timestamp: Date()
+                ),
+                SocialBrainMessage(
+                    content: "如何更好地维护这段关系？",
+                    isFromUser: true,
+                    timestamp: Date()
+                )
+            ]
+        }
+    }
+    
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color.primaryBackground
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        // Dismiss keyboard when tapping empty areas
-                        isInputFocused = false
-                    }
-                
-                VStack(spacing: 0) {
-                    // Chat area
-                    ScrollViewReader { scrollProxy in
-                        ScrollView {
-                            VStack(spacing: 16) {
-                                // Top anchor for scrolling to top
-                                Color.clear.frame(height: 1)
-                                    .id(scrollToTopID)
-                                
-                                if isConversationActive {
-                                    // Show conversation
-                                    ForEach(messages) { message in
-                                        if message.isFromUser {
-                                            // User message
-                                            MessageBubble(
-                                                text: message.content,
-                                                isFromUser: true
-                                            )
-                                        } else {
-                                            // AI response
-                                            AiBubble(
-                                                text: message.content,
-                                                actionText: message.suggestedAction,
-                                                onActionTapped: {
-                                                    handleActionButtonTapped(actionText: message.suggestedAction ?? "")
-                                                }
-                                            )
-                                        }
-                                    }
-                                } else {
-                                    // Show suggested questions
-                                    ForEach(suggestedQuestions) { question in
-                                        SuggestedQuestionBubble(text: question.content)
-                                            .contentShape(Rectangle())
-                                            .onTapGesture {
-                                                handleSuggestedQuestion(question.content)
-                                            }
-                                    }
-                                }
-                                
-                                // Spacer at the bottom for input field
-                                Spacer().frame(height: 60)
-                                    .id(scrollToBottomID)
-                            }
-                            .padding(.horizontal)
-                            .padding(.top)
-                        }
-                        .simultaneousGesture(
-                            DragGesture().onChanged { _ in
-                                // Dismiss keyboard when scrolling
-                                isInputFocused = false
-                            }
-                        )
-                        .onChange(of: messages.count) { _ in
-                            withAnimation {
-                                scrollProxy.scrollTo(scrollToBottomID, anchor: .bottom)
-                            }
-                        }
-                        .onChange(of: isLoading) { _ in
-                            withAnimation {
-                                scrollProxy.scrollTo(scrollToBottomID, anchor: .bottom)
-                            }
-                        }
-                        .onChange(of: isConversationActive) { active in
-                            if !active {
-                                // When returning to default view, scroll to top
-                                withAnimation {
-                                    scrollProxy.scrollTo(scrollToTopID, anchor: .top)
-                                }
-                            }
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    // Input area
-                    VStack(spacing: 0) {
-                        if isConversationActive {
-                            // New chat button
-                            Button(action: startNewConversation) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "plus.circle")
-                                        .font(.system(size: 18))
-                                    
-                                    Text("new_chat".localized)
-                                        .font(.system(size: 16, weight: .medium))
-                                }
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, 16)
-                                .foregroundColor(.primary)
-                                .background(Color.clear)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                )
-                            }
-                            .padding(.horizontal)
-                            .padding(.bottom, 10)
-                        }
-                        
-                        // Input bar
-                        HStack {
-                            TextField("hint_text".localized, text: $inputText)
-                                .font(.body)
-                                .padding(16)
-                                .background(Color.inputBackground)
-                                .cornerRadius(25)
-                                .focused($isInputFocused)
-                                .onSubmit {
-                                    sendMessage()
-                                }
-                            
-                            Button(action: sendMessage) {
-                                Image(systemName: "arrow.up")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .frame(width: 44, height: 44)
-                                    .background(Color.primaryAction)
-                                    .clipShape(SwiftUI.Circle())
-                                    .shadow(color: Color.primaryText.opacity(0.1), radius: 2, x: 0, y: 1)
-                            }
-                            .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 10)
-                    }
-                    .background(Color.primaryBackground)
-                }
-                .contentShape(Rectangle()) // Make entire content area tappable
+        ZStack {
+            Color.primaryBackground
+                .ignoresSafeArea()
                 .onTapGesture {
-                    // Dismiss keyboard when tapping anywhere in the content
+                    // Dismiss keyboard when tapping empty areas
                     isInputFocused = false
                 }
-                
-                // Loading modal overlay
-                if showLoadingModal {
-                    LoadingModal()
+            
+            VStack(spacing: 0) {
+                // Chat area
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            // Top anchor for scrolling to top
+                            Color.clear.frame(height: 1)
+                                .id(scrollToTopID)
+                            
+                            if isConversationActive {
+                                // Show conversation
+                                ForEach(messages) { message in
+                                    if message.isFromUser {
+                                        // User message
+                                        MessageBubble(
+                                            text: message.content,
+                                            isFromUser: true
+                                        )
+                                    } else {
+                                        // AI response
+                                        AiBubble(
+                                            text: message.content,
+                                            actionText: message.suggestedAction,
+                                            onActionTapped: {
+                                                handleActionButtonTapped(actionText: message.suggestedAction ?? "")
+                                            }
+                                        )
+                                    }
+                                }
+                            } else {
+                                // Show suggested questions
+                                ForEach(suggestedQuestions) { question in
+                                    SuggestedQuestionBubble(text: question.content)
+                                        .contentShape(Rectangle())
+                                        .onTapGesture {
+                                            handleSuggestedQuestion(question.content)
+                                        }
+                                }
+                            }
+                            
+                            // Spacer at the bottom for input field
+                            Spacer().frame(height: 60)
+                                .id(scrollToBottomID)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top)
+                    }
+                    .simultaneousGesture(
+                        DragGesture().onChanged { _ in
+                            // Dismiss keyboard when scrolling
+                            isInputFocused = false
+                        }
+                    )
+                    .onChange(of: messages.count) { _ in
+                        withAnimation {
+                            scrollProxy.scrollTo(scrollToBottomID, anchor: .bottom)
+                        }
+                    }
+                    .onChange(of: isLoading) { _ in
+                        withAnimation {
+                            scrollProxy.scrollTo(scrollToBottomID, anchor: .bottom)
+                        }
+                    }
+                    .onChange(of: isConversationActive) { active in
+                        if !active {
+                            // When returning to default view, scroll to top
+                            withAnimation {
+                                scrollProxy.scrollTo(scrollToTopID, anchor: .top)
+                            }
+                        }
+                    }
                 }
-            }
-            .navigationTitle("社交大脑")
-            .gesture(
-                TapGesture()
-                    .onEnded { _ in
-                        // Ensure keyboard dismissal when tapping anywhere
-                        isInputFocused = false
-                    }
-            )
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(errorMessage ?? "An unknown error occurred")
-            }
-            .onAppear {
-                print("- sourceType: \(sourceType)")
-                print("- sourceAction: \(sourceAction)")
-                print("- sourceId: \(sourceId)")
                 
-                // Fetch context information
-                Task {
-                    do {
-                        try await fetchContextInfo()
-                        let prompt = generateSystemPrompt()
-                    } catch {
-                        print("[SocialBrainView] Error fetching context: \(error)")
-                        errorMessage = error.localizedDescription
-                        showError = true
+                Spacer()
+                
+                // Input area
+                VStack(spacing: 0) {
+                    if isConversationActive {
+                        // New chat button
+                        Button(action: startNewConversation) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.circle")
+                                    .font(.system(size: 18))
+                                
+                                Text("new_chat".localized)
+                                    .font(.system(size: 16, weight: .medium))
+                            }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .foregroundColor(.primary)
+                            .background(Color.clear)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, 10)
                     }
+                    
+                    // Input bar
+                    HStack {
+                        TextField("hint_text".localized, text: $inputText)
+                            .font(.body)
+                            .padding(16)
+                            .background(Color.inputBackground)
+                            .cornerRadius(25)
+                            .focused($isInputFocused)
+                            .onSubmit {
+                                sendMessage()
+                            }
+                        
+                        Button(action: sendMessage) {
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.primaryAction)
+                                .clipShape(SwiftUI.Circle())
+                                .shadow(color: Color.primaryText.opacity(0.1), radius: 2, x: 0, y: 1)
+                        }
+                        .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                }
+                .background(Color.primaryBackground)
+            }
+            .contentShape(Rectangle()) // Make entire content area tappable
+            .onTapGesture {
+                // Dismiss keyboard when tapping anywhere in the content
+                isInputFocused = false
+            }
+            
+            // Loading modal overlay
+            if showLoadingModal {
+                LoadingModal()
+            }
+        }
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "An unknown error occurred")
+        }
+        .onAppear {
+            print("- sourceType: \(sourceType)")
+            print("- sourceAction: \(sourceAction)")
+            print("- sourceId: \(sourceId)")
+            
+            // Initialize suggested questions
+            initializeSuggestedQuestions()
+            
+            // Generate system prompt
+            Task {
+                do {
+                    try await generateSystemPrompt()
+                } catch {
+                    print("[SocialBrainView] Error generating system prompt: \(error)")
+                    errorMessage = error.localizedDescription
+                    showError = true
                 }
             }
         }
@@ -317,9 +358,6 @@ struct SocialBrainView: View {
                     throw AIChatServiceError.unauthorized
                 }
                 
-                // Generate system prompt
-                let systemPrompt = generateSystemPrompt()
-                
                 // Prepare messages with system prompt
                 var chatMessages = aiServiceManager.convertToChatMessages(messages)
                 chatMessages.insert(AIChatMessage(role: .system, content: systemPrompt), at: 0)
@@ -329,23 +367,59 @@ struct SocialBrainView: View {
                     print("[SocialBrainView] Role: \(message.role), Content: \(message.content)")
                 }
                 
-                let response = try await chatService.sendMessage(trimmedText, context: chatMessages)
-                
-                print("[SocialBrainView] Received response from LLM:")
-                if let firstChoice = response.choices.first {
-                    print("[SocialBrainView] \(firstChoice.message.content)")
+                // Check if we should use streaming (only for Doubao)
+                if let doubaoService = chatService as? DoubaoChatService {
+                    isStreaming = true
+                    currentStreamingMessage = ""
+                    
+                    // Create a temporary message for streaming
+                    let streamingMessage = SocialBrainMessage(
+                        content: "",
+                        isFromUser: false,
+                        timestamp: Date()
+                    )
+                    messages.append(streamingMessage)
+                    
+                    var isFirstChunk = true
+                    try await doubaoService.sendStreamingMessage(trimmedText, context: chatMessages) { chunk in
+                        Task { @MainActor in
+                            currentStreamingMessage += chunk
+                            // Update the last message with the current streaming content
+                            if let lastIndex = messages.indices.last {
+                                messages[lastIndex].content = currentStreamingMessage
+                                
+                                // Dismiss loading on first chunk
+                                if isFirstChunk {
+                                    isLoading = false
+                                    isFirstChunk = false
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Streaming completed
+                    isStreaming = false
                 } else {
-                    print("[SocialBrainView] No content in response")
-                }
-                
-                await MainActor.run {
-                    let aiMessage = aiServiceManager.convertToSocialBrainMessage(response)
-                    messages.append(aiMessage)
-                    isLoading = false
+                    // Non-streaming response
+                    let response = try await chatService.sendMessage(trimmedText, context: chatMessages)
+                    
+                    print("[SocialBrainView] Received response from LLM:")
+                    if let firstChoice = response.choices.first {
+                        print("[SocialBrainView] \(firstChoice.message.content)")
+                    } else {
+                        print("[SocialBrainView] No content in response")
+                    }
+                    
+                    await MainActor.run {
+                        let aiMessage = aiServiceManager.convertToSocialBrainMessage(response)
+                        messages.append(aiMessage)
+                        isLoading = false
+                    }
                 }
             } catch {
                 await MainActor.run {
                     isLoading = false
+                    isStreaming = false
                     print("[SocialBrainView] Error caught: \(error) (\(type(of: error)))")
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     showError = true
@@ -359,11 +433,8 @@ struct SocialBrainView: View {
             isConversationActive = false
             messages.removeAll()
             isLoading = false
-            
-            // Send initial message based on context
-            let initialMessage = generateInitialMessage()
-            inputText = initialMessage
-            sendMessage()
+            inputText = ""
+            initializeSuggestedQuestions()
         }
     }
     

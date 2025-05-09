@@ -2,7 +2,7 @@ import Foundation
 
 struct SocialBrainMessage: Identifiable {
     let id = UUID()
-    let content: String
+    var content: String
     let isFromUser: Bool
     let timestamp: Date
     let suggestedAction: String?

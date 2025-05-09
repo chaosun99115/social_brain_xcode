@@ -104,4 +104,12 @@ class KIMIChatService: AIChatServiceProtocol {
             throw AIChatServiceError.networkError(error)
         }
     }
+    
+    func sendStreamingMessage(_ message: String, context: [AIChatMessage], onChunk: @escaping (String) -> Void) async throws {
+        // KIMI doesn't support streaming, so we'll use the regular response
+        let response = try await sendMessage(message, context: context)
+        if let content = response.choices.first?.message.content {
+            onChunk(content)
+        }
+    }
 } 
