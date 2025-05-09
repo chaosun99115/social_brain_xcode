@@ -62,7 +62,7 @@
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleContactRelationship" inverseName="contacts" inverseEntity="CircleContactRelationship"/>
         <relationship name="insights" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsightContactRelationship" inverseName="contacts" inverseEntity="InsightContactRelationship"/>
-        <relationship name="notes" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="contacts" inverseEntity="NoteContactRelationship"/>
+        <relationship name="notes" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="contacts" inverseEntity="NoteContactRelationship"/>
     </entity>
     <entity name="ContactInsight" representedClassName="ContactInsight" syncable="YES" codeGenerationType="class">
         <attribute name="category" optional="YES" attributeType="String"/>

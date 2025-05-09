@@ -29,13 +29,13 @@ struct SocialContactDetailView: View {
     }
     
     enum TabType: String, CaseIterable {
-        case summary = "汇总"
-        case notes = "笔记"
+        case summary = "关系备忘录"
+        case notes = "关联笔记"
         
         var localizedName: String {
             switch self {
-            case .summary: return "汇总"
-            case .notes: return "笔记"
+            case .summary: return "关系备忘录"
+            case .notes: return "关联笔记"
             }
         }
     }
@@ -441,11 +441,12 @@ struct NoteCardView: View {
                 .font(.headline)
                 .foregroundColor(.secondaryText)
             
-            Text(note.content ?? "")
-                .font(.body)
-                .foregroundColor(.primaryText)
-                .lineLimit(4)
-                .multilineTextAlignment(.leading)
+            if let content = note.content {
+                MentionTextView(text: content)
+                    .font(.body)
+                    .lineLimit(4)
+                    .multilineTextAlignment(.leading)
+            }
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)

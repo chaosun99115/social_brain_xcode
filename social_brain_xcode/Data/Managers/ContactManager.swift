@@ -120,13 +120,16 @@ class ContactManager: ObservableObject {
     
     // MARK: - Relationships
     func getNotesForContact(contactId: UUID) -> [Note] {
-        guard let contact = fetchContact(withId: contactId),
-              let relationship = contact.notes,
-              let note = relationship.notes else {
+        let request: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
+        request.predicate = NSPredicate(format: "contacts.contactId == %@", contactId as CVarArg)
+        
+        do {
+            let relationships = try context.fetch(request)
+            return relationships.compactMap { $0.notes }
+        } catch {
+            print("Error fetching notes for contact: \(error)")
             return []
         }
-        
-        return [note]
     }
     
     // MARK: - Note Count
@@ -136,22 +139,24 @@ class ContactManager: ObservableObject {
     
     func validateContactRelationships(_ contact: Contact) throws {
         // If contact has no relationships, that's valid
-        guard let relationship = contact.notes else {
-            return // No relationship is valid
+        guard let relationships = contact.notes as? Set<NoteContactRelationship> else {
+            return // No relationships is valid
         }
         
-        // Check if the relationship is invalid
-        if relationship.notes == nil {
-            // Clean up invalid relationship
-            context.delete(relationship)
-            
-            // Save changes
-            if context.hasChanges {
-                do {
-                    try context.save()
-                } catch {
-                    print("Error cleaning up invalid relationship: \(error)")
-                }
+        // Check each relationship
+        for relationship in relationships {
+            if relationship.notes == nil {
+                // Clean up invalid relationship
+                context.delete(relationship)
+            }
+        }
+        
+        // Save changes if any relationships were deleted
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                print("Error cleaning up invalid relationships: \(error)")
             }
         }
     }
