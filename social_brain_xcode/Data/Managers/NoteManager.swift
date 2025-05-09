@@ -256,13 +256,23 @@ class NoteManager: ObservableObject {
             
             // Generate system and user prompts
             let systemPrompt = SystemPrompts.General.noteUpdateSytemPrompt()
+            print("🤖 System Prompt: \(systemPrompt)")
+            
+            // Log the note text and related data before generating user prompt
+            print("📝 Original note text: \(backgroundNote.content ?? "nil")")
+            print("👥 Related contacts count: \(relatedContacts.count)")
+            let contactNames = relatedContacts.compactMap { $0.name }
+            for name in contactNames {
+                print("👥 Contact name: \(name)")
+            }
+            print("📚 Related notes count: \(relatedNotes.count)")
+            
             let userPrompt = SystemPrompts.General.noteupdateUserPrompt(
                 noteText: backgroundNote.content ?? "",
-                relatedNotes: relatedNotes
+                relatedNotes: relatedNotes,
+                contactNames: contactNames
             )
-            
-            print("🤖 Generated System Prompt: \(systemPrompt)")
-            print("🤖 Generated User Prompt: \(userPrompt)")
+            print("🤖 User Prompt: \(userPrompt)")
             
             // Get AI service and send request
             guard let chatService = AIServiceManager.shared.getChatService() else {

@@ -4,6 +4,9 @@ import CoreData
 /// A collection of system prompts used throughout the app
 enum SystemPrompts {
     
+    /// Type alias to avoid naming conflicts with the Contact enum
+    typealias ContactEntity = Contact
+    
     /// Base prompt that's common to all interactions
     static let basePrompt = """
                             Follow the instructions strictly. Return the result in JSON format.
@@ -63,16 +66,24 @@ enum SystemPrompts {
             """
         }
         
-        static func noteupdateUserPrompt(noteText: String, relatedNotes: [Note]) -> String {
+        static func noteupdateUserPrompt(noteText: String, relatedNotes: [Note], contactNames: [String]) -> String {
             """
             \(SystemPrompts.basePrompt)
             
             You are analyzing a new note with the following content:
             \(noteText)
             
+            Related contacts in this note:
+            \(contactNames.map { "- \($0)" }.joined(separator: "\n"))
+            
             Related notes context:
             \(relatedNotes.map { "- \($0.content ?? "No content")" }.joined(separator: "\n"))
             
+            Focus on:
+            - Identifying patterns in interactions with these contacts
+            - Suggesting conversation topics based on shared interests
+            - Providing insights about communication style
+            - Recommending ways to strengthen the relationships
             """
         }
     }
