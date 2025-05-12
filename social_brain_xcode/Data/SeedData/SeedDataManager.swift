@@ -6,6 +6,12 @@ enum SeedDataSource {
     case remote
 }
 
+enum SeedDataScenario: String {
+    case changedJob = "changed_job"
+    case changedSchool = "changed_school"
+    case careerPivot = "career_pivot"
+}
+
 final class SeedDataManager {
     static let shared = SeedDataManager()
     
@@ -57,10 +63,36 @@ final class SeedDataManager {
         return entityUUIDs[identifier]
     }
     
+    // MARK: - Scenario Management
+    
+    private func loadScenarioData(from data: Data, scenario: SeedDataScenario) throws -> SeedData {
+        print("\n[SeedDataManager] Loading scenario data for: \(scenario.rawValue)")
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        struct ScenarioContainer: Codable {
+            let scenarios: [String: SeedData]
+        }
+        
+        print("[SeedDataManager] Decoding JSON data...")
+        let container = try decoder.decode(ScenarioContainer.self, from: data)
+        guard let scenarioData = container.scenarios[scenario.rawValue] else {
+            print("[SeedDataManager] ❌ ERROR: Scenario '\(scenario.rawValue)' not found in seed data")
+            throw NSError(domain: "SeedDataManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "Scenario not found"])
+        }
+        
+        print("[SeedDataManager] ✅ Successfully loaded scenario data:")
+        print("- Found \(scenarioData.notes.count) notes")
+        print("- Found \(scenarioData.contacts.count) contacts")
+        print("- Found \(scenarioData.contactInsights.count) insights")
+        return scenarioData
+    }
+    
     // MARK: - Core Data Import
     
-    func importSeedData(into context: NSManagedObjectContext) async throws {
-        print("\n[SeedDataManager] Starting seed data import...")
+    func importSeedData(into context: NSManagedObjectContext, scenario: SeedDataScenario? = nil) async throws {
+        print("\n[SeedDataManager] ===== Starting Seed Data Import =====")
+        print("[SeedDataManager] Mode: \(scenario?.rawValue ?? "Full Import")")
         
         // Check if sample data already exists
         let noteFetchRequest: NSFetchRequest<Note> = Note.fetchRequest()
@@ -68,33 +100,39 @@ final class SeedDataManager {
         let existingNotes: [Note]
         do {
             existingNotes = try context.fetch(noteFetchRequest)
-            print("[SeedDataManager] Found \(existingNotes.count) existing notes with type 0")
+            print("[SeedDataManager] 📊 Found \(existingNotes.count) existing sample notes")
+            if !existingNotes.isEmpty {
+                print("[SeedDataManager] ⚠️ Sample data already exists, aborting import")
+                throw NSError(domain: "SeedDataManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Sample data already exists"])
+            }
         } catch {
-            print("[SeedDataManager] Error fetching existing notes: \(error)")
+            print("[SeedDataManager] ❌ Error checking existing notes: \(error)")
             throw error
         }
-        if !existingNotes.isEmpty {
-            print("[SeedDataManager] Sample data already exists, aborting import")
-            throw NSError(domain: "SeedDataManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Sample data already exists"])
-        }
         
-        print("[SeedDataManager] Loading seed data...")
+        print("\n[SeedDataManager] 📥 Loading seed data...")
         let data: Data
         do {
             data = try await loadSeedData()
-            print("[SeedDataManager] Loaded seed data, size: \(data.count) bytes")
+            print("[SeedDataManager] ✅ Loaded seed data file (\(data.count) bytes)")
         } catch {
-            print("[SeedDataManager] Error loading seed data: \(error)")
+            print("[SeedDataManager] ❌ Error loading seed data: \(error)")
             throw error
         }
         
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
         let seedData: SeedData
         do {
-            seedData = try decoder.decode(SeedData.self, from: data)
-            print("[SeedDataManager] Successfully decoded seed data:")
+            if let scenario = scenario {
+                print("\n[SeedDataManager] 🎯 Loading specific scenario: \(scenario.rawValue)")
+                seedData = try loadScenarioData(from: data, scenario: scenario)
+            } else {
+                print("\n[SeedDataManager] 📦 Loading complete seed data")
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .iso8601
+                seedData = try decoder.decode(SeedData.self, from: data)
+            }
+            
+            print("\n[SeedDataManager] 📊 Data Summary:")
             print("- Notes: \(seedData.notes.count)")
             print("- Contacts: \(seedData.contacts.count)")
             print("- Contact Insights: \(seedData.contactInsights.count)")
@@ -102,20 +140,20 @@ final class SeedDataManager {
             print("- Insight-Contact Relationships: \(seedData.insightContactRelationships.count)")
         } catch {
             if let jsonString = String(data: data, encoding: .utf8) {
-                print("[SeedDataManager] Raw JSON: \n\(jsonString)")
+                print("\n[SeedDataManager] 📄 Raw JSON Data:")
+                print(jsonString)
             }
-            print("[SeedDataManager] JSON Decoding Error: \(error)")
+            print("\n[SeedDataManager] ❌ JSON Decoding Error: \(error)")
             throw error
         }
         
         // Clear previous UUID mapping
         entityUUIDs.removeAll()
+        print("\n[SeedDataManager] 🔄 Starting entity creation...")
         
         try await context.perform {
-            print("\n[SeedDataManager] Starting entity creation...")
-            
             // Import Notes
-            print("\n[SeedDataManager] Importing notes...")
+            print("\n[SeedDataManager] 📝 Importing \(seedData.notes.count) notes...")
             for noteData in seedData.notes {
                 let note = Note(context: context)
                 let noteUUID = self.generateAndStoreUUID(for: noteData.uniqueIdentifier)
@@ -127,11 +165,11 @@ final class SeedDataManager {
                 note.updatedAt = noteData.updatedAt
                 note.recordStatus = noteData.recordStatus
                 note.isArchived = false
-                print("- Created note: \(noteUUID) with type \(noteData.type)")
             }
+            print("[SeedDataManager] ✅ Notes imported")
             
             // Import Contacts
-            print("\n[SeedDataManager] Importing contacts...")
+            print("\n[SeedDataManager] 👥 Importing \(seedData.contacts.count) contacts...")
             for contactData in seedData.contacts {
                 let contact = Contact(context: context)
                 let contactUUID = self.generateAndStoreUUID(for: contactData.uniqueIdentifier)
@@ -140,11 +178,11 @@ final class SeedDataManager {
                 contact.createdAt = contactData.createdAt
                 contact.updatedAt = contactData.updatedAt
                 contact.recordStatus = contactData.recordStatus
-                print("- Created contact: \(contactUUID) with name \(contactData.name)")
             }
+            print("[SeedDataManager] ✅ Contacts imported")
             
             // Import Contact Insights
-            print("\n[SeedDataManager] Importing contact insights...")
+            print("\n[SeedDataManager] 💡 Importing \(seedData.contactInsights.count) insights...")
             for insightData in seedData.contactInsights {
                 let insight = ContactInsight(context: context)
                 let insightUUID = self.generateAndStoreUUID(for: insightData.uniqueIdentifier)
@@ -156,34 +194,35 @@ final class SeedDataManager {
                 insight.createdAt = insightData.createdAt
                 insight.updatedAt = insightData.updatedAt
                 insight.recordStatus = insightData.recordStatus
-                print("- Created insight: \(insightUUID) with type \(insightData.type)")
             }
+            print("[SeedDataManager] ✅ Insights imported")
             
             // Save context after creating all entities
-            print("\n[SeedDataManager] Saving context after entity creation...")
+            print("\n[SeedDataManager] 💾 Saving context after entity creation...")
             do {
                 try context.save()
-                print("[SeedDataManager] Context saved successfully")
+                print("[SeedDataManager] ✅ Context saved successfully")
             } catch {
-                print("[SeedDataManager] Error saving context after entity creation: \(error)")
+                print("[SeedDataManager] ❌ Error saving context after entity creation: \(error)")
                 throw error
             }
             
             // Create Note-Contact Relationships
-            print("\n[SeedDataManager] Creating note-contact relationships...")
+            print("\n[SeedDataManager] 🔗 Creating \(seedData.noteContactRelationships.count) note-contact relationships...")
+            var relationshipErrors = 0
             for relationshipData in seedData.noteContactRelationships {
                 let noteUUID = self.getUUID(for: relationshipData.noteIdentifier)
                 let contactUUID = self.getUUID(for: relationshipData.contactIdentifier)
+                
                 if noteUUID == nil || contactUUID == nil {
-                    print("[SeedDataManager] ERROR: UUID missing for note or contact in relationship")
-                    print("- Note Identifier: \(relationshipData.noteIdentifier), UUID: \(String(describing: noteUUID))")
-                    print("- Contact Identifier: \(relationshipData.contactIdentifier), UUID: \(String(describing: contactUUID))")
+                    relationshipErrors += 1
+                    continue
                 }
+                
                 let relationship = NoteContactRelationship(context: context)
                 relationship.relationshipId = UUID()
                 relationship.createdAt = relationshipData.createdAt
                 
-                // Fetch note and contact using their UUIDs
                 let noteRequest: NSFetchRequest<Note> = Note.fetchRequest()
                 noteRequest.predicate = NSPredicate(format: "noteId == %@", noteUUID! as CVarArg)
                 
@@ -194,32 +233,34 @@ final class SeedDataManager {
                 let contacts = try? context.fetch(contactRequest)
                 
                 guard let note = notes?.first, let contact = contacts?.first else {
-                    print("[SeedDataManager] Warning: Could not find note or contact for relationship")
-                    print("- Note Identifier: \(relationshipData.noteIdentifier)")
-                    print("- Contact Identifier: \(relationshipData.contactIdentifier)")
+                    relationshipErrors += 1
                     continue
                 }
                 
                 relationship.notes = note
                 relationship.contacts = contact
-                print("- Created relationship between note \(note.noteId?.uuidString ?? "nil") and contact \(contact.name ?? "unnamed")")
             }
+            if relationshipErrors > 0 {
+                print("[SeedDataManager] ⚠️ \(relationshipErrors) note-contact relationships failed to create")
+            }
+            print("[SeedDataManager] ✅ Note-contact relationships created")
             
             // Create Insight-Contact Relationships
-            print("\n[SeedDataManager] Creating insight-contact relationships...")
+            print("\n[SeedDataManager] 🔗 Creating \(seedData.insightContactRelationships.count) insight-contact relationships...")
+            relationshipErrors = 0
             for relationshipData in seedData.insightContactRelationships {
                 let contactUUID = self.getUUID(for: relationshipData.contactIdentifier)
                 let insightUUID = self.getUUID(for: relationshipData.insightIdentifier)
+                
                 if contactUUID == nil || insightUUID == nil {
-                    print("[SeedDataManager] ERROR: UUID missing for contact or insight in relationship")
-                    print("- Contact Identifier: \(relationshipData.contactIdentifier), UUID: \(String(describing: contactUUID))")
-                    print("- Insight Identifier: \(relationshipData.insightIdentifier), UUID: \(String(describing: insightUUID))")
+                    relationshipErrors += 1
+                    continue
                 }
+                
                 let relationship = InsightContactRelationship(context: context)
                 relationship.relationshipId = UUID()
                 relationship.createdAt = relationshipData.createdAt
                 
-                // Fetch contact and insight using their UUIDs
                 let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
                 contactRequest.predicate = NSPredicate(format: "contactId == %@", contactUUID! as CVarArg)
                 
@@ -230,66 +271,36 @@ final class SeedDataManager {
                 let insights = try? context.fetch(insightRequest)
                 
                 guard let contact = contacts?.first, let insight = insights?.first else {
-                    print("[SeedDataManager] Warning: Could not find contact or insight for relationship")
-                    print("- Contact Identifier: \(relationshipData.contactIdentifier)")
-                    print("- Insight Identifier: \(relationshipData.insightIdentifier)")
+                    relationshipErrors += 1
                     continue
                 }
                 
                 relationship.contacts = contact
                 relationship.insights = insight
-                print("- Created relationship between insight \(insight.insightId?.uuidString ?? "nil") and contact \(contact.name ?? "unnamed")")
             }
+            if relationshipErrors > 0 {
+                print("[SeedDataManager] ⚠️ \(relationshipErrors) insight-contact relationships failed to create")
+            }
+            print("[SeedDataManager] ✅ Insight-contact relationships created")
             
-            print("\n[SeedDataManager] Saving final context...")
+            print("\n[SeedDataManager] 💾 Saving final context...")
             do {
                 try context.save()
-                print("[SeedDataManager] Final context save successful")
+                print("[SeedDataManager] ✅ Final context save successful")
             } catch {
-                print("[SeedDataManager] Error saving final context: \(error)")
+                print("[SeedDataManager] ❌ Error saving final context: \(error)")
                 throw error
             }
             
             // Verify the data was imported correctly
-            print("\n[SeedDataManager] Verifying imported data...")
+            print("\n[SeedDataManager] 🔍 Verifying imported data...")
             let finalNoteRequest: NSFetchRequest<Note> = Note.fetchRequest()
             let finalNotes = (try? context.fetch(finalNoteRequest)) ?? []
+            print("\n[SeedDataManager] 📊 Final Data Summary:")
             print("- Total notes in database: \(finalNotes.count)")
-            for note in finalNotes {
-                print("- Note: \(note.noteId?.uuidString ?? "nil")")
-                print("  Content: \(note.content ?? "nil")")
-                print("  Type: \(note.type)")
-                print("  Is Archived: \(note.isArchived)")
-                if let relationships = note.contacts as? Set<NoteContactRelationship> {
-                    for relationship in relationships {
-                        print("  Has Contact: \(relationship.contacts?.name ?? "nil")")
-                    }
-                } else {
-                    print("  No Contact Relationship")
-                }
-            }
-            
-            // Verify Contact Insights
-            print("\n[SeedDataManager] Verifying contact insights...")
-            let finalInsightRequest: NSFetchRequest<ContactInsight> = ContactInsight.fetchRequest()
-            let finalInsights = (try? context.fetch(finalInsightRequest)) ?? []
-            print("- Total insights in database: \(finalInsights.count)")
-            for insight in finalInsights {
-                print("- Insight: \(insight.insightId?.uuidString ?? "nil")")
-                print("  Type: \(insight.type ?? "nil")")
-                print("  Category: \(insight.category ?? "nil")")
-                print("  Content: \(insight.content ?? "nil")")
-                if let relationships = insight.contacts as? Set<InsightContactRelationship> {
-                    for relationship in relationships {
-                        print("  Has Contact: \(relationship.contacts?.name ?? "nil")")
-                    }
-                } else {
-                    print("  No Contact Relationship")
-                }
-            }
         }
         
-        print("\n[SeedDataManager] Seed data import completed")
+        print("\n[SeedDataManager] ===== Seed Data Import Completed =====")
     }
 }
 

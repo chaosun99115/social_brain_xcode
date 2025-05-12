@@ -18,13 +18,13 @@ struct MainTabView: View {
             
             SocialNotesView()
                 .tabItem {
-                    Label("笔记", systemImage: "doc.text")
+                    Label("社交笔记", systemImage: "doc.text")
                 }
                 .tag(1)
             
             SocialContactView()
                 .tabItem {
-                    Label("联系人", systemImage: "person.2")
+                    Label("社交关系", systemImage: "person.2")
                 }
                 .tag(2)
         }

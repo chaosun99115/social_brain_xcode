@@ -3,7 +3,9 @@ import CoreData
 
 struct SocialContactView: View {
     @State private var searchText = ""
+    @State private var selectedTab = 0 // 0 for 熟人, 1 for 圈子
     @EnvironmentObject var localizationManager: LocalizationManager
+    @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var contactManager = ContactManager.shared
     @State private var contacts: [Contact] = []
     @State private var isLoading = true
@@ -53,10 +55,27 @@ struct SocialContactView: View {
     }
     
     var filteredContacts: [Contact] {
-        if searchText.isEmpty {
-            return contacts
+        let filtered: [Contact]
+        if appModeManager.isSampleMode {
+            filtered = contacts
+        } else {
+            // Filter contacts based on tab selection and note type
+            filtered = contacts.filter { contact in
+                guard let contactId = contact.contactId else { return false }
+                let notes = ContactManager.shared.getNotesForContact(contactId: contactId)
+                let hasValidNotes = notes.contains(where: { $0.type != 0 })
+                
+                // For 熟人 tab (selectedTab == 0), show contacts with type 1 notes
+                // For 圈子 tab (selectedTab == 1), show contacts with type 2 notes
+                let noteType = selectedTab == 0 ? 1 : 2
+                return hasValidNotes && notes.contains(where: { $0.type == noteType })
+            }
         }
-        return contacts.filter { contact in
+        
+        if searchText.isEmpty {
+            return filtered
+        }
+        return filtered.filter { contact in
             guard let name = contact.name else { return false }
             return name.localizedCaseInsensitiveContains(searchText)
         }
@@ -69,40 +88,107 @@ struct SocialContactView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    if isLoading {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle())
-                            .scaleEffect(1.5)
-                    } else if let error = errorMessage {
-                        errorView(message: error)
-                    } else if filteredContacts.isEmpty {
-                        emptySearchView
-                    } else {
-                        contactListView
+                    if appModeManager.isSampleMode {
+                        Button(action: {
+                            appModeManager.isSampleMode = false
+                            appModeManager.sampleModeType = nil
+                            Task { await loadContacts() }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                Text("退出示例模式")
+                            }
+                            .font(.footnote)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                            .background(Color(hex: "4085F3"))
+                            .cornerRadius(6)
+                            .padding(.horizontal, 100)
+                        }
+                        .padding(.top, 16)
+                        .padding(.bottom, 8)
                     }
+                    
+                    // Tab selector
+                    HStack(spacing: 0) {
+                        TabButton(
+                            title: "熟人",
+                            isSelected: selectedTab == 0,
+                            action: { 
+                                withAnimation(.easeInOut(duration: 0.4)) { 
+                                    selectedTab = 0 
+                                }
+                            }
+                        )
+                        
+                        TabButton(
+                            title: "圈子",
+                            isSelected: selectedTab == 1,
+                            action: { 
+                                withAnimation(.easeInOut(duration: 0.4)) { 
+                                    selectedTab = 1 
+                                }
+                            }
+                        )
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    
+                    // TabView for scrollable content
+                    TabView(selection: $selectedTab) {
+                        // 熟人 Tab
+                        ContactListView(
+                            contacts: filteredContacts,
+                            isLoading: isLoading,
+                            errorMessage: errorMessage,
+                            isRefreshing: isRefreshing,
+                            searchText: $searchText,
+                            onRefresh: { await refreshContacts() },
+                            selectedTab: 0
+                        )
+                        .tag(0)
+                        
+                        // 圈子 Tab
+                        ContactListView(
+                            contacts: filteredContacts,
+                            isLoading: isLoading,
+                            errorMessage: errorMessage,
+                            isRefreshing: isRefreshing,
+                            searchText: $searchText,
+                            onRefresh: { await refreshContacts() },
+                            selectedTab: 1
+                        )
+                        .tag(1)
+                    }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .animation(.easeInOut(duration: 0.4), value: selectedTab)
                 }
                 
                 // Floating Action Button
-                VStack {
-                    Spacer()
-                    HStack {
+                if !filteredContacts.isEmpty {
+                    VStack {
                         Spacer()
-                        Button(action: {
-                            // Add contact action
-                        }) {
-                            Image(systemName: "person.badge.plus")
-                                .font(.system(size: 22, weight: .bold, design: .default))
-                                .foregroundColor(.white)
-                                .frame(width: 56, height: 56)
-                                .background(Color.primaryAction)
-                                .clipShape(SwiftUI.Circle())
-                                .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                // Add contact action
+                            }) {
+                                Image(systemName: "person.badge.plus")
+                                    .font(.system(size: 22, weight: .bold, design: .default))
+                                    .foregroundColor(.white)
+                                    .frame(width: 56, height: 56)
+                                    .background(Color.primaryAction)
+                                    .clipShape(SwiftUI.Circle())
+                                    .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
+                            }
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 20)
                         }
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 20)
                     }
                 }
-                // Show overlay spinner only during refresh (not initial load)
+                
+                // Show overlay spinner only during refresh
                 if isRefreshing && !isLoading {
                     Color.primaryBackground.opacity(0.3)
                         .ignoresSafeArea()
@@ -111,80 +197,208 @@ struct SocialContactView: View {
                         .scaleEffect(1.5)
                 }
             }
-            .navigationTitle("联系人")
+            .navigationTitle("社交关系")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_contacts".localized)
-            .refreshable {
-                await refreshContacts()
-            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .task {
             await loadContacts()
         }
     }
+}
+
+// Extracted ContactListView for reuse
+struct ContactListView: View {
+    let contacts: [Contact]
+    let isLoading: Bool
+    let errorMessage: String?
+    let isRefreshing: Bool
+    @Binding var searchText: String
+    let onRefresh: () async -> Void
+    let selectedTab: Int
+    
+    @State private var showingSampleDialog = false
+    @State private var showingCreateContact = false // Placeholder for create action
+    @State private var isImportingSample = false
+    @State private var errorMessageSample: String? = nil
+    @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var appModeManager: AppModeManager
+    @State private var refreshTrigger = false
+    
+    var body: some View {
+        Group {
+            if isLoading || isImportingSample {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.5)
+            } else if let error = errorMessage ?? errorMessageSample {
+                errorView(message: error)
+            } else if contacts.isEmpty {
+                emptyTabView
+            } else {
+                List {
+                    ForEach(contacts, id: \ .contactId) { contact in
+                        NavigationLink(destination: SocialContactDetailView(contact: contact)) {
+                            ContactCardView(contact: contact)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                        .listRowSeparator(.visible)
+                        .listRowBackground(Color.cardBackground)
+                    }
+                }
+                .listStyle(.plain)
+                .refreshable {
+                    await onRefresh()
+                }
+            }
+        }
+        .confirmationDialog(
+            "选择一个用户场景。进入示例模式后，将会生成虚拟的示例数据，供你全面体验小日常的功能。示例模式不影响你的私有数据，退出示例模式后将恢复原状。",
+            isPresented: $showingSampleDialog,
+            titleVisibility: .visible
+        ) {
+            Button("换了一份新工作") { Task { await handleSampleModeSelection("换了一份新工作") } }
+            Button("孩子进了新学校") { Task { await handleSampleModeSelection("孩子进了新学校") } }
+            Button("打算职业转型") { Task { await handleSampleModeSelection("打算职业转型") } }
+            Button("取消", role: .cancel) {}
+        }
+        .alert(isPresented: Binding<Bool>(get: { errorMessageSample != nil }, set: { _ in errorMessageSample = nil })) {
+            Alert(title: Text("导入示例数据失败"), message: Text(errorMessageSample ?? "未知错误"), dismissButton: .default(Text("确定")))
+        }
+        // Placeholder for create contact/circle modal
+        .sheet(isPresented: $showingCreateContact) {
+            Text("创建功能待实现")
+                .font(.title)
+                .padding()
+        }
+    }
     
     private func errorView(message: String) -> some View {
         VStack(spacing: 16) {
             Spacer()
-            
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 48))
                 .foregroundColor(Color.tertiaryText)
-            
             Text(message)
                 .font(.headline)
                 .foregroundColor(Color.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
-            
             Button("Retry") {
                 Task {
-                    await loadContacts()
+                    await onRefresh()
                 }
             }
             .padding()
             .background(Color.primaryAction)
             .foregroundColor(.white)
             .cornerRadius(8)
-                
             Spacer()
         }
     }
     
-    private var emptySearchView: some View {
-        VStack(spacing: 16) {
+    private var emptyTabView: some View {
+        VStack(spacing: 32) {
             Spacer()
-            
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 48))
-                .foregroundColor(Color.tertiaryText)
-            
-            Text("no_contacts".localized)
-                .font(.headline)
-                .foregroundColor(Color.secondaryText)
-                
-            Text("add_contact".localized)
-                .font(.subheadline)
-                .foregroundColor(Color.tertiaryText)
-                
-            Spacer()
-        }
-    }
-    
-    private var contactListView: some View {
-        List {
-            ForEach(filteredContacts, id: \.contactId) { contact in
-                NavigationLink(destination: SocialContactDetailView(contact: contact)) {
-                    ContactCardView(contact: contact)
-                        .contentShape(Rectangle())
+            VStack(spacing: 12) {
+                if selectedTab == 0 {
+                    Text("在这里记录您的社交熟人")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    Text("\"社交大脑\"将协助你管理你的社交关系")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                } else {
+                    Text("在这里记录您的社交圈子")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    Text("\"社交大脑\"将协助你管理你的社交关系")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                .buttonStyle(PlainButtonStyle())
-                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                .listRowSeparator(.visible)
-                .listRowBackground(Color.cardBackground)
+            }
+            VStack(spacing: 16) {
+                Button(action: {
+                    showingSampleDialog = true
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: selectedTab == 0 ? "person.3.sequence.fill" : "person.2.circle")
+                        Text(selectedTab == 0 ? "查看示例熟人" : "查看示例圈子")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Color(hex: "4085F3"))
+                    .cornerRadius(8)
+                }
+                .padding(.horizontal, 60)
+                Button(action: {
+                    showingCreateContact = true
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: selectedTab == 0 ? "person.crop.circle.badge.plus" : "plus.circle")
+                        Text(selectedTab == 0 ? "创建熟人" : "创建圈子")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(Color.primaryAction)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.primaryAction, lineWidth: 1)
+                    )
+                }
+                .padding(.horizontal, 60)
+            }
+            Spacer()
+        }
+    }
+    
+    private func handleSampleModeSelection(_ mode: String) async {
+        isImportingSample = true
+        errorMessageSample = nil
+        let scenario: SeedDataScenario
+        switch mode {
+        case "换了一份新工作":
+            scenario = .changedJob
+        case "孩子进了新学校":
+            scenario = .changedSchool
+        case "打算职业转型":
+            scenario = .careerPivot
+        default:
+            isImportingSample = false
+            errorMessageSample = "未知示例场景"
+            return
+        }
+        do {
+            // Clear existing sample data
+            let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Note.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "type == %d", 0)
+            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+            try viewContext.execute(deleteRequest)
+            try viewContext.save()
+            // Import new sample data
+            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: scenario)
+            await MainActor.run {
+                appModeManager.isSampleMode = true
+                appModeManager.sampleModeType = mode
+                refreshTrigger.toggle()
+            }
+        } catch {
+            await MainActor.run {
+                errorMessageSample = error.localizedDescription
             }
         }
-        .listStyle(.plain)
+        isImportingSample = false
+        // Optionally trigger refresh in parent
+        await onRefresh()
     }
 }
 
@@ -221,6 +435,36 @@ struct ContactCardView: View {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full
         return formatter.localizedString(for: date, relativeTo: Date())
+    }
+}
+
+// Tab Button Component
+struct TabButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(isSelected ? .primaryAction : .secondaryText)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(
+                    VStack {
+                        Spacer()
+                        if isSelected {
+                            Rectangle()
+                                .fill(Color.primaryAction)
+                                .frame(height: 2)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+                    }
+                )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .animation(.easeInOut(duration: 0.4), value: isSelected)
     }
 }
 
