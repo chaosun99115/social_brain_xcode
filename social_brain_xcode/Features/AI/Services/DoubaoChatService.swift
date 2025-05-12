@@ -188,8 +188,8 @@ class DoubaoChatService: AIChatServiceProtocol {
             default:
                 // For non-200 responses, we need to collect the error message from the stream
                 var errorData = Data()
-                for try await byte in bytes {
-                    errorData.append(byte)
+                for try await line in bytes.lines {
+                    errorData.append(contentsOf: line.utf8)
                 }
                 
                 if let errorMessage = String(data: errorData, encoding: .utf8) {

@@ -57,6 +57,11 @@ struct SocialBrainView: View {
                 
                 prompt += "Contact is \(contact.name ?? "failed to load contact name"). "
                 
+                // Update suggested questions using the provider
+                await MainActor.run {
+                    initializeSuggestedQuestions()
+                }
+                
                 // Concatenate all notes
                 if !contextNotes.isEmpty {
                     print("[SocialBrainView] Concatenating notes content...")
@@ -90,6 +95,7 @@ struct SocialBrainView: View {
         
         print("[SocialBrainView] Generated System Prompt: \(prompt)")
         systemPrompt = prompt
+        
     }
     
     // Initial message based on context
@@ -110,35 +116,9 @@ struct SocialBrainView: View {
     // Initialize suggested questions based on navigation source
     private func initializeSuggestedQuestions() {
         if sourceType == "contact" && sourceAction == "general" {
-            // Single question for contact navigation
-            if let contact = contextContact {
-                suggestedQuestions = [
-                    SocialBrainMessage(
-                        content: "关于 \(contact.name ?? "这个联系人")，你想问什么",
-                        isFromUser: true,
-                        timestamp: Date()
-                    )
-                ]
-            }
+            suggestedQuestions = SuggestedQuestionsProvider.forContact(contextContact)
         } else {
-            // Three questions for direct tab access
-            suggestedQuestions = [
-                SocialBrainMessage(
-                    content: "如何与这个联系人建立更深层次的关系？",
-                    isFromUser: true,
-                    timestamp: Date()
-                ),
-                SocialBrainMessage(
-                    content: "有什么话题可以增进我们的交流？",
-                    isFromUser: true,
-                    timestamp: Date()
-                ),
-                SocialBrainMessage(
-                    content: "如何更好地维护这段关系？",
-                    isFromUser: true,
-                    timestamp: Date()
-                )
-            ]
+            suggestedQuestions = SuggestedQuestionsProvider.general()
         }
     }
     

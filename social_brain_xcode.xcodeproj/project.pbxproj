@@ -42,6 +42,7 @@
 		AFBF98972DCAA44300AF626E /* DeepSeekChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */; };
 		AFDDDC8F2DCE7B0900425764 /* SystemPrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */; };
 		AFDDDC922DCEA93E00425764 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = AFDDDC912DCEA93E00425764 /* MarkdownUI */; };
+		AFDDDC942DD2759200425764 /* SuggestedQuestionsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC932DD2759200425764 /* SuggestedQuestionsProvider.swift */; };
 		AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */; };
 		AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBA2DA075730001DD70 /* Assets.xcassets */; };
 		AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBD2DA075730001DD70 /* Preview Assets.xcassets */; };
@@ -90,6 +91,7 @@
 		AFBF98932DCAA44300AF626E /* AIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AIChatService.swift; sourceTree = "<group>"; };
 		AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeepSeekChatService.swift; sourceTree = "<group>"; };
 		AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemPrompts.swift; sourceTree = "<group>"; };
+		AFDDDC932DD2759200425764 /* SuggestedQuestionsProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuggestedQuestionsProvider.swift; sourceTree = "<group>"; };
 		AFF98BB32DA075720001DD70 /* social_brain_xcode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = social_brain_xcode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = social_brain_xcodeApp.swift; sourceTree = "<group>"; };
 		AFF98BBA2DA075730001DD70 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -204,6 +206,7 @@
 		AFA276222DB03C8C00C29B81 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				AFDDDC932DD2759200425764 /* SuggestedQuestionsProvider.swift */,
 				AFF98BD22DA4453F0001DD70 /* SocialBrainView.swift */,
 				AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */,
 			);
@@ -482,6 +485,7 @@
 				AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */,
 				AFBF98972DCAA44300AF626E /* DeepSeekChatService.swift in Sources */,
 				AF56DC2C2DCBE25900F56D6E /* AppDelegate.swift in Sources */,
+				AFDDDC942DD2759200425764 /* SuggestedQuestionsProvider.swift in Sources */,
 				AFF98BCE2DA0772F0001DD70 /* MainTabView.swift in Sources */,
 				AFBD50FD2DA739660066907B /* SocialContactDetailView.swift in Sources */,
 				AFBF98962DCAA44300AF626E /* AIChatService.swift in Sources */,
