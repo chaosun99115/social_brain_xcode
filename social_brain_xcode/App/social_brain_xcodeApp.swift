@@ -8,11 +8,25 @@
 import SwiftUI
 import CoreData
 
+class AppModeManager: ObservableObject {
+    @Published var isSampleMode: Bool = false {
+        didSet {
+            print("[AppModeManager] isSampleMode changed to \(isSampleMode)")
+        }
+    }
+    @Published var sampleModeType: String? = nil {
+        didSet {
+            print("[AppModeManager] sampleModeType changed to \(String(describing: sampleModeType))")
+        }
+    }
+}
+
 @main
 struct social_brain_xcodeApp: App {
     let persistenceController = PersistenceController.shared
     @StateObject private var localizationManager = LocalizationManager()
     @StateObject private var noteManager = NoteManager.shared
+    @StateObject private var appModeManager = AppModeManager()
     
     init() {
         AIConfig.configure()
@@ -24,6 +38,7 @@ struct social_brain_xcodeApp: App {
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(localizationManager)
                 .environmentObject(noteManager)
+                .environmentObject(appModeManager)
         }
     }
 }

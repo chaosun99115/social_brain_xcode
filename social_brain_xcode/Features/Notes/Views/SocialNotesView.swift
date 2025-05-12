@@ -8,7 +8,10 @@ struct SocialNotesView: View {
     @State private var showingNoteDetail = false
     @State private var refreshTrigger = false
     @State private var showingDebugMenu = false
+    @State private var showingSampleNoteModal = false
+    @State private var showingSampleNoteDialog = false
     @EnvironmentObject var noteManager: NoteManager
+    @EnvironmentObject var appModeManager: AppModeManager
     
     var filteredNotes: [SocialNote] {
         let notes = noteManager.fetchNotes()
@@ -30,28 +33,78 @@ struct SocialNotesView: View {
                 Color.primaryBackground
                     .ignoresSafeArea()
                 
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
-                            selectedNote = note
-                            showingNoteDetail = true
-                        })
-                        .padding(.top, 10)
-                        .id(refreshTrigger)
-                        
-                        // Add space at the bottom for better scrolling and to avoid FAB overlap
-                        Spacer().frame(height: 80)
+                if filteredNotes.isEmpty {
+                    VStack(spacing: 32) {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            Text("在这里记录您的社交互动")
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                            Text("\"社交大脑\"将协助您管理人际关系")
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        VStack(spacing: 16) {
+                            Button(action: {
+                                showingSampleNoteDialog = true
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "doc.text.magnifyingglass")
+                                    Text("查看示例笔记")
+                                }
+                                .font(.subheadline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 0)
+                                .background(Color(hex: "4085F3"))
+                                .cornerRadius(8)
+                            }
+                            .padding(.horizontal, 60)
+                            
+                            Button(action: {
+                                showingSimpleNoteModal = true
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "square.and.pencil")
+                                    Text("创建笔记")
+                                }
+                                .font(.subheadline)
+                                .foregroundColor(Color.primaryAction)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 0)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.primaryAction, lineWidth: 1)
+                                )
+                            }
+                            .padding(.horizontal, 60)
+                        }
+                        Spacer()
                     }
-                    .refreshable {
-                        // Trigger refresh when pulled down
-                        await refreshNotes()
-                        // Reset scroll position to top
-                        withAnimation {
-                            proxy.scrollTo("top", anchor: .top)
+                } else {
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
+                                selectedNote = note
+                                showingNoteDetail = true
+                            })
+                            .padding(.top, 10)
+                            .id(refreshTrigger)
+                            
+                            Spacer().frame(height: 80)
+                        }
+                        .refreshable {
+                            await refreshNotes()
+                            withAnimation {
+                                proxy.scrollTo("top", anchor: .top)
+                            }
                         }
                     }
                 }
-                
                 // Floating Action Button
                 VStack {
                     Spacer()
@@ -101,6 +154,28 @@ struct SocialNotesView: View {
             }
             .sheet(isPresented: $showingDebugMenu) {
                 DebugMenuView()
+            }
+            .confirmationDialog(
+                "选择一个用户场景。进入示例模式后，将会生成虚拟的示例数据，供你全面体验小日常的功能。示例模式不影响你的私有数据，退出示例模式后将恢复原状。",
+                isPresented: $showingSampleNoteDialog,
+                titleVisibility: .visible
+            ) {
+                Button("换了一份新工作") {
+                    appModeManager.isSampleMode = true
+                    appModeManager.sampleModeType = "换了一份新工作"
+                    print("[SocialNotesView] Entered sample mode: 换了一份新工作")
+                }
+                Button("孩子进了新学校") {
+                    appModeManager.isSampleMode = true
+                    appModeManager.sampleModeType = "孩子进了新学校"
+                    print("[SocialNotesView] Entered sample mode: 孩子进了新学校")
+                }
+                Button("打算职业转型") {
+                    appModeManager.isSampleMode = true
+                    appModeManager.sampleModeType = "打算职业转型"
+                    print("[SocialNotesView] Entered sample mode: 打算职业转型")
+                }
+                Button("取消", role: .cancel) {}
             }
             .background(
                 NavigationLink(
@@ -164,5 +239,31 @@ struct SocialNotesView_Previews: PreviewProvider {
         SocialNotesView()
             .environment(\.colorScheme, .dark)
             .environmentObject(NoteManager.shared)
+    }
+}
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 } 
