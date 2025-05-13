@@ -18,6 +18,9 @@ struct SocialContactDetailView: View {
     @State private var selectedContacts: Set<UUID> = []
     @State private var showingEditSheet = false
     @State private var showingSocialBrain = false
+    @State private var showingEditCircleSheet = false
+    @State private var isUpdatesExpanded = false
+    @State private var isReviewsExpanded = false
     
     // Context parameters for SocialBrain
     private var socialBrainContext: (sourceType: String, sourceAction: String, sourceId: String) {
@@ -88,16 +91,6 @@ struct SocialContactDetailView: View {
                     
                     // Bottom toolbar content
                     HStack(spacing: 0) {
-                        // Add Note button
-                        Button(action: {
-                            // Add note action
-                        }) {
-                            Image(systemName: "square.and.pencil")
-                                .font(.system(size: 24))
-                                .foregroundColor(.accentColor)
-                                .frame(maxWidth: .infinity)
-                        }
-                        
                         // AI Insights button
                         Button(action: {
                             showingSocialBrain = true
@@ -144,6 +137,12 @@ struct SocialContactDetailView: View {
             .onAppear {
                 print("[SocialContactDetailView] Opening SocialBrainView with context: type=\(socialBrainContext.sourceType), action=\(socialBrainContext.sourceAction), id=\(socialBrainContext.sourceId)")
             }
+        }
+        .sheet(isPresented: $showingEditCircleSheet) {
+            EditContactCirclesSheet(
+                contact: contact,
+                isPresented: $showingEditCircleSheet
+            )
         }
         .onAppear {
             loadContactNotes()
@@ -268,8 +267,7 @@ struct SocialContactDetailView: View {
                         }
                         Spacer()
                         Button(action: {
-                            // TODO: Show edit circle sheet
-                            // showingEditCircleSheet = true
+                            showingEditCircleSheet = true
                         }) {
                             Image(systemName: "square.and.pencil")
                                 .font(.system(size: 20, weight: .medium))
@@ -297,10 +295,11 @@ struct SocialContactDetailView: View {
                     SummarySectionHeader(title: "最新近况")
                     SectionContentWrapper {
                         VStack(alignment: .leading, spacing: 0) {
-                            ForEach(Array(updates.enumerated()), id: \.element.insightId) { idx, insight in
+                            let displayUpdates = isUpdatesExpanded ? updates : Array(updates.prefix(3))
+                            ForEach(Array(displayUpdates.enumerated()), id: \.element.insightId) { idx, insight in
                                 ContactDetailInsightRow(
                                     insight: insight,
-                                    isLast: idx == updates.count - 1,
+                                    isLast: idx == displayUpdates.count - 1,
                                     onTap: {
                                         selectedInsight = insight
                                         if let insightId = insight.insightId {
@@ -310,19 +309,44 @@ struct SocialContactDetailView: View {
                                     }
                                 )
                             }
+                            
+                            if updates.count > 3 {
+                                Divider()
+                                    .padding(.leading, 22)
+                                    .padding(.vertical, 8)
+                                
+                                Button(action: {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        isUpdatesExpanded.toggle()
+                                    }
+                                }) {
+                                    HStack {
+                                        Text(isUpdatesExpanded ? "收起" : "展开更多")
+                                            .font(.system(size: 15))
+                                            .foregroundColor(.primaryAction)
+                                        Image(systemName: isUpdatesExpanded ? "chevron.up" : "chevron.down")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(.primaryAction)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.vertical, 12)
+                                }
+                            }
                         }
                     }
                 }
+                
                 // 关系回顾
                 let reviews = contactInsights.filter { $0.category?.lowercased() == "review" }
                 if !reviews.isEmpty {
                     SummarySectionHeader(title: "关系回顾")
                     SectionContentWrapper {
                         VStack(alignment: .leading, spacing: 0) {
-                            ForEach(Array(reviews.enumerated()), id: \.element.insightId) { idx, insight in
+                            let displayReviews = isReviewsExpanded ? reviews : Array(reviews.prefix(3))
+                            ForEach(Array(displayReviews.enumerated()), id: \.element.insightId) { idx, insight in
                                 ContactDetailInsightRow(
                                     insight: insight,
-                                    isLast: idx == reviews.count - 1,
+                                    isLast: idx == displayReviews.count - 1,
                                     onTap: {
                                         selectedInsight = insight
                                         if let insightId = insight.insightId {
@@ -331,6 +355,29 @@ struct SocialContactDetailView: View {
                                         showingEditSheet = true
                                     }
                                 )
+                            }
+                            
+                            if reviews.count > 3 {
+                                Divider()
+                                    .padding(.leading, 22)
+                                    .padding(.vertical, 8)
+                                
+                                Button(action: {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        isReviewsExpanded.toggle()
+                                    }
+                                }) {
+                                    HStack {
+                                        Text(isReviewsExpanded ? "收起" : "展开更多")
+                                            .font(.system(size: 15))
+                                            .foregroundColor(.primaryAction)
+                                        Image(systemName: isReviewsExpanded ? "chevron.up" : "chevron.down")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(.primaryAction)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.vertical, 12)
+                                }
                             }
                         }
                     }
@@ -676,5 +723,78 @@ struct ContactDetailInsightRow: View {
         .onTapGesture {
             onTap?()
         }
+    }
+}
+
+// MARK: - EditContactCirclesSheet
+struct EditContactCirclesSheet: View {
+    let contact: Contact
+    @Binding var isPresented: Bool
+    @StateObject private var circleManager = CircleManager.shared
+    @State private var allCircles: [Circle] = []
+    @State private var selectedCircleIds: Set<UUID> = []
+    
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach(allCircles, id: \ .circleId) { circle in
+                    HStack {
+                        Text(circle.name ?? "圈子")
+                        Spacer()
+                        CheckboxView(isChecked: selectedCircleIds.contains(circle.circleId ?? UUID())) {
+                            toggleCircle(circle)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("选择所属圈子")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("完成") {
+                        isPresented = false
+                    }
+                }
+            }
+            .onAppear {
+                loadCircles()
+            }
+        }
+    }
+    
+    private func loadCircles() {
+        allCircles = circleManager.fetchCircles()
+        if let contactId = contact.contactId {
+            let related = circleManager.getCirclesForContact(contactId: contactId)
+            selectedCircleIds = Set(related.compactMap { $0.circleId })
+        }
+    }
+    
+    private func toggleCircle(_ circle: Circle) {
+        guard let circleId = circle.circleId, let contactId = contact.contactId else { return }
+        if selectedCircleIds.contains(circleId) {
+            // Remove
+            if circleManager.removeContactFromCircle(circleId: circleId, contactId: contactId) {
+                selectedCircleIds.remove(circleId)
+            }
+        } else {
+            // Add
+            if circleManager.addContactToCircle(circleId: circleId, contactId: contactId) {
+                selectedCircleIds.insert(circleId)
+            }
+        }
+    }
+}
+
+struct CheckboxView: View {
+    var isChecked: Bool
+    var onTap: () -> Void
+    var body: some View {
+        Button(action: onTap) {
+            Image(systemName: isChecked ? "checkmark.square.fill" : "square")
+                .foregroundColor(isChecked ? .accentColor : .secondary)
+                .font(.system(size: 22))
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }

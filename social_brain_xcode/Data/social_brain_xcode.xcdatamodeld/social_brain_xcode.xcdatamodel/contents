@@ -62,7 +62,7 @@
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="type" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleContactRelationship" inverseName="contacts" inverseEntity="CircleContactRelationship"/>
+        <relationship name="circles" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CircleContactRelationship" inverseName="contacts" inverseEntity="CircleContactRelationship"/>
         <relationship name="insights" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsightContactRelationship" inverseName="contacts" inverseEntity="InsightContactRelationship"/>
         <relationship name="notes" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="NoteContactRelationship" inverseName="contacts" inverseEntity="NoteContactRelationship"/>
     </entity>
