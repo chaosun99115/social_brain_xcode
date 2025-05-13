@@ -4,6 +4,7 @@ import CoreData
 struct SocialContact: Identifiable {
     let id: UUID
     let name: String
+    let type: Int16
     let createdAt: Date
     let updatedAt: Date
     let recordStatus: Int16
@@ -13,15 +14,17 @@ struct SocialContact: Identifiable {
         let contact = contact as! Contact
         self.id = contact.contactId ?? UUID()
         self.name = contact.name ?? ""
+        self.type = contact.type
         self.createdAt = contact.createdAt ?? Date()
         self.updatedAt = contact.updatedAt ?? Date()
         self.recordStatus = contact.recordStatus
     }
     
     // Initialize with default values
-    init(id: UUID = UUID(), name: String, createdAt: Date = Date(), updatedAt: Date = Date(), recordStatus: Int16 = 0) {
+    init(id: UUID = UUID(), name: String, type: Int16 = 0, createdAt: Date = Date(), updatedAt: Date = Date(), recordStatus: Int16 = 0) {
         self.id = id
         self.name = name
+        self.type = type
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.recordStatus = recordStatus
@@ -76,13 +79,14 @@ extension SocialContact {
                 contact = existingContact
             } else {
                 contact = Contact(context: context)
-//                contact.contactId = id
-//                contact.createdAt = createdAt
+                contact.contactId = id
+                contact.createdAt = createdAt
             }
             
-//            contact.name = name
-//            contact.updatedAt = updatedAt
-//            contact.recordStatus = recordStatus
+            contact.name = name
+            contact.type = type
+            contact.updatedAt = updatedAt
+            contact.recordStatus = recordStatus
             
             try context.save()
             return true

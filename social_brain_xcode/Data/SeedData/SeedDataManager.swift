@@ -175,6 +175,7 @@ final class SeedDataManager {
                 let contactUUID = self.generateAndStoreUUID(for: contactData.uniqueIdentifier)
                 contact.contactId = contactUUID
                 contact.name = contactData.name
+                contact.type = contactData.type ?? 0  // Unwrap the optional with a default value of 0
                 contact.createdAt = contactData.createdAt
                 contact.updatedAt = contactData.updatedAt
                 contact.recordStatus = contactData.recordStatus
@@ -327,9 +328,36 @@ struct NoteData: Codable {
 struct ContactData: Codable {
     let uniqueIdentifier: String  // Used to generate and track UUID
     let name: String
+    let type: Int16?
     let createdAt: Date
     let updatedAt: Date
     let recordStatus: Int16
+    
+    // Custom decoding to provide default value for type
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        uniqueIdentifier = try container.decode(String.self, forKey: .uniqueIdentifier)
+        name = try container.decode(String.self, forKey: .name)
+        type = try container.decodeIfPresent(Int16.self, forKey: .type) ?? 0
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+        recordStatus = try container.decode(Int16.self, forKey: .recordStatus)
+    }
+    
+    // Custom encoding to ensure type is always included
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(uniqueIdentifier, forKey: .uniqueIdentifier)
+        try container.encode(name, forKey: .name)
+        try container.encode(type ?? 0, forKey: .type)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(updatedAt, forKey: .updatedAt)
+        try container.encode(recordStatus, forKey: .recordStatus)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case uniqueIdentifier, name, type, createdAt, updatedAt, recordStatus
+    }
 }
 
 struct ContactInsightData: Codable {

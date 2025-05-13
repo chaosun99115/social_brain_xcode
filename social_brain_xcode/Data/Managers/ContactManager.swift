@@ -8,10 +8,11 @@ class ContactManager: ObservableObject {
     private init() {}
     
     // MARK: - Create
-    func createContact(name: String) -> Contact? {
+    func createContact(name: String, type: Int16 = 0) -> Contact? {
         let contact = Contact(context: context)
         contact.contactId = UUID()
         contact.name = name
+        contact.type = type
         contact.createdAt = Date()
         contact.updatedAt = Date()
         contact.recordStatus = 0 // unsynced
@@ -69,10 +70,13 @@ class ContactManager: ObservableObject {
     }
     
     // MARK: - Update
-    func updateContact(contactId: UUID, name: String) -> Bool {
+    func updateContact(contactId: UUID, name: String, type: Int16? = nil) -> Bool {
         guard let contact = fetchContact(withId: contactId) else { return false }
         
         contact.name = name
+        if let type = type {
+            contact.type = type
+        }
         contact.updatedAt = Date()
         contact.recordStatus = 0 // mark as unsynced
         
