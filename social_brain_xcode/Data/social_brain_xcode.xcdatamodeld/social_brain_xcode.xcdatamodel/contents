@@ -31,12 +31,13 @@
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="type" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="contacts" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleContactRelationship" inverseName="circles" inverseEntity="CircleContactRelationship"/>
+        <relationship name="contacts" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CircleContactRelationship" inverseName="circles" inverseEntity="CircleContactRelationship"/>
         <relationship name="insights" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsightCircleRelationship" inverseName="circles" inverseEntity="InsightCircleRelationship"/>
     </entity>
     <entity name="CircleContactRelationship" representedClassName="CircleContactRelationship" syncable="YES" codeGenerationType="class">
-        <attribute name="createdAt" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="relationshipId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Circle" inverseName="contacts" inverseEntity="Circle"/>
         <relationship name="contacts" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Contact" inverseName="circles" inverseEntity="Contact"/>
@@ -51,7 +52,7 @@
         <attribute name="subCategory" optional="YES" attributeType="String"/>
         <attribute name="subOrder" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="type" optional="YES" attributeType="String"/>
-        <attribute name="updatedAt" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InsightCircleRelationship" inverseName="insights" inverseEntity="InsightCircleRelationship"/>
     </entity>
     <entity name="Contact" representedClassName="Contact" syncable="YES" codeGenerationType="class">

@@ -183,7 +183,7 @@
             "contactInsights": [
                 {
                     "uniqueIdentifier": "insight_1",
-                    "type": "memo",
+                    "type": "0",
                     "category": "update",
                     "order": 0,
                     "content": "计划下个月对团队架构做调整，好像是要精简一些岗位。要找机会了解一下详细情况。",
@@ -193,7 +193,7 @@
                 },
                 {
                     "uniqueIdentifier": "insight_2",
-                    "type": "memo",
+                    "type": "0",
                     "category": "update",
                     "order": 0,
                     "content": "上周刚从三亚度假回来，找机会可以聊聊他的旅行，看看他下一次旅行打算在哪里",
@@ -203,7 +203,7 @@
                 },
                 {
                     "uniqueIdentifier": "insight_3",
-                    "type": "memo",
+                    "type": "0",
                     "category": "update",
                     "order": 0,
                     "content": "周末开始带7岁的儿子去公园骑自行车，可以聊聊孩子的周末安排，看看能不能安排小孩一起玩",
@@ -213,7 +213,7 @@
                 },
                 {
                     "uniqueIdentifier": "insight_4",
-                    "type": "memo",
+                    "type": "0",
                     "category": "update",
                     "order": 0,
                     "content": "注意：张总注重结果，不喜欢模糊的表述，你的所有互动都要有对应的行动。",
@@ -223,7 +223,7 @@
                 },
                 {
                     "uniqueIdentifier": "insight_5",
-                    "type": "memo",
+                    "type": "0",
                     "category": "review",
                     "order": 0,
                     "content": "第一次见面：入职第一天见面时，他提到认识我上家公司的产品总监",
@@ -233,7 +233,7 @@
                 },
                 {
                     "uniqueIdentifier": "insight_6",
-                    "type": "memo",
+                    "type": "0",
                     "category": "review",
                     "order": 0,
                     "content": "第二次见面：和陈总一起午餐时，她分享了一些教育心得，可以找机会请教她关于教育规划的建议。",  
@@ -304,6 +304,84 @@
                     "createdAt": "2024-03-20T10:00:00Z",
                     "contactIdentifier": "contact_1",
                     "insightIdentifier": "insight_6"
+                }
+            ],
+            "circles": [
+                {
+                    "uniqueIdentifier": "circle_1",
+                    "name": "产品团队",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "circle_2",
+                    "name": "跨部门合作",
+                    "type": 1,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "circleInsights": [
+                {
+                    "uniqueIdentifier": "circleInsight_1",
+                    "type": "0",
+                    "category": "team",
+                    "subCategory": "dynamics",
+                    "order": 0,
+                    "subOrder": 0,
+                    "content": "核心团队成员之间沟通直接，注重效率，但有时需要更多情感支持。",
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "circleInsight_2",
+                    "type": "0",
+                    "category": "collaboration",
+                    "subCategory": "strategy",
+                    "order": 0,
+                    "subOrder": 0,
+                    "content": "跨部门合作需要提前沟通，明确目标和责任分工。",
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "circleContactRelationships": [
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "contact_1",
+                    "circleIdentifier": "circle_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "contact_2",
+                    "circleIdentifier": "circle_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "contact_3",
+                    "circleIdentifier": "circle_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "contact_4",
+                    "circleIdentifier": "circle_2"
+                }
+            ],
+            "insightCircleRelationships": [
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "circleIdentifier": "circle_1",
+                    "insightIdentifier": "circleInsight_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "circleIdentifier": "circle_2",
+                    "insightIdentifier": "circleInsight_2"
                 }
             ]
         },
@@ -376,6 +454,57 @@
                     "contactIdentifier": "school_contact_1",
                     "insightIdentifier": "school_insight_1"
                 }
+            ],
+            "circles": [
+                {
+                    "uniqueIdentifier": "school_circle_1",
+                    "name": "学术导师",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "school_circle_2",
+                    "name": "学习伙伴",
+                    "type": 1,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "circleInsights": [
+                {
+                    "uniqueIdentifier": "school_circle_insight_1",
+                    "type": "memo",
+                    "category": "academic",
+                    "subCategory": "mentorship",
+                    "order": 0,
+                    "subOrder": 0,
+                    "content": "导师关系需要主动维护，定期汇报研究进展，及时寻求指导。",
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "circleContactRelationships": [
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_1",
+                    "circleIdentifier": "school_circle_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_2",
+                    "circleIdentifier": "school_circle_2"
+                }
+            ],
+            "insightCircleRelationships": [
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "circleIdentifier": "school_circle_1",
+                    "insightIdentifier": "school_circle_insight_1"
+                }
             ]
         },
         "career_pivot": {
@@ -446,6 +575,57 @@
                     "createdAt": "2024-03-20T10:00:00Z",
                     "contactIdentifier": "career_contact_1",
                     "insightIdentifier": "career_insight_1"
+                }
+            ],
+            "circles": [
+                {
+                    "uniqueIdentifier": "career_circle_1",
+                    "name": "职业导师",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "career_circle_2",
+                    "name": "转型伙伴",
+                    "type": 1,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "circleInsights": [
+                {
+                    "uniqueIdentifier": "career_circle_insight_1",
+                    "type": "memo",
+                    "category": "career",
+                    "subCategory": "transition",
+                    "order": 0,
+                    "subOrder": 0,
+                    "content": "职业转型需要循序渐进，保持现有工作的同时探索新方向。",
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "circleContactRelationships": [
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "career_contact_1",
+                    "circleIdentifier": "career_circle_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "career_contact_2",
+                    "circleIdentifier": "career_circle_2"
+                }
+            ],
+            "insightCircleRelationships": [
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "circleIdentifier": "career_circle_1",
+                    "insightIdentifier": "career_circle_insight_1"
                 }
             ]
         }

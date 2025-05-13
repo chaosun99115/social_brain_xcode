@@ -7,7 +7,9 @@ struct SocialContactView: View {
     @EnvironmentObject var localizationManager: LocalizationManager
     @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var contactManager = ContactManager.shared
+    @StateObject private var circleManager = CircleManager.shared
     @State private var contacts: [Contact] = []
+    @State private var circles: [Circle] = []
     @State private var isLoading = true
     @State private var isRefreshing = false
     @State private var errorMessage: String? = nil
@@ -42,6 +44,35 @@ struct SocialContactView: View {
         }
     }
     
+    // Add loadCircles function
+    private func loadCircles() async {
+        if !isRefreshing {
+            await MainActor.run { isLoading = true }
+        }
+        errorMessage = nil
+        defer {
+            Task { @MainActor in
+                isLoading = false
+                isRefreshing = false
+            }
+        }
+        
+        let fetchedCircles = circleManager.fetchCircles()
+        let validCircles = fetchedCircles.filter { circle in
+            do {
+                try circleManager.validateCircleRelationships(circle)
+                return true
+            } catch {
+                print("Invalid relationships for circle: \(circle.name ?? "Unknown")")
+                return false
+            }
+        }
+        
+        await MainActor.run {
+            self.circles = validCircles
+        }
+    }
+    
     // Pull-to-refresh
     private func refreshContacts() async {
         await MainActor.run { isRefreshing = true }
@@ -52,6 +83,7 @@ struct SocialContactView: View {
         // Add a small delay to ensure the refresh control is in the correct state
         try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
         await loadContacts()
+        await loadCircles()
     }
     
     var filteredContacts: [Contact] {
@@ -135,7 +167,7 @@ struct SocialContactView: View {
                     .padding(.horizontal)
                     .padding(.top, 8)
                     
-                    // TabView for scrollable content
+                    // Modify TabView to use CircleListView for circles tab
                     TabView(selection: $selectedTab) {
                         // 熟人 Tab
                         ContactListView(
@@ -150,14 +182,13 @@ struct SocialContactView: View {
                         .tag(0)
                         
                         // 圈子 Tab
-                        ContactListView(
-                            contacts: filteredContacts,
+                        CircleListView(
+                            circles: circles,
                             isLoading: isLoading,
                             errorMessage: errorMessage,
                             isRefreshing: isRefreshing,
                             searchText: $searchText,
-                            onRefresh: { await refreshContacts() },
-                            selectedTab: 1
+                            onRefresh: { await refreshContacts() }
                         )
                         .tag(1)
                     }
@@ -203,6 +234,7 @@ struct SocialContactView: View {
         .navigationViewStyle(StackNavigationViewStyle())
         .task {
             await loadContacts()
+            await loadCircles()
         }
     }
 }
@@ -414,9 +446,9 @@ struct ContactCardView: View {
                 .foregroundColor(.primaryText)
             
             HStack {
-                Text(formatDate(contact.createdAt ?? Date()))
-                Text("|")
-                Text("\(getNotesCount()) " + "note".localized)
+                Text("共有\(getNotesCount())条笔记")
+                Text("｜")
+                Text("\(formatLastUpdateTime())")
             }
             .font(.footnote)
             .foregroundColor(.secondary)
@@ -431,10 +463,22 @@ struct ContactCardView: View {
         return contactManager.getNotesCount(forContactId: contactId)
     }
     
-    private func formatDate(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
+    private func formatLastUpdateTime() -> String {
+        guard let updatedAt = contact.updatedAt else { return "未知时间" }
+        let calendar = Calendar.current
+        let now = Date()
+        let components = calendar.dateComponents([.day], from: updatedAt, to: now)
+        
+        if let days = components.day {
+            if days == 0 {
+                return "今天更新"
+            } else if days == 1 {
+                return "昨天更新"
+            } else {
+                return "\(days)天前更新"
+            }
+        }
+        return "未知时间"
     }
 }
 
@@ -465,6 +509,150 @@ struct TabButton: View {
         }
         .buttonStyle(PlainButtonStyle())
         .animation(.easeInOut(duration: 0.4), value: isSelected)
+    }
+}
+
+// Add CircleListView component before SocialContactView_Previews
+struct CircleListView: View {
+    let circles: [Circle]
+    let isLoading: Bool
+    let errorMessage: String?
+    let isRefreshing: Bool
+    @Binding var searchText: String
+    let onRefresh: () async -> Void
+    
+    @State private var showingCreateCircle = false
+    @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject var appModeManager: AppModeManager
+    
+    var filteredCircles: [Circle] {
+        if searchText.isEmpty {
+            return circles
+        }
+        return circles.filter { circle in
+            guard let name = circle.name else { return false }
+            return name.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+    
+    var body: some View {
+        Group {
+            if isLoading {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.5)
+            } else if let error = errorMessage {
+                errorView(message: error)
+            } else if filteredCircles.isEmpty {
+                emptyCircleView
+            } else {
+                List {
+                    ForEach(filteredCircles, id: \.circleId) { circle in
+                        NavigationLink(destination: CircleDetailView(circle: circle)) {
+                            CircleCardView(circle: circle)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                        .listRowSeparator(.visible)
+                        .listRowBackground(Color.cardBackground)
+                    }
+                }
+                .listStyle(.plain)
+                .refreshable {
+                    await onRefresh()
+                }
+            }
+        }
+        .sheet(isPresented: $showingCreateCircle) {
+            Text("创建圈子功能待实现")
+                .font(.title)
+                .padding()
+        }
+    }
+    
+    private func errorView(message: String) -> some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 48))
+                .foregroundColor(Color.tertiaryText)
+            Text(message)
+                .font(.headline)
+                .foregroundColor(Color.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            Button("Retry") {
+                Task {
+                    await onRefresh()
+                }
+            }
+            .padding()
+            .background(Color.primaryAction)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+            Spacer()
+        }
+    }
+    
+    private var emptyCircleView: some View {
+        VStack(spacing: 32) {
+            Spacer()
+            VStack(spacing: 12) {
+                Text("在这里记录您的社交圈子")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                Text("\"社交大脑\"将协助你管理你的社交圈子")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            Button(action: {
+                showingCreateCircle = true
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.circle")
+                    Text("创建圈子")
+                }
+                .font(.subheadline)
+                .foregroundColor(Color.primaryAction)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.primaryAction, lineWidth: 1)
+                )
+            }
+            .padding(.horizontal, 60)
+            Spacer()
+        }
+    }
+}
+
+struct CircleCardView: View {
+    let circle: Circle
+    @StateObject private var circleManager = CircleManager.shared
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(circle.name ?? "Unnamed Circle")
+                .font(.title3)
+                .fontWeight(.medium)
+                .foregroundColor(.primaryText)
+            
+            Text("共有\(getContactsCount())个熟人")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+        }
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+    
+    private func getContactsCount() -> Int {
+        guard let circleId = circle.circleId else { return 0 }
+        return circleManager.getContactsCount(forCircleId: circleId)
     }
 }
 

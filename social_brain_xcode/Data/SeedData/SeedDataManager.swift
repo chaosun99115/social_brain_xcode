@@ -54,13 +54,28 @@ final class SeedDataManager {
     // MARK: - UUID Management
     
     private func generateAndStoreUUID(for identifier: String) -> UUID {
-        let uuid = UUID()
+        // Use a deterministic UUID generation based on the identifier
+        // This ensures the same identifier always gets the same UUID
+        let uuidString = identifier.replacingOccurrences(of: "_", with: "-")
+        if let existingUUID = entityUUIDs[identifier] {
+            print("[DEBUG] Reusing existing UUID for \(identifier): \(existingUUID)")
+            return existingUUID
+        }
+        
+        // For identifiers that don't already have a UUID, generate one deterministically
+        let uuid = UUID(uuidString: uuidString) ?? UUID()
+        print("[DEBUG] Generated new UUID for \(identifier): \(uuid)")
         entityUUIDs[identifier] = uuid
         return uuid
     }
     
     private func getUUID(for identifier: String) -> UUID? {
-        return entityUUIDs[identifier]
+        if let uuid = entityUUIDs[identifier] {
+            print("[DEBUG] Retrieved UUID for \(identifier): \(uuid)")
+            return uuid
+        }
+        print("[DEBUG] No UUID found for \(identifier)")
+        return nil
     }
     
     // MARK: - Scenario Management
@@ -88,11 +103,54 @@ final class SeedDataManager {
         return scenarioData
     }
     
-    // MARK: - Core Data Import
+    // MARK: - Store Management
+    
+    func deleteExistingStore(for context: NSManagedObjectContext) throws {
+        print("\n[SeedDataManager] 🗑️ Deleting existing store...")
+        
+        guard let coordinator = context.persistentStoreCoordinator,
+              let store = coordinator.persistentStores.first,
+              let storeURL = store.url else {
+            print("[SeedDataManager] ⚠️ No existing store found")
+            return
+        }
+        
+        do {
+            // Remove the store from coordinator
+            try coordinator.remove(store)
+            
+            // Delete the store file
+            try FileManager.default.removeItem(at: storeURL)
+            print("[SeedDataManager] ✅ Store file deleted successfully")
+            
+            // Add a new store to the coordinator
+            let options = [
+                NSMigratePersistentStoresAutomaticallyOption: true,
+                NSInferMappingModelAutomaticallyOption: true
+            ]
+            
+            try coordinator.addPersistentStore(
+                ofType: NSSQLiteStoreType,
+                configurationName: nil,
+                at: storeURL,
+                options: options
+            )
+            print("[SeedDataManager] ✅ New store added to coordinator")
+            
+        } catch {
+            print("[SeedDataManager] ❌ Error managing store: \(error)")
+            throw error
+        }
+    }
+    
+    // MARK: - Data Import
     
     func importSeedData(into context: NSManagedObjectContext, scenario: SeedDataScenario? = nil) async throws {
         print("\n[SeedDataManager] ===== Starting Seed Data Import =====")
         print("[SeedDataManager] Mode: \(scenario?.rawValue ?? "Full Import")")
+        
+        // Delete existing store before importing new data
+        try deleteExistingStore(for: context)
         
         // Check if sample data already exists
         let noteFetchRequest: NSFetchRequest<Note> = Note.fetchRequest()
@@ -138,6 +196,10 @@ final class SeedDataManager {
             print("- Contact Insights: \(seedData.contactInsights.count)")
             print("- Note-Contact Relationships: \(seedData.noteContactRelationships.count)")
             print("- Insight-Contact Relationships: \(seedData.insightContactRelationships.count)")
+            print("- Circles: \(seedData.circles.count)")
+            print("- Circle Insights: \(seedData.circleInsights.count)")
+            print("- Circle-Contact Relationships: \(seedData.circleContactRelationships.count)")
+            print("- Insight-Circle Relationships: \(seedData.insightCircleRelationships.count)")
         } catch {
             if let jsonString = String(data: data, encoding: .utf8) {
                 print("\n[SeedDataManager] 📄 Raw JSON Data:")
@@ -198,6 +260,38 @@ final class SeedDataManager {
             }
             print("[SeedDataManager] ✅ Insights imported")
             
+            // Import Circles
+            print("\n[SeedDataManager] 👥 Importing \(seedData.circles.count) circles...")
+            for circleData in seedData.circles {
+                let circle = Circle(context: context)
+                let circleUUID = self.generateAndStoreUUID(for: circleData.uniqueIdentifier)
+                circle.circleId = circleUUID
+                circle.name = circleData.name
+                circle.type = circleData.type
+                circle.createdAt = circleData.createdAt
+                circle.updatedAt = circleData.updatedAt
+                circle.recordStatus = circleData.recordStatus
+            }
+            print("[SeedDataManager] ✅ Circles imported")
+
+            // Import Circle Insights
+            print("\n[SeedDataManager] 💡 Importing \(seedData.circleInsights.count) circle insights...")
+            for insightData in seedData.circleInsights {
+                let insight = CircleInsight(context: context)
+                let insightUUID = self.generateAndStoreUUID(for: insightData.uniqueIdentifier)
+                insight.insightId = insightUUID
+                insight.type = insightData.type
+                insight.category = insightData.category
+                insight.subCategory = insightData.subCategory
+                insight.order = insightData.order  // Now directly assigning Int16
+                insight.subOrder = insightData.subOrder  // Now directly assigning Int16
+                insight.content = insightData.content
+                insight.createdAt = insightData.createdAt
+                insight.updatedAt = insightData.updatedAt
+                insight.recordStatus = insightData.recordStatus
+            }
+            print("[SeedDataManager] ✅ Circle insights imported")
+
             // Save context after creating all entities
             print("\n[SeedDataManager] 💾 Saving context after entity creation...")
             do {
@@ -222,7 +316,7 @@ final class SeedDataManager {
                 
                 let relationship = NoteContactRelationship(context: context)
                 relationship.relationshipId = UUID()
-                relationship.createdAt = relationshipData.createdAt
+                relationship.createdAt = relationshipData.createdAt  // Date from seed data
                 
                 let noteRequest: NSFetchRequest<Note> = Note.fetchRequest()
                 noteRequest.predicate = NSPredicate(format: "noteId == %@", noteUUID! as CVarArg)
@@ -260,7 +354,7 @@ final class SeedDataManager {
                 
                 let relationship = InsightContactRelationship(context: context)
                 relationship.relationshipId = UUID()
-                relationship.createdAt = relationshipData.createdAt
+                relationship.createdAt = relationshipData.createdAt  // Date from seed data
                 
                 let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
                 contactRequest.predicate = NSPredicate(format: "contactId == %@", contactUUID! as CVarArg)
@@ -283,6 +377,113 @@ final class SeedDataManager {
                 print("[SeedDataManager] ⚠️ \(relationshipErrors) insight-contact relationships failed to create")
             }
             print("[SeedDataManager] ✅ Insight-contact relationships created")
+
+            // Create Circle-Contact Relationships
+            print("\n[SeedDataManager] 🔗 Creating \(seedData.circleContactRelationships.count) circle-contact relationships...")
+            relationshipErrors = 0
+            
+            // First collect all valid relationships
+            var validRelationships: [(Circle, Contact, Date)] = []
+            for relationshipData in seedData.circleContactRelationships {
+                print("\n[DEBUG] Processing relationship:")
+                print("[DEBUG] Circle ID: \(relationshipData.circleIdentifier)")
+                print("[DEBUG] Contact ID: \(relationshipData.contactIdentifier)")
+                
+                let circleUUID = self.getUUID(for: relationshipData.circleIdentifier)
+                let contactUUID = self.getUUID(for: relationshipData.contactIdentifier)
+                
+                if circleUUID == nil || contactUUID == nil {
+                    print("[DEBUG] Failed to get UUIDs:")
+                    print("[DEBUG] Circle UUID: \(String(describing: circleUUID))")
+                    print("[DEBUG] Contact UUID: \(String(describing: contactUUID))")
+                    relationshipErrors += 1
+                    continue
+                }
+                
+                let circleRequest: NSFetchRequest<Circle> = Circle.fetchRequest()
+                circleRequest.predicate = NSPredicate(format: "circleId == %@", circleUUID! as CVarArg)
+                
+                let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
+                contactRequest.predicate = NSPredicate(format: "contactId == %@", contactUUID! as CVarArg)
+                
+                let circles = try? context.fetch(circleRequest)
+                let contacts = try? context.fetch(contactRequest)
+                
+                print("[DEBUG] Found circle: \(circles?.first?.name ?? "nil")")
+                print("[DEBUG] Found contact: \(contacts?.first?.name ?? "nil")")
+                
+                guard let circle = circles?.first, let contact = contacts?.first else {
+                    print("[DEBUG] Failed to find circle or contact in database")
+                    relationshipErrors += 1
+                    continue
+                }
+                
+                validRelationships.append((circle, contact, relationshipData.createdAt))
+                print("[DEBUG] Added to valid relationships")
+            }
+            
+            // Then create all relationships in a single batch
+            print("\n[DEBUG] Creating \(validRelationships.count) relationships in batch...")
+            for (circle, contact, createdAt) in validRelationships {
+                let relationship = CircleContactRelationship(context: context)
+                relationship.relationshipId = UUID()
+                relationship.circles = circle
+                relationship.contacts = contact
+                relationship.createdAt = createdAt
+                print("[DEBUG] Created relationship: \(circle.name ?? "nil") - \(contact.name ?? "nil")")
+            }
+            
+            // Save all relationships at once
+            do {
+                try context.save()
+                print("[DEBUG] Successfully saved all relationships")
+            } catch {
+                print("[DEBUG] Error saving relationships: \(error)")
+                relationshipErrors += validRelationships.count
+            }
+            
+            if relationshipErrors > 0 {
+                print("[SeedDataManager] ⚠️ \(relationshipErrors) circle-contact relationships failed to create")
+            }
+            print("[SeedDataManager] ✅ Circle-contact relationships created")
+
+            // Create Insight-Circle Relationships
+            print("\n[SeedDataManager] 🔗 Creating \(seedData.insightCircleRelationships.count) insight-circle relationships...")
+            relationshipErrors = 0
+            for relationshipData in seedData.insightCircleRelationships {
+                let circleUUID = self.getUUID(for: relationshipData.circleIdentifier)
+                let insightUUID = self.getUUID(for: relationshipData.insightIdentifier)
+                
+                if circleUUID == nil || insightUUID == nil {
+                    relationshipErrors += 1
+                    continue
+                }
+                
+                let relationship = InsightCircleRelationship(context: context)
+                relationship.relationshipId = UUID()
+                relationship.createdAt = relationshipData.createdAt  // Date from seed data
+                
+                let circleRequest: NSFetchRequest<Circle> = Circle.fetchRequest()
+                circleRequest.predicate = NSPredicate(format: "circleId == %@", circleUUID! as CVarArg)
+                
+                let insightRequest: NSFetchRequest<CircleInsight> = CircleInsight.fetchRequest()
+                insightRequest.predicate = NSPredicate(format: "insightId == %@", insightUUID! as CVarArg)
+                
+                let circles = try? context.fetch(circleRequest)
+                let insights = try? context.fetch(insightRequest)
+                
+                guard let circle = circles?.first, let insight = insights?.first else {
+                    relationshipErrors += 1
+                    continue
+                }
+                
+                relationship.circles = circle
+                relationship.insights = insight
+            }
+            if relationshipErrors > 0 {
+                print("[SeedDataManager] ⚠️ \(relationshipErrors) insight-circle relationships failed to create")
+            }
+            print("[SeedDataManager] ✅ Insight-circle relationships created")
             
             print("\n[SeedDataManager] 💾 Saving final context...")
             do {
@@ -313,6 +514,10 @@ struct SeedData: Codable {
     let contactInsights: [ContactInsightData]
     let noteContactRelationships: [NoteContactRelationshipData]
     let insightContactRelationships: [InsightContactRelationshipData]
+    let circles: [CircleData]
+    let circleInsights: [CircleInsightData]
+    let circleContactRelationships: [CircleContactRelationshipData]
+    let insightCircleRelationships: [InsightCircleRelationshipData]
 }
 
 struct NoteData: Codable {
@@ -380,5 +585,73 @@ struct NoteContactRelationshipData: Codable {
 struct InsightContactRelationshipData: Codable {
     let createdAt: Date
     let contactIdentifier: String // References the uniqueIdentifier of the contact
+    let insightIdentifier: String // References the uniqueIdentifier of the insight
+}
+
+struct CircleData: Codable {
+    let uniqueIdentifier: String  // Used to generate and track UUID
+    let name: String
+    let type: Int16
+    let createdAt: Date
+    let updatedAt: Date
+    let recordStatus: Int16
+}
+
+struct CircleInsightData: Codable {
+    let uniqueIdentifier: String  // Used to generate and track UUID
+    let type: String
+    let category: String
+    let subCategory: String
+    let order: Int16
+    let subOrder: Int16
+    let content: String
+    let createdAt: Date
+    let updatedAt: Date
+    let recordStatus: Int16
+    
+    // Custom decoding to handle potential string values in JSON
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        uniqueIdentifier = try container.decode(String.self, forKey: .uniqueIdentifier)
+        type = try container.decode(String.self, forKey: .type)
+        category = try container.decode(String.self, forKey: .category)
+        subCategory = try container.decode(String.self, forKey: .subCategory)
+        
+        // Handle order which might come as String or Int
+        if let orderInt = try? container.decode(Int16.self, forKey: .order) {
+            order = orderInt
+        } else if let orderString = try? container.decode(String.self, forKey: .order),
+                  let orderInt = Int16(orderString) {
+            order = orderInt
+        } else {
+            order = 0 // Default value if decoding fails
+        }
+        
+        // Handle subOrder which might come as String or Int
+        if let subOrderInt = try? container.decode(Int16.self, forKey: .subOrder) {
+            subOrder = subOrderInt
+        } else if let subOrderString = try? container.decode(String.self, forKey: .subOrder),
+                  let subOrderInt = Int16(subOrderString) {
+            subOrder = subOrderInt
+        } else {
+            subOrder = 0 // Default value if decoding fails
+        }
+        
+        content = try container.decode(String.self, forKey: .content)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+        recordStatus = try container.decode(Int16.self, forKey: .recordStatus)
+    }
+}
+
+struct CircleContactRelationshipData: Codable {
+    let createdAt: Date
+    let contactIdentifier: String // References the uniqueIdentifier of the contact
+    let circleIdentifier: String  // References the uniqueIdentifier of the circle
+}
+
+struct InsightCircleRelationshipData: Codable {
+    let createdAt: Date
+    let circleIdentifier: String  // References the uniqueIdentifier of the circle
     let insightIdentifier: String // References the uniqueIdentifier of the insight
 } 
