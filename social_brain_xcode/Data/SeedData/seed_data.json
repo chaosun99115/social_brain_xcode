@@ -183,7 +183,7 @@
             "contactInsights": [
                 {
                     "uniqueIdentifier": "insight_1",
-                    "type": "0",
+                    "type": 0,
                     "category": "update",
                     "order": 0,
                     "content": "计划下个月对团队架构做调整，好像是要精简一些岗位。要找机会了解一下详细情况。",
@@ -193,7 +193,7 @@
                 },
                 {
                     "uniqueIdentifier": "insight_2",
-                    "type": "0",
+                    "type": 0,
                     "category": "update",
                     "order": 0,
                     "content": "上周刚从三亚度假回来，找机会可以聊聊他的旅行，看看他下一次旅行打算在哪里",
@@ -203,7 +203,7 @@
                 },
                 {
                     "uniqueIdentifier": "insight_3",
-                    "type": "0",
+                    "type": 0,
                     "category": "update",
                     "order": 0,
                     "content": "周末开始带7岁的儿子去公园骑自行车，可以聊聊孩子的周末安排，看看能不能安排小孩一起玩",
@@ -213,7 +213,7 @@
                 },
                 {
                     "uniqueIdentifier": "insight_4",
-                    "type": "0",
+                    "type": 0,
                     "category": "update",
                     "order": 0,
                     "content": "注意：张总注重结果，不喜欢模糊的表述，你的所有互动都要有对应的行动。",
@@ -223,7 +223,7 @@
                 },
                 {
                     "uniqueIdentifier": "insight_5",
-                    "type": "0",
+                    "type": 0,
                     "category": "review",
                     "order": 0,
                     "content": "第一次见面：入职第一天见面时，他提到认识我上家公司的产品总监",
@@ -233,7 +233,7 @@
                 },
                 {
                     "uniqueIdentifier": "insight_6",
-                    "type": "0",
+                    "type": 0,
                     "category": "review",
                     "order": 0,
                     "content": "第二次见面：和陈总一起午餐时，她分享了一些教育心得，可以找机会请教她关于教育规划的建议。",  
@@ -318,7 +318,7 @@
                 {
                     "uniqueIdentifier": "circle_2",
                     "name": "跨部门合作",
-                    "type": 1,
+                    "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
                     "recordStatus": 1
@@ -327,7 +327,7 @@
             "circleInsights": [
                 {
                     "uniqueIdentifier": "circleInsight_1",
-                    "type": "0",
+                    "type": 0,
                     "category": "team",
                     "subCategory": "dynamics",
                     "order": 0,
@@ -339,7 +339,7 @@
                 },
                 {
                     "uniqueIdentifier": "circleInsight_2",
-                    "type": "0",
+                    "type": 0,
                     "category": "collaboration",
                     "subCategory": "strategy",
                     "order": 0,
@@ -427,7 +427,7 @@
             "contactInsights": [
                 {
                     "uniqueIdentifier": "school_insight_1",
-                    "type": "memo",
+                    "type": 0,
                     "category": "review",
                     "order": 0,
                     "content": "第一次见面：对我的研究方向很感兴趣，但要求很高，需要充分准备理论基础。",
@@ -476,7 +476,7 @@
             "circleInsights": [
                 {
                     "uniqueIdentifier": "school_circle_insight_1",
-                    "type": "memo",
+                    "type": 0,
                     "category": "academic",
                     "subCategory": "mentorship",
                     "order": 0,
@@ -549,7 +549,7 @@
             "contactInsights": [
                 {
                     "uniqueIdentifier": "career_insight_1",
-                    "type": "memo",
+                    "type": 0,
                     "category": "update",
                     "order": 0,
                     "content": "建议从兼职开始尝试新领域，可以找他详细聊聊具体的转型路径。",
@@ -598,7 +598,7 @@
             "circleInsights": [
                 {
                     "uniqueIdentifier": "career_circle_insight_1",
-                    "type": "memo",
+                    "type": 0,
                     "category": "career",
                     "subCategory": "transition",
                     "order": 0,

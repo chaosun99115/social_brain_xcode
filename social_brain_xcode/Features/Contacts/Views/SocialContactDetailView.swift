@@ -246,6 +246,48 @@ struct SocialContactDetailView: View {
     // MARK: - Summary Section
     private var summarySectionView: some View {
         VStack(spacing: 0) {
+            // --- Related Circles Section ---
+            if let contactId = contact.contactId {
+                let relatedCircles = CircleManager.shared.getCirclesForContact(contactId: contactId)
+                if !relatedCircles.isEmpty {
+                    SummarySectionHeader(title: "所属圈子")
+                    HStack(alignment: .center, spacing: 0) {
+                        HStack(spacing: 8) {
+                            ForEach(relatedCircles, id: \ .circleId) { circle in
+                                NavigationLink(destination: CircleDetailView(circle: circle)) {
+                                    Text(circle.name ?? "圈子")
+                                        .font(.system(size: 15, weight: .medium))
+                                        .foregroundColor(Color.blue)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.blue.opacity(0.12))
+                                        .cornerRadius(8)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        Spacer()
+                        Button(action: {
+                            // TODO: Show edit circle sheet
+                            // showingEditCircleSheet = true
+                        }) {
+                            Image(systemName: "square.and.pencil")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(Color.blue)
+                                .padding(8)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.systemBackground))
+                            .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+                }
+            }
             if isLoadingInsights {
                 ProgressView().padding()
             } else {
@@ -621,23 +663,6 @@ struct ContactDetailInsightRow: View {
                         .foregroundColor(.primaryText)
                         .lineSpacing(4)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    if let contacts = insight.contacts as? Set<InsightContactRelationship>, !contacts.isEmpty {
-                        HStack {
-                            ForEach(Array(contacts), id: \.relationshipId) { relationship in
-                                if let contact = relationship.contacts {
-                                    Text(contact.name ?? "Unknown")
-                                        .font(.caption)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(
-                                            Capsule()
-                                                .fill(Color.primaryAction.opacity(0.15))
-                                        )
-                                        .foregroundColor(.primaryAction)
-                                }
-                            }
-                        }
-                    }
                 }
             }
             if !isLast {

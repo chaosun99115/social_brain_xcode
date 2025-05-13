@@ -8,7 +8,7 @@ class CircleInsightManager: ObservableObject {
     private init() {}
     
     // MARK: - Create
-    func createInsight(type: String, category: String, subCategory: String = "", content: String, order: Int16 = 0, subOrder: Int16 = 0) -> CircleInsight? {
+    func createInsight(type: Int16, category: String, subCategory: String = "", content: String, order: Int16 = 0, subOrder: Int16 = 0) -> CircleInsight? {
         let insight = CircleInsight(context: context)
         insight.insightId = UUID()
         insight.type = type
@@ -61,7 +61,7 @@ class CircleInsightManager: ObservableObject {
     }
     
     // MARK: - Update
-    func updateInsight(insightId: UUID, type: String, category: String, subCategory: String, content: String, order: Int16, subOrder: Int16) -> Bool {
+    func updateInsight(insightId: UUID, type: Int16, category: String, subCategory: String, content: String, order: Int16, subOrder: Int16) -> Bool {
         guard let insight = fetchInsight(withId: insightId) else { return false }
         
         insight.type = type

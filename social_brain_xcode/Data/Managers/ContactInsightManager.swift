@@ -8,7 +8,7 @@ class ContactInsightManager: ObservableObject {
     private init() {}
     
     // MARK: - Create
-    func createInsight(type: String, category: String, content: String, order: Int16 = 0) -> ContactInsight? {
+    func createInsight(type: Int16, category: String, content: String, order: Int16 = 0) -> ContactInsight? {
         let insight = ContactInsight(context: context)
         insight.insightId = UUID()
         insight.type = type
@@ -65,7 +65,7 @@ class ContactInsightManager: ObservableObject {
     }
     
     // MARK: - Update
-    func updateInsight(insightId: UUID, type: String, category: String, content: String, order: Int16) -> Bool {
+    func updateInsight(insightId: UUID, type: Int16, category: String, content: String, order: Int16) -> Bool {
         guard let insight = fetchInsight(withId: insightId) else { return false }
         
         insight.type = type

@@ -300,7 +300,7 @@ struct AddInsightToCircleView: View {
         guard let circleId = circle.circleId else { return }
         
         if let insight = CircleInsightManager.shared.createInsight(
-            type: "memo",
+            type: 0,
             category: category,
             subCategory: subCategory,
             content: insightText

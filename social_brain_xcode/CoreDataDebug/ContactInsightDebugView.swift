@@ -9,10 +9,10 @@ struct ContactInsightDebugView: View {
     @State private var selectedInsight: ContactInsight?
     
     // Form fields for create/edit
-    @State private var type = ""
+    @State private var type: Int16 = 0
     @State private var category = ""
     @State private var content = ""
-    @State private var order: Int16 = 0
+    @State private var order = "0"
     @State private var selectedContacts: Set<UUID> = []
     
     var body: some View {
@@ -64,7 +64,7 @@ struct ContactInsightDebugView: View {
                 NavigationView {
                     InsightFormView(
                         type: Binding(
-                            get: { insight.type ?? "" },
+                            get: { insight.type ?? 0 },
                             set: { type = $0 }
                         ),
                         category: Binding(
@@ -76,7 +76,7 @@ struct ContactInsightDebugView: View {
                             set: { content = $0 }
                         ),
                         order: Binding(
-                            get: { Int16(insight.order ?? "0") ?? 0 },
+                            get: { String(insight.order ?? "0") },
                             set: { order = $0 }
                         ),
                         selectedContacts: $selectedContacts,
@@ -106,7 +106,7 @@ struct ContactInsightDebugView: View {
             type: type,
             category: category,
             content: content,
-            order: order
+            order: Int16(order) ?? 0
         ) else { return }
         
         // Add selected contacts
@@ -130,7 +130,7 @@ struct ContactInsightDebugView: View {
             type: type,
             category: category,
             content: content,
-            order: order
+            order: Int16(order) ?? 0
         )
         
         // Update contacts
@@ -169,7 +169,7 @@ struct InsightRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(insight.type ?? "Unknown Type")
+                Text("\(insight.type)")
                     .font(.headline)
                 Spacer()
                 Text("Order: \(insight.order ?? "0")")
@@ -205,10 +205,10 @@ struct InsightRow: View {
 }
 
 struct InsightFormView: View {
-    @Binding var type: String
+    @Binding var type: Int16
     @Binding var category: String
     @Binding var content: String
-    @Binding var order: Int16
+    @Binding var order: String
     @Binding var selectedContacts: Set<UUID>
     let onSave: () -> Void
     
@@ -218,10 +218,10 @@ struct InsightFormView: View {
     var body: some View {
         Form {
             Section("Insight Details") {
-                TextField("Type", text: $type)
+                Stepper("Type: \(type)", value: $type, in: 0...100)
                 TextField("Category", text: $category)
                 TextField("Content", text: $content)
-                Stepper("Order: \(order)", value: $order, in: 0...100)
+                TextField("Order", text: $order)
             }
             
             Section("Related Contacts") {

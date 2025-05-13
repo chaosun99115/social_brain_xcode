@@ -522,17 +522,36 @@ struct CircleListView: View {
     let onRefresh: () async -> Void
     
     @State private var showingCreateCircle = false
+    @State private var showingSampleDialog = false
+    @State private var isImportingSample = false
+    @State private var errorMessageSample: String? = nil
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var appModeManager: AppModeManager
+    @State private var refreshTrigger = false
     
     var filteredCircles: [Circle] {
-        if searchText.isEmpty {
-            return circles
+        print("[CircleListView] appModeManager.isSampleMode = \(appModeManager.isSampleMode)")
+        print("[CircleListView] circles count before filtering: \(circles.count)")
+        print("[CircleListView] circles types: \(circles.map { $0.type })")
+        let base: [Circle]
+        if appModeManager.isSampleMode {
+            base = circles
+            print("[CircleListView] In sample mode, showing all circles.")
+        } else {
+            base = circles.filter { $0.type != 0 }
+            print("[CircleListView] Not in sample mode, filtered circles count: \(base.count)")
+            print("[CircleListView] Filtered circles types: \(base.map { $0.type })")
         }
-        return circles.filter { circle in
+        if searchText.isEmpty {
+            print("[CircleListView] Returning \(base.count) circles after filtering by type.")
+            return base
+        }
+        let filtered = base.filter { circle in
             guard let name = circle.name else { return false }
             return name.localizedCaseInsensitiveContains(searchText)
         }
+        print("[CircleListView] Returning \(filtered.count) circles after filtering by search text '", searchText, "'.")
+        return filtered
     }
     
     var body: some View {
@@ -608,25 +627,95 @@ struct CircleListView: View {
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
-            Button(action: {
-                showingCreateCircle = true
-            }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "plus.circle")
-                    Text("创建圈子")
+            VStack(spacing: 16) {
+                Button(action: {
+                    showingSampleDialog = true
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.2.circle")
+                        Text("查看示例圈子")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Color(hex: "4085F3"))
+                    .cornerRadius(8)
                 }
-                .font(.subheadline)
-                .foregroundColor(Color.primaryAction)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.primaryAction, lineWidth: 1)
-                )
+                .padding(.horizontal, 60)
+                Button(action: {
+                    showingCreateCircle = true
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle")
+                        Text("创建圈子")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(Color.primaryAction)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.primaryAction, lineWidth: 1)
+                    )
+                }
+                .padding(.horizontal, 60)
             }
-            .padding(.horizontal, 60)
             Spacer()
         }
+        .confirmationDialog(
+            "选择一个用户场景。进入示例模式后，将会生成虚拟的示例数据，供你全面体验小日常的功能。示例模式不影响你的私有数据，退出示例模式后将恢复原状。",
+            isPresented: $showingSampleDialog,
+            titleVisibility: .visible
+        ) {
+            Button("换了一份新工作") { Task { await handleSampleModeSelection("换了一份新工作") } }
+            Button("孩子进了新学校") { Task { await handleSampleModeSelection("孩子进了新学校") } }
+            Button("打算职业转型") { Task { await handleSampleModeSelection("打算职业转型") } }
+            Button("取消", role: .cancel) {}
+        }
+        .alert(isPresented: Binding<Bool>(get: { errorMessageSample != nil }, set: { _ in errorMessageSample = nil })) {
+            Alert(title: Text("导入示例数据失败"), message: Text(errorMessageSample ?? "未知错误"), dismissButton: .default(Text("确定")))
+        }
+    }
+
+    private func handleSampleModeSelection(_ mode: String) async {
+        isImportingSample = true
+        errorMessageSample = nil
+        let scenario: SeedDataScenario
+        switch mode {
+        case "换了一份新工作":
+            scenario = .changedJob
+        case "孩子进了新学校":
+            scenario = .changedSchool
+        case "打算职业转型":
+            scenario = .careerPivot
+        default:
+            isImportingSample = false
+            errorMessageSample = "未知示例场景"
+            return
+        }
+        do {
+            // Clear existing sample data
+            let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Note.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "type == %d", 0)
+            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+            try viewContext.execute(deleteRequest)
+            try viewContext.save()
+            // Import new sample data
+            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: scenario)
+            await MainActor.run {
+                appModeManager.isSampleMode = true
+                appModeManager.sampleModeType = mode
+                refreshTrigger.toggle()
+            }
+        } catch {
+            await MainActor.run {
+                errorMessageSample = error.localizedDescription
+            }
+        }
+        isImportingSample = false
+        // Optionally trigger refresh in parent
+        await onRefresh()
     }
 }
 

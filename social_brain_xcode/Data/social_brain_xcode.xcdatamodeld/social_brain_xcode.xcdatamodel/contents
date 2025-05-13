@@ -51,7 +51,7 @@
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="subCategory" optional="YES" attributeType="String"/>
         <attribute name="subOrder" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
-        <attribute name="type" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InsightCircleRelationship" inverseName="insights" inverseEntity="InsightCircleRelationship"/>
     </entity>
@@ -73,7 +73,7 @@
         <attribute name="insightId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="order" optional="YES" attributeType="String"/>
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
-        <attribute name="type" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="contacts" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsightContactRelationship" inverseName="insights" inverseEntity="InsightContactRelationship"/>
     </entity>

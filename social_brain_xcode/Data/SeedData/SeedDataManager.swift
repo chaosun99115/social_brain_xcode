@@ -245,14 +245,14 @@ final class SeedDataManager {
             print("[SeedDataManager] ✅ Contacts imported")
             
             // Import Contact Insights
-            print("\n[SeedDataManager] 💡 Importing \(seedData.contactInsights.count) insights...")
+            print("\n[SeedDataManager] 💡 Importing \(seedData.contactInsights.count) contact insights...")
             for insightData in seedData.contactInsights {
                 let insight = ContactInsight(context: context)
                 let insightUUID = self.generateAndStoreUUID(for: insightData.uniqueIdentifier)
                 insight.insightId = insightUUID
-                insight.type = insightData.type
+                insight.type = insightData.type  // Use Int16 directly
                 insight.category = insightData.category
-                insight.order = String(insightData.order)
+                insight.order = String(insightData.order)  // Keep as String since model defines it as String
                 insight.content = insightData.content
                 insight.createdAt = insightData.createdAt
                 insight.updatedAt = insightData.updatedAt
@@ -280,11 +280,11 @@ final class SeedDataManager {
                 let insight = CircleInsight(context: context)
                 let insightUUID = self.generateAndStoreUUID(for: insightData.uniqueIdentifier)
                 insight.insightId = insightUUID
-                insight.type = insightData.type
+                insight.type = insightData.type  // Use Int16 directly
                 insight.category = insightData.category
                 insight.subCategory = insightData.subCategory
-                insight.order = insightData.order  // Now directly assigning Int16
-                insight.subOrder = insightData.subOrder  // Now directly assigning Int16
+                insight.order = insightData.order  // Already Int16
+                insight.subOrder = insightData.subOrder  // Already Int16
                 insight.content = insightData.content
                 insight.createdAt = insightData.createdAt
                 insight.updatedAt = insightData.updatedAt
@@ -567,7 +567,7 @@ struct ContactData: Codable {
 
 struct ContactInsightData: Codable {
     let uniqueIdentifier: String  // Used to generate and track UUID
-    let type: String
+    let type: Int16
     let category: String
     let order: Int16
     let content: String
@@ -599,49 +599,15 @@ struct CircleData: Codable {
 
 struct CircleInsightData: Codable {
     let uniqueIdentifier: String  // Used to generate and track UUID
-    let type: String
+    let type: Int16
     let category: String
     let subCategory: String
     let order: Int16
     let subOrder: Int16
     let content: String
     let createdAt: Date
-    let updatedAt: Date
+    let updatedAt: Date  // Keep as Date to match Core Data model
     let recordStatus: Int16
-    
-    // Custom decoding to handle potential string values in JSON
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        uniqueIdentifier = try container.decode(String.self, forKey: .uniqueIdentifier)
-        type = try container.decode(String.self, forKey: .type)
-        category = try container.decode(String.self, forKey: .category)
-        subCategory = try container.decode(String.self, forKey: .subCategory)
-        
-        // Handle order which might come as String or Int
-        if let orderInt = try? container.decode(Int16.self, forKey: .order) {
-            order = orderInt
-        } else if let orderString = try? container.decode(String.self, forKey: .order),
-                  let orderInt = Int16(orderString) {
-            order = orderInt
-        } else {
-            order = 0 // Default value if decoding fails
-        }
-        
-        // Handle subOrder which might come as String or Int
-        if let subOrderInt = try? container.decode(Int16.self, forKey: .subOrder) {
-            subOrder = subOrderInt
-        } else if let subOrderString = try? container.decode(String.self, forKey: .subOrder),
-                  let subOrderInt = Int16(subOrderString) {
-            subOrder = subOrderInt
-        } else {
-            subOrder = 0 // Default value if decoding fails
-        }
-        
-        content = try container.decode(String.self, forKey: .content)
-        createdAt = try container.decode(Date.self, forKey: .createdAt)
-        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
-        recordStatus = try container.decode(Int16.self, forKey: .recordStatus)
-    }
 }
 
 struct CircleContactRelationshipData: Codable {

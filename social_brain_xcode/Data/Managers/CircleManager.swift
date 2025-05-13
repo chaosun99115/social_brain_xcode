@@ -359,4 +359,18 @@ class CircleManager: ObservableObject {
             return false
         }
     }
+    
+    /// Returns all circles for a given contactId
+    func getCirclesForContact(contactId: UUID) -> [Circle] {
+        let request: NSFetchRequest<CircleContactRelationship> = CircleContactRelationship.fetchRequest()
+        request.predicate = NSPredicate(format: "contacts.contactId == %@", contactId as CVarArg)
+        do {
+            let relationships = try context.fetch(request)
+            let circles = relationships.compactMap { $0.circles }
+            return circles
+        } catch {
+            print("[DEBUG] Error fetching circles for contact: \(error)")
+            return []
+        }
+    }
 } 
