@@ -292,6 +292,12 @@ final class SeedDataManager {
             }
             print("[SeedDataManager] ✅ Circle insights imported")
 
+            // After parsing JSON, before creating relationships
+            print("[DEBUG] Parsed insightCircleRelationships from seed data:")
+            for rel in seedData.insightCircleRelationships {
+                print("[DEBUG] Parsed: circleIdentifier=\(rel.circleIdentifier), insightIdentifier=\(rel.insightIdentifier), createdAt=\(rel.createdAt)")
+            }
+
             // Save context after creating all entities
             print("\n[SeedDataManager] 💾 Saving context after entity creation...")
             do {
@@ -453,8 +459,35 @@ final class SeedDataManager {
             for relationshipData in seedData.insightCircleRelationships {
                 let circleUUID = self.getUUID(for: relationshipData.circleIdentifier)
                 let insightUUID = self.getUUID(for: relationshipData.insightIdentifier)
+                print("[DEBUG] Creating relationship: circleUUID=\(String(describing: circleUUID)), insightUUID=\(String(describing: insightUUID)), createdAt=\(relationshipData.createdAt)")
                 
                 if circleUUID == nil || insightUUID == nil {
+                    print("[DEBUG] Skipping relationship due to nil UUID: circleUUID=\(String(describing: circleUUID)), insightUUID=\(String(describing: insightUUID))")
+                    relationshipErrors += 1
+                    continue
+                }
+                
+                let circleRequest: NSFetchRequest<Circle> = Circle.fetchRequest()
+                circleRequest.predicate = NSPredicate(format: "circleId == %@", circleUUID! as CVarArg)
+                let insightRequest: NSFetchRequest<CircleInsight> = CircleInsight.fetchRequest()
+                insightRequest.predicate = NSPredicate(format: "insightId == %@", insightUUID! as CVarArg)
+                
+                let circles = try? context.fetch(circleRequest)
+                let insights = try? context.fetch(insightRequest)
+                print("[DEBUG] Fetched circles count: \(circles?.count ?? -1), insights count: \(insights?.count ?? -1)")
+                if let circle = circles?.first {
+                    print("[DEBUG] Fetched circle: name=\(circle.name ?? "nil"), circleId=\(circle.circleId?.uuidString ?? "nil")")
+                } else {
+                    print("[DEBUG] Fetched circle: nil")
+                }
+                if let insight = insights?.first {
+                    print("[DEBUG] Fetched insight: content=\(insight.content ?? "nil"), insightId=\(insight.insightId?.uuidString ?? "nil")")
+                } else {
+                    print("[DEBUG] Fetched insight: nil")
+                }
+                
+                guard let circle = circles?.first, let insight = insights?.first else {
+                    print("[DEBUG] Skipping relationship due to missing circle or insight entity")
                     relationshipErrors += 1
                     continue
                 }
@@ -462,28 +495,23 @@ final class SeedDataManager {
                 let relationship = InsightCircleRelationship(context: context)
                 relationship.relationshipId = UUID()
                 relationship.createdAt = relationshipData.createdAt  // Date from seed data
-                
-                let circleRequest: NSFetchRequest<Circle> = Circle.fetchRequest()
-                circleRequest.predicate = NSPredicate(format: "circleId == %@", circleUUID! as CVarArg)
-                
-                let insightRequest: NSFetchRequest<CircleInsight> = CircleInsight.fetchRequest()
-                insightRequest.predicate = NSPredicate(format: "insightId == %@", insightUUID! as CVarArg)
-                
-                let circles = try? context.fetch(circleRequest)
-                let insights = try? context.fetch(insightRequest)
-                
-                guard let circle = circles?.first, let insight = insights?.first else {
-                    relationshipErrors += 1
-                    continue
-                }
-                
                 relationship.circles = circle
                 relationship.insights = insight
+                print("[DEBUG] Set relationship: circleId=\(circle.circleId?.uuidString ?? "nil"), insightId=\(insight.insightId?.uuidString ?? "nil")")
             }
             if relationshipErrors > 0 {
                 print("[SeedDataManager] ⚠️ \(relationshipErrors) insight-circle relationships failed to create")
             }
             print("[SeedDataManager] ✅ Insight-circle relationships created")
+            
+            // After all relationships are created, print all from Core Data
+            let allRelationshipsRequest: NSFetchRequest<InsightCircleRelationship> = InsightCircleRelationship.fetchRequest()
+            if let allRelationships = try? context.fetch(allRelationshipsRequest) {
+                print("[DEBUG] All InsightCircleRelationships in Core Data after import:")
+                for rel in allRelationships {
+                    print("[DEBUG] CoreData: relationshipId=\(rel.relationshipId?.uuidString ?? "nil"), circleId=\(rel.circles?.circleId?.uuidString ?? "nil"), insightId=\(rel.insights?.insightId?.uuidString ?? "nil"), createdAt=\(rel.createdAt?.description ?? "nil")")
+                }
+            }
             
             print("\n[SeedDataManager] 💾 Saving final context...")
             do {

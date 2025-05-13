@@ -53,7 +53,7 @@
         <attribute name="subOrder" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="type" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="circles" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InsightCircleRelationship" inverseName="insights" inverseEntity="InsightCircleRelationship"/>
+        <relationship name="circles" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsightCircleRelationship" inverseName="insights" inverseEntity="InsightCircleRelationship"/>
     </entity>
     <entity name="Contact" representedClassName="Contact" syncable="YES" codeGenerationType="class">
         <attribute name="contactId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>

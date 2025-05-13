@@ -222,6 +222,10 @@ class CircleManager: ObservableObject {
         
         do {
             let relationships = try context.fetch(request)
+            print("[DEBUG] getInsightsForCircle: Found \(relationships.count) relationships for circleId=\(circleId)")
+            for rel in relationships {
+                print("[DEBUG] Relationship: relationshipId=\(rel.relationshipId?.uuidString ?? "nil"), insightId=\(rel.insights?.insightId?.uuidString ?? "nil"), content=\(rel.insights?.content ?? "nil")")
+            }
             return relationships.compactMap { $0.insights }
         } catch {
             print("Error fetching insights for circle: \(error)")
