@@ -197,7 +197,7 @@ struct SocialContactView: View {
                 }
                 
                 // Floating Action Button
-                if !filteredContacts.isEmpty {
+                if !filteredContacts.isEmpty && !appModeManager.isSampleMode {
                     VStack {
                         Spacer()
                         HStack {

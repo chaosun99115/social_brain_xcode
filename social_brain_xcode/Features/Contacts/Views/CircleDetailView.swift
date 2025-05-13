@@ -194,25 +194,6 @@ struct CircleDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(circle.name ?? "Unnamed Circle")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Menu {
-                    Button(action: {
-                        showingAddInsight = true
-                    }) {
-                        Label("Add Insight", systemImage: "lightbulb")
-                    }
-                    
-                    Button(role: .destructive, action: {
-                        deleteCircle()
-                    }) {
-                        Label("Delete Circle", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                }
-            }
-        }
         .sheet(isPresented: $showingAddContact) {
             AddContactToCircleView(circle: circle) { contact in
                 if let contact = contact {
