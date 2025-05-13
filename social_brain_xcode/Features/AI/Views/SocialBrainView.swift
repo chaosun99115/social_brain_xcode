@@ -380,6 +380,7 @@ struct SocialBrainView: View {
                     
                     // Streaming completed
                     isStreaming = false
+                    isLoading = false
                 } else {
                     // Non-streaming response
                     let response = try await chatService.sendMessage(trimmedText, context: chatMessages)

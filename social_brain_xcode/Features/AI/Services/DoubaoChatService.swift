@@ -148,34 +148,61 @@ class DoubaoChatService: AIChatServiceProtocol {
             // Handle different HTTP status codes
             switch httpResponse.statusCode {
             case 200:
-                for try await line in bytes.lines {
-                    guard !line.isEmpty else { continue }
+                var buffer = Data()
+                var iterator = bytes.makeAsyncIterator()
+                
+                while let byte = try await iterator.next() {
+                    buffer.append(byte)
                     
-                    // Remove "data: " prefix if present
-                    let jsonString = line.hasPrefix("data: ") ? String(line.dropFirst(6)) : line
-                    
-                    // Skip [DONE] message
-                    if jsonString.trimmingCharacters(in: .whitespacesAndNewlines) == "[DONE]" {
-                        continue
-                    }
-                    
-                    guard let jsonData = jsonString.data(using: .utf8) else {
-                        print("[DoubaoChatService] Failed to convert string to data: \(jsonString)")
-                        continue
-                    }
-                    
-                    do {
-                        let decoder = JSONDecoder()
-                        let streamResponse = try decoder.decode(ChatCompletionStreamResponse.self, from: jsonData)
-                        
-                        if let content = streamResponse.choices.first?.delta.content {
-                            onChunk(content)
+                    // Check if we have a complete line
+                    if byte == UInt8(ascii: "\n") {
+                        if let line = String(data: buffer, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                           !line.isEmpty {
+                            // Remove "data: " prefix if present
+                            let jsonString = line.hasPrefix("data: ") ? String(line.dropFirst(6)) : line
+                            
+                            // Skip [DONE] message
+                            if jsonString.trimmingCharacters(in: .whitespacesAndNewlines) == "[DONE]" {
+                                buffer.removeAll()
+                                continue
+                            }
+                            
+                            // Try to decode the JSON
+                            if let jsonData = jsonString.data(using: .utf8) {
+                                do {
+                                    let decoder = JSONDecoder()
+                                    let streamResponse = try decoder.decode(ChatCompletionStreamResponse.self, from: jsonData)
+                                    if let content = streamResponse.choices.first?.delta.content {
+                                        onChunk(content)
+                                    }
+                                } catch {
+                                    print("[DoubaoChatService] Failed to decode streaming response: \(error)")
+                                }
+                            }
                         }
-                    } catch {
-                        print("[DoubaoChatService] Failed to decode streaming response: \(error)")
-                        continue
+                        buffer.removeAll()
                     }
                 }
+                
+                // Process any remaining data
+                if !buffer.isEmpty,
+                   let line = String(data: buffer, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !line.isEmpty {
+                    let jsonString = line.hasPrefix("data: ") ? String(line.dropFirst(6)) : line
+                    if jsonString.trimmingCharacters(in: .whitespacesAndNewlines) != "[DONE]",
+                       let jsonData = jsonString.data(using: .utf8) {
+                        do {
+                            let decoder = JSONDecoder()
+                            let streamResponse = try decoder.decode(ChatCompletionStreamResponse.self, from: jsonData)
+                            if let content = streamResponse.choices.first?.delta.content {
+                                onChunk(content)
+                            }
+                        } catch {
+                            print("[DoubaoChatService] Failed to decode final streaming response: \(error)")
+                        }
+                    }
+                }
+                
             case 401:
                 print("[DoubaoChatService] Unauthorized (401)")
                 throw AIChatServiceError.unauthorized
@@ -186,10 +213,11 @@ class DoubaoChatService: AIChatServiceProtocol {
                 print("[DoubaoChatService] Server error (\(httpResponse.statusCode))")
                 throw AIChatServiceError.serverError(httpResponse.statusCode)
             default:
-                // For non-200 responses, we need to collect the error message from the stream
+                // For non-200 responses, collect the error message
                 var errorData = Data()
-                for try await line in bytes.lines {
-                    errorData.append(contentsOf: line.utf8)
+                var iterator = bytes.makeAsyncIterator()
+                while let byte = try await iterator.next() {
+                    errorData.append(byte)
                 }
                 
                 if let errorMessage = String(data: errorData, encoding: .utf8) {
