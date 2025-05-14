@@ -3,17 +3,17 @@ import Foundation
 enum AIServiceType {
     case deepSeek
     case kimi
-    case doubaoLite
-    case doubaoPro
-    case doubao1_5Pro256k    // For doubao-1.5-pro-256k-250115
-    case doubaoPro256k       // For doubao-pro-256k-241115
+    case doubao_1_5_lite
+    case doubao_1_5_pro
+    case doubao_1_5_pro_256k
+    case doubao_pro_256k
 }
 
 enum DoubaoModelType {
     case lite
     case pro
-    case pro1_5_256k        // For doubao-1.5-pro-256k-250115
-    case pro256k            // For doubao-pro-256k-241115
+    case pro256k
+    case pro256k_241115
     
     var modelId: String {
         switch self {
@@ -21,9 +21,9 @@ enum DoubaoModelType {
             return "doubao-1.5-lite-32k-250115"
         case .pro:
             return "doubao-1-5-pro-32k-250115"
-        case .pro1_5_256k:
-            return "doubao-1.5-pro-256k-250115"
         case .pro256k:
+            return "doubao-1.5-pro-256k-250115"
+        case .pro256k_241115:
             return "doubao-pro-256k-241115"
         }
     }
@@ -51,7 +51,7 @@ enum AIConfig {
     
     // MARK: - Configuration
     
-    static var currentServiceType: AIServiceType = .doubaoPro256k  // Updated default
+    static var currentServiceType: AIServiceType = .doubao_pro_256k
     
     static func configure() {
         switch currentServiceType {
@@ -61,18 +61,9 @@ enum AIConfig {
         case .kimi:
             print("[AIConfig] Using KIMI API Key: \(kimiAPIKey.prefix(8))... (length: \(kimiAPIKey.count))")
             AIServiceManager.shared.configure(with: kimiAPIKey, serviceType: .kimi)
-        case .doubaoLite:
+        case .doubao_1_5_lite, .doubao_1_5_pro, .doubao_1_5_pro_256k, .doubao_pro_256k:
             print("[AIConfig] Using Doubao API Key: \(doubaoAPIKey.prefix(8))... (length: \(doubaoAPIKey.count))")
-            AIServiceManager.shared.configure(with: doubaoAPIKey, serviceType: .doubaoLite)
-        case .doubaoPro:
-            print("[AIConfig] Using Doubao API Key: \(doubaoAPIKey.prefix(8))... (length: \(doubaoAPIKey.count))")
-            AIServiceManager.shared.configure(with: doubaoAPIKey, serviceType: .doubaoPro)
-        case .doubao1_5Pro256k:
-            print("[AIConfig] Using Doubao API Key: \(doubaoAPIKey.prefix(8))... (length: \(doubaoAPIKey.count))")
-            AIServiceManager.shared.configure(with: doubaoAPIKey, serviceType: .doubao1_5Pro256k)
-        case .doubaoPro256k:
-            print("[AIConfig] Using Doubao API Key: \(doubaoAPIKey.prefix(8))... (length: \(doubaoAPIKey.count))")
-            AIServiceManager.shared.configure(with: doubaoAPIKey, serviceType: .doubaoPro256k)
+            AIServiceManager.shared.configure(with: doubaoAPIKey, serviceType: currentServiceType)
         }
     }
     
@@ -87,17 +78,16 @@ enum AIConfig {
     
     static func getDoubaoModelType(for serviceType: AIServiceType) -> DoubaoModelType {
         switch serviceType {
-        case .deepSeek, .kimi:
-            // For non-Doubao services, return a default model type
-            return .pro
-        case .doubaoLite:
+        case .doubao_1_5_lite:
             return .lite
-        case .doubaoPro:
+        case .doubao_1_5_pro:
             return .pro
-        case .doubao1_5Pro256k:
-            return .pro1_5_256k
-        case .doubaoPro256k:
+        case .doubao_1_5_pro_256k:
             return .pro256k
+        case .doubao_pro_256k:
+            return .pro256k_241115
+        default:
+            return .pro // Default to pro if somehow called with wrong service type
         }
     }
 } 

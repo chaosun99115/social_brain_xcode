@@ -1,7 +1,5 @@
 import Foundation
-import social_brain_xcode  // Import the main module to access AIConfig
 
-// Updated to use new model types for Doubao 1.5 and non-1.5 series
 class AIServiceManager {
     static let shared = AIServiceManager()
     
@@ -15,14 +13,14 @@ class AIServiceManager {
             chatService = DeepSeekChatService(apiKey: apiKey)
         case .kimi:
             chatService = KIMIChatService(apiKey: apiKey)
-        case .doubaoLite:
+        case .doubao_1_5_lite:
             chatService = DoubaoChatService(apiKey: apiKey, modelType: .lite)
-        case .doubaoPro:
+        case .doubao_1_5_pro:
             chatService = DoubaoChatService(apiKey: apiKey, modelType: .pro)
-        case .doubao1_5Pro256k:
-            chatService = DoubaoChatService(apiKey: apiKey, modelType: .pro1_5_256k)
-        case .doubaoPro256k:
+        case .doubao_1_5_pro_256k:
             chatService = DoubaoChatService(apiKey: apiKey, modelType: .pro256k)
+        case .doubao_pro_256k:
+            chatService = DoubaoChatService(apiKey: apiKey, modelType: .pro256k_241115)
         }
     }
     

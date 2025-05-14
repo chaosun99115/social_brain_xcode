@@ -133,7 +133,9 @@ struct ChangedJobProvider: SampleModeProvider {
         // Add debug logging
         print("[ChangedJobProvider] Received question: '\(context.question)'")
         print("[ChangedJobProvider] Question length: \(context.question.count)")
-        print("[ChangedJobProvider] Question contains target string: \(context.question.contains("明天要跟张总一对一对聊"))")
+        print("[ChangedJobProvider] Question contains target string: \(context.question.contains("最近的社交"))")
+        print("[ChangedJobProvider] Question exact match: \(context.question == "回顾我最近的社交")")
+        print("[ChangedJobProvider] Question trimmed: '\(context.question.trimmingCharacters(in: .whitespacesAndNewlines))'")
         
         // Add context-specific guidance
         if context.isContactSpecific {
