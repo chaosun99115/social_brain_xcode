@@ -47,6 +47,7 @@
 		AFDDDC9B2DD393DF00425764 /* CircleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC992DD393DC00425764 /* CircleManager.swift */; };
 		AFDDDC9C2DD393DF00425764 /* CircleInsightManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC9A2DD393DC00425764 /* CircleInsightManager.swift */; };
 		AFDDDC9E2DD393F100425764 /* CircleDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC9D2DD393F100425764 /* CircleDetailView.swift */; };
+		AFDDDCA02DD52DC200425764 /* SampleModeProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC9F2DD52DC200425764 /* SampleModeProvider.swift */; };
 		AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */; };
 		AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBA2DA075730001DD70 /* Assets.xcassets */; };
 		AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBD2DA075730001DD70 /* Preview Assets.xcassets */; };
@@ -100,6 +101,7 @@
 		AFDDDC992DD393DC00425764 /* CircleManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleManager.swift; sourceTree = "<group>"; };
 		AFDDDC9A2DD393DC00425764 /* CircleInsightManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleInsightManager.swift; sourceTree = "<group>"; };
 		AFDDDC9D2DD393F100425764 /* CircleDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleDetailView.swift; sourceTree = "<group>"; };
+		AFDDDC9F2DD52DC200425764 /* SampleModeProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SampleModeProvider.swift; sourceTree = "<group>"; };
 		AFF98BB32DA075720001DD70 /* social_brain_xcode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = social_brain_xcode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = social_brain_xcodeApp.swift; sourceTree = "<group>"; };
 		AFF98BBA2DA075730001DD70 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -227,6 +229,7 @@
 		AFA276232DB03CAE00C29B81 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				AFDDDC9F2DD52DC200425764 /* SampleModeProvider.swift */,
 				AFF98BD42DA4496C0001DD70 /* SocialBrainMessage.swift */,
 			);
 			path = Models;
@@ -484,6 +487,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFDDDC9B2DD393DF00425764 /* CircleManager.swift in Sources */,
+				AFDDDCA02DD52DC200425764 /* SampleModeProvider.swift in Sources */,
 				AFF98BC02DA075730001DD70 /* Persistence.swift in Sources */,
 				AFBF98952DCAA44300AF626E /* AIServiceManager.swift in Sources */,
 				AF84F41D2DC582C600BD66D5 /* NoteDebugView.swift in Sources */,

@@ -3,6 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @State private var selectedTab = 1 // Default to Social Notes (middle tab)
     @EnvironmentObject var localizationManager: LocalizationManager
+    @EnvironmentObject var appModeManager: AppModeManager
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -11,6 +12,7 @@ struct MainTabView: View {
                 sourceAction: "chat",
                 sourceId: ""
             )
+            .environmentObject(appModeManager)
             .tabItem {
                 Label("社交大脑", systemImage: "sparkles")
             }
@@ -35,5 +37,6 @@ struct MainTabView_Previews: PreviewProvider {
     static var previews: some View {
         MainTabView()
             .environmentObject(LocalizationManager())
+            .environmentObject(AppModeManager())
     }
 } 

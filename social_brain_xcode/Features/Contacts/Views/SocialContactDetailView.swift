@@ -6,6 +6,7 @@ struct SocialContactDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var localizationManager: LocalizationManager
+    @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var contactManager = ContactManager.shared
     @StateObject private var insightManager = ContactInsightManager.shared
     @State private var activeTab: TabType = .summary
@@ -134,6 +135,7 @@ struct SocialContactDetailView: View {
                 sourceAction: socialBrainContext.sourceAction,
                 sourceId: socialBrainContext.sourceId
             )
+            .environmentObject(appModeManager)
             .onAppear {
                 print("[SocialContactDetailView] Opening SocialBrainView with context: type=\(socialBrainContext.sourceType), action=\(socialBrainContext.sourceAction), id=\(socialBrainContext.sourceId)")
             }

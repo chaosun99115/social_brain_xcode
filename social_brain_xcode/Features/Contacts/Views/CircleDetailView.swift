@@ -15,6 +15,7 @@ struct CircleDetailView: View {
     @State private var showingSocialBrain = false
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject private var appModeManager: AppModeManager
     
     // Context parameters for SocialBrain
     private var socialBrainContext: (sourceType: String, sourceAction: String, sourceId: String) {
@@ -214,6 +215,7 @@ struct CircleDetailView: View {
                 sourceAction: socialBrainContext.sourceAction,
                 sourceId: socialBrainContext.sourceId
             )
+            .environmentObject(appModeManager)
             .onAppear {
                 print("[CircleDetailView] Opening SocialBrainView with context: type=\(socialBrainContext.sourceType), action=\(socialBrainContext.sourceAction), id=\(socialBrainContext.sourceId)")
             }
