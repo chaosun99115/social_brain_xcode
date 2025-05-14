@@ -32,9 +32,7 @@ protocol SampleModeProvider {
 // MARK: - Changed Job Provider
 struct ChangedJobProvider: SampleModeProvider {
     var baseSystemPrompt: String {
-        """
-        sample mode - 换了一份新工作
-        """
+        SampleModePrompts.ChangedJob.basePrompt
     }
     
     func generateSystemPrompt(for context: PromptContext) -> String {
@@ -47,19 +45,16 @@ struct ChangedJobProvider: SampleModeProvider {
         
         // Add context-specific guidance
         if context.isContactSpecific {
-            prompt += "\n\nFor this specific interaction with \(context.contact?.name ?? "the contact"):"
-            prompt += "\n- Focus on building a professional relationship"
-            prompt += "\n- Consider their role and influence in the organization"
-            prompt += "\n- Identify potential collaboration opportunities"
+            prompt += "\n\n" + String(format: SampleModePrompts.ChangedJob.contactSpecificGuidance, context.contact?.name ?? "the contact")
         }
         
         // Add question-specific guidance
         if context.question.contains("明天要跟张总一对一对聊") {
             print("[ChangedJobProvider] Matched one-on-one meeting question")
-            prompt += "test1"
+            prompt += SampleModePrompts.ChangedJob.oneOnOneMeetingGuidance
         } else if context.question.contains("最近的社交") {
             print("[ChangedJobProvider] Matched recent social interactions question")
-            prompt += "test2"
+            prompt += SampleModePrompts.ChangedJob.recentSocialGuidance
         } else {
             print("[ChangedJobProvider] No specific question pattern matched")
         }
@@ -89,32 +84,18 @@ struct ChangedJobProvider: SampleModeProvider {
 // MARK: - Changed School Provider
 struct ChangedSchoolProvider: SampleModeProvider {
     var baseSystemPrompt: String {
-        """
-        You are an AI assistant helping a user whose child just started at a new school.
-        Focus on:
-        1. Building relationships with teachers and staff
-        2. Understanding school culture and policies
-        3. Supporting child's academic and social development
-        4. Engaging with other parents
-        5. Managing school-home communication
-        """
+        SampleModePrompts.ChangedSchool.basePrompt
     }
     
     func generateSystemPrompt(for context: PromptContext) -> String {
         var prompt = baseSystemPrompt
         
         if context.isContactSpecific {
-            prompt += "\n\nFor this specific interaction with \(context.contact?.name ?? "the teacher"):"
-            prompt += "\n- Focus on understanding their teaching approach"
-            prompt += "\n- Consider how to best support your child's learning"
-            prompt += "\n- Build a collaborative parent-teacher relationship"
+            prompt += "\n\n" + String(format: SampleModePrompts.ChangedSchool.contactSpecificGuidance, context.contact?.name ?? "the teacher")
         }
         
         if context.question.contains("一对一聊聊") {
-            prompt += "\n\nFor this one-on-one meeting preparation:"
-            prompt += "\n- Prepare specific questions about your child's progress"
-            prompt += "\n- Identify areas where you can support the teacher"
-            prompt += "\n- Consider how to maintain open communication"
+            prompt += "\n\n" + SampleModePrompts.ChangedSchool.oneOnOneMeetingGuidance
         }
         
         prompt += "\n\nUse the provided notes to give context-aware advice."
@@ -143,37 +124,20 @@ struct ChangedSchoolProvider: SampleModeProvider {
 // MARK: - Career Pivot Provider
 struct CareerPivotProvider: SampleModeProvider {
     var baseSystemPrompt: String {
-        """
-        You are an AI assistant helping a user who is planning a career transition.
-        Focus on:
-        1. Identifying transferable skills
-        2. Building new professional networks
-        3. Managing the transition period
-        4. Exploring new opportunities
-        5. Balancing current job with transition
-        """
+        SampleModePrompts.CareerPivot.basePrompt
     }
     
     func generateSystemPrompt(for context: PromptContext) -> String {
         var prompt = baseSystemPrompt
         
         if context.isContactSpecific {
-            prompt += "\n\nFor this specific interaction with \(context.contact?.name ?? "the mentor"):"
-            prompt += "\n- Focus on learning from their career transition experience"
-            prompt += "\n- Identify specific advice for your situation"
-            prompt += "\n- Build a meaningful mentor-mentee relationship"
+            prompt += "\n\n" + String(format: SampleModePrompts.CareerPivot.contactSpecificGuidance, context.contact?.name ?? "the mentor")
         }
         
         if context.question.contains("技能") {
-            prompt += "\n\nFor skill assessment:"
-            prompt += "\n- Analyze transferable skills from current role"
-            prompt += "\n- Identify skill gaps for target industry"
-            prompt += "\n- Suggest skill development opportunities"
+            prompt += "\n\n" + SampleModePrompts.CareerPivot.skillAssessmentGuidance
         } else if context.question.contains("人脉") {
-            prompt += "\n\nFor network building:"
-            prompt += "\n- Identify key people in target industry"
-            prompt += "\n- Develop networking strategy"
-            prompt += "\n- Create meaningful connection opportunities"
+            prompt += "\n\n" + SampleModePrompts.CareerPivot.networkBuildingGuidance
         }
         
         prompt += "\n\nUse the provided notes to give context-aware advice."
