@@ -42,93 +42,64 @@ struct SocialBrainView: View {
     // System prompt generation
     private func generateSystemPrompt() async throws {
         print("==== Generating system prompt for sourceType: \(sourceType), sourceAction: \(sourceAction) ====")
-        var prompt = ""
         
         // First check if we're in sample mode
         if let sampleProvider = getSampleProvider() {
-            // Use the new prompt generation system
+            // Use the new prompt generation system with notes
             let context = PromptContext(
                 mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
                 question: "",  // Initial prompt doesn't have a specific question
                 contact: contextContact
             )
-            prompt = sampleProvider.generateSystemPrompt(for: context)
-        } else {
-            // Use existing logic for non-sample mode
-            prompt = "system prompt"
-            switch (sourceType, sourceAction) {
-            case ("contact", "general"):
-                print("[SocialBrainView] Fetching contact context for ID: \(sourceId)")
-                let context = try await CoreDataManager.shared.viewContext
-                let contactFetchRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
-                contactFetchRequest.predicate = NSPredicate(format: "contactId == %@", sourceId as CVarArg)
-                
-                if let contact = try context.fetch(contactFetchRequest).first {
-                    print("[SocialBrainView] Found contact: \(contact.name ?? "unnamed")")
-                    contextContact = contact
-                    
-                    // Fetch related notes
-                    let notesFetchRequest: NSFetchRequest<Note> = Note.fetchRequest()
-                    notesFetchRequest.predicate = NSPredicate(format: "contacts.contacts == %@", contact)
-                    notesFetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)]
-                    
-                    contextNotes = try context.fetch(notesFetchRequest)
-                    print("[SocialBrainView] Found \(contextNotes.count) related notes")
-                    
-                    prompt += "Contact is \(contact.name ?? "failed to load contact name"). "
-                    
-                    // Update suggested questions using the provider
-                    await MainActor.run {
-                        initializeSuggestedQuestions()
-                    }
-                    
-                    // Concatenate all notes
-                    if !contextNotes.isEmpty {
-                        print("[SocialBrainView] Concatenating notes content...")
-                        let notesContent = contextNotes.compactMap { note -> String? in
-                            guard let content = note.content else { return nil }
-                            let dateFormatter = DateFormatter()
-                            dateFormatter.dateStyle = .medium
-                            let dateStr = note.createdAt.map { dateFormatter.string(from: $0) } ?? "unknown date"
-                            return "[\(dateStr)] \(content)"
-                        }.joined(separator: "\n")
-                        
-                        prompt += "Here are the notes about this contact:\n\(notesContent)\n"
-                        print("[SocialBrainView] Successfully concatenated \(contextNotes.count) notes")
-                    } else {
-                        prompt += "No notes found for this contact. "
-                    }
-                } else {
-                    print("[SocialBrainView] No contact found for ID: \(sourceId)")
-                    prompt += "contact + general (ID: \(sourceId)). "
-                    prompt += "Focus on general relationship management, communication strategies, and maintaining healthy connections."
-                }
-
-            case ("contact", "insights"):
-                prompt += "You are analyzing a specific contact with ID: \(sourceId). "
-                prompt += "Focus on providing insights about this contact's relationship with the user, "
-                prompt += "suggesting conversation topics, and identifying opportunities for deeper connection."
-                
-            default:
-                prompt += "You are providing general social relationship advice."
-            }
+            systemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
+            print("[SocialBrainView] Generated System Prompt: \(systemPrompt)")
+            return
         }
         
-        // Add contact-specific context if available
-        if let contact = contextContact {
-            prompt += "\nContact is \(contact.name ?? "failed to load contact name"). "
+        // Use existing logic for non-sample mode
+        var prompt = "system prompt"
+        switch (sourceType, sourceAction) {
+        case ("contact", "general"):
+            print("[SocialBrainView] Fetching contact context for ID: \(sourceId)")
+            let context = try await CoreDataManager.shared.viewContext
+            let contactFetchRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
+            contactFetchRequest.predicate = NSPredicate(format: "contactId == %@", sourceId as CVarArg)
             
-            if !contextNotes.isEmpty {
-                let notesContent = contextNotes.compactMap { note -> String? in
-                    guard let content = note.content else { return nil }
-                    let dateFormatter = DateFormatter()
-                    dateFormatter.dateStyle = .medium
-                    let dateStr = note.createdAt.map { dateFormatter.string(from: $0) } ?? "unknown date"
-                    return "[\(dateStr)] \(content)"
-                }.joined(separator: "\n")
+            if let contact = try context.fetch(contactFetchRequest).first {
+                print("[SocialBrainView] Found contact: \(contact.name ?? "unnamed")")
+                contextContact = contact
                 
-                prompt += "\nHere are the notes about this contact:\n\(notesContent)\n"
+                // Update suggested questions using the provider
+                await MainActor.run {
+                    initializeSuggestedQuestions()
+                }
+                
+                prompt += "Contact is \(contact.name ?? "failed to load contact name"). "
+                
+                // Use the new note fetching functionality
+                if let sampleProvider = getSampleProvider() {
+                    let context = PromptContext(
+                        mode: .none,
+                        question: "",
+                        contact: contact
+                    )
+                    let notesContext = try await sampleProvider.fetchRelevantNotes(for: context)
+                    if !notesContext.isEmpty {
+                        prompt += notesContext
+                    }
+                }
+            } else {
+                print("[SocialBrainView] No contact found for ID: \(sourceId)")
+                prompt += "contact + general (ID: \(sourceId)). "
+                prompt += "Focus on general relationship management, communication strategies, and maintaining healthy connections."
             }
+            
+            prompt += "You are analyzing a specific contact with ID: \(sourceId). "
+            prompt += "Focus on providing insights about this contact's relationship with the user, "
+            prompt += "suggesting conversation topics, and identifying opportunities for deeper connection."
+            
+        default:
+            prompt += "You are providing general social relationship advice."
         }
         
         print("[SocialBrainView] Generated System Prompt: \(prompt)")
@@ -393,7 +364,7 @@ struct SocialBrainView: View {
                         question: trimmedText,  // Use the actual question
                         contact: contextContact
                     )
-                    systemPrompt = sampleProvider.generateSystemPrompt(for: context)
+                    systemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
                 }
                 
                 // Prepare messages with system prompt

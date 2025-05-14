@@ -1,4 +1,5 @@
 import Foundation
+import CoreData
 
 // MARK: - Prompt Context
 struct PromptContext {
@@ -25,18 +26,109 @@ protocol SampleModeProvider {
     var suggestedQuestions: [SocialBrainMessage] { get }
     var contactSpecificQuestions: (Contact) -> [SocialBrainMessage] { get }
     
-    // New method to generate contextual prompt
-    func generateSystemPrompt(for context: PromptContext) -> String
+    // Updated to be async
+    func generateSystemPrompt(for context: PromptContext) async throws -> String
+}
+
+// MARK: - Sample Mode Provider Protocol Extension
+extension SampleModeProvider {
+    /// Fetches and formats relevant notes for the given context
+    func fetchRelevantNotes(for context: PromptContext) async throws -> String {
+        print("[SampleModeProvider] Starting fetchRelevantNotes for context: mode=\(context.mode.rawValue), hasContact=\(context.contact != nil)")
+        
+        let viewContext = CoreDataManager.shared.viewContext
+        
+        // First, let's check if there are any notes at all
+        let allNotesFetchRequest = NSFetchRequest<Note>(entityName: "Note")
+        let allNotes = try viewContext.fetch(allNotesFetchRequest)
+        print("[SampleModeProvider] Total notes in database: \(allNotes.count)")
+        
+        // Log all note types to see what we have
+        let noteTypes = allNotes.map { $0.type }
+        print("[SampleModeProvider] Note types in database: \(noteTypes)")
+        
+        let notesFetchRequest = NSFetchRequest<Note>(entityName: "Note")
+        
+        // Configure fetch request based on context
+        if let contact = context.contact {
+            print("[SampleModeProvider] Fetching notes for specific contact: \(contact.name ?? "unnamed")")
+            notesFetchRequest.predicate = NSPredicate(format: "contacts.contacts == %@", contact)
+        } else {
+            print("[SampleModeProvider] Fetching notes for sample mode")
+            // In sample mode, we want to include both sample notes (type 0) and social notes (type 2)
+            notesFetchRequest.predicate = NSPredicate(format: "type == %d OR type == %d", 0, NoteType.social.rawValue)
+            print("[SampleModeProvider] Using predicate to fetch both sample notes (type 0) and social notes (type \(NoteType.social.rawValue))")
+        }
+        
+        // Sort by date, most recent first
+        notesFetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)]
+        notesFetchRequest.fetchLimit = 10
+        
+        // Log the fetch request details
+        print("[SampleModeProvider] Fetch request predicate: \(notesFetchRequest.predicate?.description ?? "nil")")
+        
+        let notes = try viewContext.fetch(notesFetchRequest)
+        print("[SampleModeProvider] Fetched \(notes.count) notes")
+        
+        // Log details of fetched notes
+        for (index, note) in notes.enumerated() {
+            print("[SampleModeProvider] Note \(index + 1):")
+            print("  - Type: \(note.type)")
+            print("  - Content: \(note.content ?? "nil")")
+            print("  - Created: \(note.createdAt?.description ?? "nil")")
+        }
+        
+        // Format notes for the prompt
+        let formattedNotes = notes.compactMap { note -> String? in
+            guard let content = note.content,
+                  let date = note.createdAt else { return nil }
+            
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateStyle = .medium
+            let dateStr = dateFormatter.string(from: date)
+            
+            // Format each note with date and content
+            return "[\(dateStr)] \(content)"
+        }.joined(separator: "\n")
+        
+        let result = formattedNotes.isEmpty ? "" : "\n\nRelevant social notes:\n\(formattedNotes)"
+        print("[SampleModeProvider] Formatted notes result: \(result.isEmpty ? "empty" : "contains notes")")
+        return result
+    }
+    
+    /// Generates a system prompt with context and relevant notes
+    func generateSystemPromptWithNotes(for context: PromptContext) async throws -> String {
+        print("[SampleModeProvider] Starting generateSystemPromptWithNotes")
+        
+        // First get the base prompt
+        var prompt = try await generateSystemPrompt(for: context)
+        print("[SampleModeProvider] Base prompt generated: \(prompt)")
+        
+        // Fetch and append relevant notes
+        let notesContext = try await fetchRelevantNotes(for: context)
+        if !notesContext.isEmpty {
+            print("[SampleModeProvider] Appending notes to prompt")
+            prompt += notesContext
+        } else {
+            print("[SampleModeProvider] No notes to append")
+        }
+        
+        print("[SampleModeProvider] Final prompt with notes: \(prompt)")
+        return prompt
+    }
 }
 
 // MARK: - Changed Job Provider
 struct ChangedJobProvider: SampleModeProvider {
     var baseSystemPrompt: String {
-        SampleModePrompts.ChangedJob.basePrompt
+        print("[ChangedJobProvider] Getting baseSystemPrompt")
+        return SampleModePrompts.ChangedJob.basePrompt
     }
     
-    func generateSystemPrompt(for context: PromptContext) -> String {
+    func generateSystemPrompt(for context: PromptContext) async throws -> String {
+        print("[ChangedJobProvider] Starting generateSystemPrompt")
         var prompt = baseSystemPrompt
+        print("[ChangedJobProvider] Base prompt: \(prompt)")
         
         // Add debug logging
         print("[ChangedJobProvider] Received question: '\(context.question)'")
@@ -45,6 +137,7 @@ struct ChangedJobProvider: SampleModeProvider {
         
         // Add context-specific guidance
         if context.isContactSpecific {
+            print("[ChangedJobProvider] Adding contact-specific guidance")
             prompt += "\n\n" + String(format: SampleModePrompts.ChangedJob.contactSpecificGuidance, context.contact?.name ?? "the contact")
         }
         
@@ -59,6 +152,7 @@ struct ChangedJobProvider: SampleModeProvider {
             print("[ChangedJobProvider] No specific question pattern matched")
         }
         
+        print("[ChangedJobProvider] Final prompt before notes: \(prompt)")
         return prompt
     }
     
@@ -87,7 +181,7 @@ struct ChangedSchoolProvider: SampleModeProvider {
         SampleModePrompts.ChangedSchool.basePrompt
     }
     
-    func generateSystemPrompt(for context: PromptContext) -> String {
+    func generateSystemPrompt(for context: PromptContext) async throws -> String {
         var prompt = baseSystemPrompt
         
         if context.isContactSpecific {
@@ -96,6 +190,12 @@ struct ChangedSchoolProvider: SampleModeProvider {
         
         if context.question.contains("一对一聊聊") {
             prompt += "\n\n" + SampleModePrompts.ChangedSchool.oneOnOneMeetingGuidance
+        }
+        
+        // Fetch and append relevant notes
+        let notesContext = try await fetchRelevantNotes(for: context)
+        if !notesContext.isEmpty {
+            prompt += notesContext
         }
         
         prompt += "\n\nUse the provided notes to give context-aware advice."
@@ -127,7 +227,7 @@ struct CareerPivotProvider: SampleModeProvider {
         SampleModePrompts.CareerPivot.basePrompt
     }
     
-    func generateSystemPrompt(for context: PromptContext) -> String {
+    func generateSystemPrompt(for context: PromptContext) async throws -> String {
         var prompt = baseSystemPrompt
         
         if context.isContactSpecific {
@@ -138,6 +238,12 @@ struct CareerPivotProvider: SampleModeProvider {
             prompt += "\n\n" + SampleModePrompts.CareerPivot.skillAssessmentGuidance
         } else if context.question.contains("人脉") {
             prompt += "\n\n" + SampleModePrompts.CareerPivot.networkBuildingGuidance
+        }
+        
+        // Fetch and append relevant notes
+        let notesContext = try await fetchRelevantNotes(for: context)
+        if !notesContext.isEmpty {
+            prompt += notesContext
         }
         
         prompt += "\n\nUse the provided notes to give context-aware advice."
@@ -182,13 +288,13 @@ struct SampleModeProviderFactory {
         }
     }
     
-    static func generatePrompt(for mode: String, question: String, contact: Contact? = nil) -> String? {
+    static func generatePrompt(for mode: String, question: String, contact: Contact? = nil) async throws -> String? {
         guard let provider = getProvider(for: mode) else { return nil }
         let context = PromptContext(
             mode: SampleMode(rawValue: mode) ?? .none,
             question: question,
             contact: contact
         )
-        return provider.generateSystemPrompt(for: context)
+        return try await provider.generateSystemPrompt(for: context)
     }
 } 
