@@ -353,9 +353,7 @@ struct SocialNoteDetailView: View {
         
         // Sort insights by order
         contactInsights = allInsights.sorted { insight1, insight2 in
-            let order1 = Int(insight1.order ?? "0") ?? 0
-            let order2 = Int(insight2.order ?? "0") ?? 0
-            return order1 < order2
+            insight1.order < insight2.order
         }
         
         print("\n--- ContactInsight Debug Log ---")

@@ -14,7 +14,7 @@ class ContactInsightManager: ObservableObject {
         insight.type = type
         insight.category = category
         insight.content = content
-        insight.order = String(order)
+        insight.order = order
         insight.createdAt = Date()
         insight.updatedAt = Date()
         insight.recordStatus = 0 // unsynced
@@ -71,7 +71,7 @@ class ContactInsightManager: ObservableObject {
         insight.type = type
         insight.category = category
         insight.content = content
-        insight.order = String(order)
+        insight.order = order
         insight.updatedAt = Date()
         insight.recordStatus = 0 // mark as unsynced
         

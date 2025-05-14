@@ -12,7 +12,7 @@ struct ContactInsightDebugView: View {
     @State private var type: Int16 = 0
     @State private var category = ""
     @State private var content = ""
-    @State private var order = "0"
+    @State private var order: Int16 = 0
     @State private var selectedContacts: Set<UUID> = []
     
     var body: some View {
@@ -76,7 +76,7 @@ struct ContactInsightDebugView: View {
                             set: { content = $0 }
                         ),
                         order: Binding(
-                            get: { String(insight.order ?? "0") },
+                            get: { insight.order },
                             set: { order = $0 }
                         ),
                         selectedContacts: $selectedContacts,
@@ -106,7 +106,7 @@ struct ContactInsightDebugView: View {
             type: type,
             category: category,
             content: content,
-            order: Int16(order) ?? 0
+            order: order
         ) else { return }
         
         // Add selected contacts
@@ -130,7 +130,7 @@ struct ContactInsightDebugView: View {
             type: type,
             category: category,
             content: content,
-            order: Int16(order) ?? 0
+            order: order
         )
         
         // Update contacts
@@ -172,7 +172,7 @@ struct InsightRow: View {
                 Text("\(insight.type)")
                     .font(.headline)
                 Spacer()
-                Text("Order: \(insight.order ?? "0")")
+                Text("Order: \(insight.order)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -208,7 +208,7 @@ struct InsightFormView: View {
     @Binding var type: Int16
     @Binding var category: String
     @Binding var content: String
-    @Binding var order: String
+    @Binding var order: Int16
     @Binding var selectedContacts: Set<UUID>
     let onSave: () -> Void
     
@@ -221,7 +221,7 @@ struct InsightFormView: View {
                 Stepper("Type: \(type)", value: $type, in: 0...100)
                 TextField("Category", text: $category)
                 TextField("Content", text: $content)
-                TextField("Order", text: $order)
+                Stepper("Order: \(order)", value: $order, in: 0...100)
             }
             
             Section("Related Contacts") {

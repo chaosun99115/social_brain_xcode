@@ -228,7 +228,7 @@ struct SocialContactDetailView: View {
         
         // Sort by order
         contactInsights.sort { (a, b) in
-            (Int(a.order ?? "0") ?? 0) < (Int(b.order ?? "0") ?? 0)
+            a.order < b.order
         }
         
         print("\n--- ContactInsight Debug Log ---")

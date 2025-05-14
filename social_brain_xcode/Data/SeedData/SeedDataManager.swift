@@ -252,7 +252,7 @@ final class SeedDataManager {
                 insight.insightId = insightUUID
                 insight.type = insightData.type  // Use Int16 directly
                 insight.category = insightData.category
-                insight.order = String(insightData.order)  // Keep as String since model defines it as String
+                insight.order = insightData.order  // Use Int16 directly
                 insight.content = insightData.content
                 insight.createdAt = insightData.createdAt
                 insight.updatedAt = insightData.updatedAt
@@ -311,36 +311,130 @@ final class SeedDataManager {
             // Create Note-Contact Relationships
             print("\n[SeedDataManager] 🔗 Creating \(seedData.noteContactRelationships.count) note-contact relationships...")
             var relationshipErrors = 0
+
+            // First, fetch all notes and contacts to avoid repeated fetches
+            let noteRequest: NSFetchRequest<Note> = Note.fetchRequest()
+            let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
+            let allNotes = try? context.fetch(noteRequest)
+            let allContacts = try? context.fetch(contactRequest)
+
+            // Create dictionaries for quick lookup
+            var notesByUUID: [UUID: Note] = [:]
+            var contactsByUUID: [UUID: Contact] = [:]
+
+            allNotes?.forEach { note in
+                if let noteId = note.noteId {
+                    notesByUUID[noteId] = note
+                }
+            }
+
+            allContacts?.forEach { contact in
+                if let contactId = contact.contactId {
+                    contactsByUUID[contactId] = contact
+                }
+            }
+
+            // Group relationships by contact for batch processing
+            var relationshipsByContact: [UUID: [(Note, Date)]] = [:]
+
+            // First pass: validate and group relationships
             for relationshipData in seedData.noteContactRelationships {
+                print("\n[DEBUG] Validating relationship:")
+                print("[DEBUG] Note ID: \(relationshipData.noteIdentifier)")
+                print("[DEBUG] Contact ID: \(relationshipData.contactIdentifier)")
+                
                 let noteUUID = self.getUUID(for: relationshipData.noteIdentifier)
                 let contactUUID = self.getUUID(for: relationshipData.contactIdentifier)
                 
-                if noteUUID == nil || contactUUID == nil {
+                guard let noteUUID = noteUUID,
+                      let contactUUID = contactUUID,
+                      let note = notesByUUID[noteUUID],
+                      let contact = contactsByUUID[contactUUID] else {
+                    print("[DEBUG] ❌ Invalid relationship data")
                     relationshipErrors += 1
                     continue
                 }
                 
-                let relationship = NoteContactRelationship(context: context)
-                relationship.relationshipId = UUID()
-                relationship.createdAt = relationshipData.createdAt  // Date from seed data
-                
-                let noteRequest: NSFetchRequest<Note> = Note.fetchRequest()
-                noteRequest.predicate = NSPredicate(format: "noteId == %@", noteUUID! as CVarArg)
-                
-                let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
-                contactRequest.predicate = NSPredicate(format: "contactId == %@", contactUUID! as CVarArg)
-                
-                let notes = try? context.fetch(noteRequest)
-                let contacts = try? context.fetch(contactRequest)
-                
-                guard let note = notes?.first, let contact = contacts?.first else {
-                    relationshipErrors += 1
-                    continue
-                }
-                
-                relationship.notes = note
-                relationship.contacts = contact
+                // Group by contact for batch processing
+                relationshipsByContact[contactUUID, default: []].append((note, relationshipData.createdAt))
+                print("[DEBUG] ✅ Validated relationship for \(contact.name ?? "unknown")")
             }
+
+            // Second pass: create relationships in batches per contact
+            for (contactUUID, noteData) in relationshipsByContact {
+                guard let contact = contactsByUUID[contactUUID] else { continue }
+                
+                print("\n[DEBUG] Processing batch for contact: \(contact.name ?? "unknown")")
+                print("[DEBUG] Creating \(noteData.count) relationships")
+                
+                // Create all relationships for this contact
+                let relationships = noteData.map { (note, createdAt) -> NoteContactRelationship in
+                    let relationship = NoteContactRelationship(context: context)
+                    relationship.relationshipId = UUID()
+                    relationship.createdAt = createdAt
+                    
+                    // Set both sides of the relationship
+                    relationship.notes = note
+                    relationship.contacts = contact
+                    
+                    // Add to contact's notes set
+                    contact.addToNotes(relationship)
+                    
+                    print("[DEBUG] Created relationship: \(relationship.relationshipId?.uuidString ?? "nil")")
+                    print("  - Note: \(note.noteId?.uuidString ?? "nil")")
+                    print("  - Contact: \(contact.contactId?.uuidString ?? "nil")")
+                    
+                    return relationship
+                }
+                
+                // Save relationships for this contact
+                do {
+                    // Verify relationships before saving
+                    for relationship in relationships {
+                        guard relationship.notes != nil && relationship.contacts != nil else {
+                            print("[DEBUG] ❌ Invalid relationship state before save")
+                            throw NSError(domain: "SeedDataManager", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid relationship state"])
+                        }
+                    }
+                    
+                    // Save this batch
+                    try context.save()
+                    print("[DEBUG] ✅ Saved \(relationships.count) relationships for \(contact.name ?? "unknown")")
+                    
+                    // Verify relationships after saving
+                    for relationship in relationships {
+                        guard relationship.notes != nil && relationship.contacts != nil else {
+                            print("[DEBUG] ❌ Relationship lost references after save")
+                            throw NSError(domain: "SeedDataManager", code: 4, userInfo: [NSLocalizedDescriptionKey: "Relationship lost references"])
+                        }
+                    }
+                } catch {
+                    print("[DEBUG] ❌ Error saving relationships for \(contact.name ?? "unknown"): \(error)")
+                    relationshipErrors += noteData.count
+                    
+                    // Rollback this batch
+                    context.rollback()
+                    
+                    // Try individual saves as fallback
+                    for (note, createdAt) in noteData {
+                        do {
+                            let relationship = NoteContactRelationship(context: context)
+                            relationship.relationshipId = UUID()
+                            relationship.createdAt = createdAt
+                            relationship.notes = note
+                            relationship.contacts = contact
+                            contact.addToNotes(relationship)
+                            
+                            try context.save()
+                            print("[DEBUG] ✅ Saved individual relationship")
+                        } catch {
+                            print("[DEBUG] ❌ Failed to save individual relationship: \(error)")
+                            relationshipErrors += 1
+                        }
+                    }
+                }
+            }
+
             if relationshipErrors > 0 {
                 print("[SeedDataManager] ⚠️ \(relationshipErrors) note-contact relationships failed to create")
             }
