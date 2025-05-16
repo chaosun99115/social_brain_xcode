@@ -86,13 +86,19 @@ class KIMIChatService: AIChatServiceProtocol {
                 throw AIChatServiceError.rateLimitExceeded
             case 500...599:
                 print("[KIMIChatService] Server error (\(httpResponse.statusCode))")
-                throw AIChatServiceError.serverError(httpResponse.statusCode)
-            default:
                 if let errorMessage = String(data: data, encoding: .utf8) {
                     print("[KIMIChatService] API error: \(errorMessage)")
                     throw AIChatServiceError.apiError(errorMessage)
                 } else {
                     print("[KIMIChatService] Unknown error, status: \(httpResponse.statusCode)")
+                    throw AIChatServiceError.serverError(httpResponse.statusCode)
+                }
+            default:
+                print("[KIMIChatService] Unexpected status code: \(httpResponse.statusCode)")
+                if let errorMessage = String(data: data, encoding: .utf8) {
+                    print("[KIMIChatService] API error: \(errorMessage)")
+                    throw AIChatServiceError.apiError(errorMessage)
+                } else {
                     throw AIChatServiceError.invalidResponse
                 }
             }

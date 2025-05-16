@@ -13,14 +13,8 @@ class AIServiceManager {
             chatService = DeepSeekChatService(apiKey: apiKey)
         case .kimi:
             chatService = KIMIChatService(apiKey: apiKey)
-        case .doubao_1_5_lite:
-            chatService = DoubaoChatService(apiKey: apiKey, modelType: .lite)
-        case .doubao_1_5_pro:
-            chatService = DoubaoChatService(apiKey: apiKey, modelType: .pro)
-        case .doubao_1_5_pro_256k:
-            chatService = DoubaoChatService(apiKey: apiKey, modelType: .pro256k)
-        case .doubao_pro_256k:
-            chatService = DoubaoChatService(apiKey: apiKey, modelType: .pro256k_241115)
+        case .doubao_1_5_lite, .doubao_1_5_pro, .doubao_1_5_pro_256k, .doubao_pro_256k:
+            chatService = DoubaoChatService(apiKey: apiKey, modelType: AIConfig.getDoubaoModelType(for: serviceType))
         }
     }
     

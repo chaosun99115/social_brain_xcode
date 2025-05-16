@@ -88,13 +88,19 @@ class DoubaoChatService: AIChatServiceProtocol {
                 throw AIChatServiceError.rateLimitExceeded
             case 500...599:
                 print("[DoubaoChatService] Server error (\(httpResponse.statusCode))")
-                throw AIChatServiceError.serverError(httpResponse.statusCode)
-            default:
                 if let errorMessage = String(data: data, encoding: .utf8) {
                     print("[DoubaoChatService] API error: \(errorMessage)")
                     throw AIChatServiceError.apiError(errorMessage)
                 } else {
                     print("[DoubaoChatService] Unknown error, status: \(httpResponse.statusCode)")
+                    throw AIChatServiceError.serverError(httpResponse.statusCode)
+                }
+            default:
+                print("[DoubaoChatService] Unexpected status code: \(httpResponse.statusCode)")
+                if let errorMessage = String(data: data, encoding: .utf8) {
+                    print("[DoubaoChatService] API error: \(errorMessage)")
+                    throw AIChatServiceError.apiError(errorMessage)
+                } else {
                     throw AIChatServiceError.invalidResponse
                 }
             }

@@ -91,7 +91,7 @@ extension SampleModeProvider {
             return "[\(dateStr)] \(content)"
         }.joined(separator: "\n")
         
-        let result = formattedNotes.isEmpty ? "" : "\n\nRelevant social notes:\n\(formattedNotes)"
+        let result = formattedNotes.isEmpty ? "" : "\n\n相关笔记如下:\n\(formattedNotes)"
         print("[SampleModeProvider] Formatted notes result: \(result.isEmpty ? "empty" : "contains notes")")
         return result
     }

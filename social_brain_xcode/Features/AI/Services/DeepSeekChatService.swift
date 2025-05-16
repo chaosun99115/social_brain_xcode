@@ -87,13 +87,19 @@ class DeepSeekChatService: AIChatServiceProtocol {
                 throw AIChatServiceError.rateLimitExceeded
             case 500...599:
                 print("[DeepSeekChatService] Server error (\(httpResponse.statusCode))")
-                throw AIChatServiceError.serverError(httpResponse.statusCode)
-            default:
                 if let errorMessage = String(data: data, encoding: .utf8) {
                     print("[DeepSeekChatService] API error: \(errorMessage)")
                     throw AIChatServiceError.apiError(errorMessage)
                 } else {
                     print("[DeepSeekChatService] Unknown error, status: \(httpResponse.statusCode)")
+                    throw AIChatServiceError.serverError(httpResponse.statusCode)
+                }
+            default:
+                print("[DeepSeekChatService] Unexpected status code: \(httpResponse.statusCode)")
+                if let errorMessage = String(data: data, encoding: .utf8) {
+                    print("[DeepSeekChatService] API error: \(errorMessage)")
+                    throw AIChatServiceError.apiError(errorMessage)
+                } else {
                     throw AIChatServiceError.invalidResponse
                 }
             }

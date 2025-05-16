@@ -1,4 +1,4 @@
-import Foundation    
+import Foundation
 
 enum AIServiceType {
     case deepSeek
@@ -18,11 +18,11 @@ enum DoubaoModelType {
     var modelId: String {
         switch self {
         case .lite:
-            return "doubao-1.5-lite-32k-250115"
+            return "doubao-1.5-lite"
         case .pro:
-            return "doubao-1-5-pro-32k-250115"
+            return "doubao-1.5-pro"
         case .pro256k:
-            return "doubao-1.5-pro-256k-250115"
+            return "doubao-1.5-pro-256k"
         case .pro256k_241115:
             return "doubao-pro-256k-241115"
         }
@@ -51,7 +51,7 @@ enum AIConfig {
     
     // MARK: - Configuration
     
-    static var currentServiceType: AIServiceType = .doubao_pro_256k
+    static var currentServiceType: AIServiceType = .deepSeek
     
     static func configure() {
         switch currentServiceType {
