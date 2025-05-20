@@ -51,7 +51,7 @@ enum AIConfig {
     
     // MARK: - Configuration
     
-    static var currentServiceType: AIServiceType = .deepSeek
+    static var currentServiceType: AIServiceType = .doubao_pro_256k
     
     static func configure() {
         switch currentServiceType {

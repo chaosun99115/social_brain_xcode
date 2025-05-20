@@ -14,10 +14,10 @@ struct PromptContext {
 
 // MARK: - Sample Mode Enum
 enum SampleMode: String {
-    case changedJob = "换了一份新工作"
-    case changedSchool = "孩子进了新学校"
-    case careerPivot = "打算职业转型"
-    case none = "none"
+    case changedJob
+    case changedSchool
+    case careerPivot
+    case none
 }
 
 // MARK: - Sample Mode Provider Protocol

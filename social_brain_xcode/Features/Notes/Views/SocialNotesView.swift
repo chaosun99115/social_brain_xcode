@@ -49,14 +49,14 @@ struct SocialNotesView: View {
                             refreshTrigger.toggle()
                         }) {
                             HStack(spacing: 6) {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                Text("退出示例模式")
+                                Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
+                                Text(SampleModeConfig.UIConstants.exitButtonTitle)
                             }
                             .font(.footnote)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 6)
-                            .background(Color(hex: "4085F3"))
+                            .background(Color(hex: SampleModeConfig.UIConstants.exitButtonColor))
                             .cornerRadius(6)
                             .padding(.horizontal, 100)
                         }
@@ -79,18 +79,17 @@ struct SocialNotesView: View {
                             }
                             VStack(spacing: 16) {
                                 Button(action: {
-                                    // Show confirmation dialog instead of directly entering sample mode
                                     showingSampleNoteDialog = true
                                 }) {
                                     HStack(spacing: 6) {
-                                        Image(systemName: "doc.text.magnifyingglass")
-                                        Text("查看示例笔记")
+                                        Image(systemName: SampleModeConfig.UIConstants.sampleButtonIcon)
+                                        Text(SampleModeConfig.UIConstants.sampleButtonTitle)
                                     }
                                     .font(.subheadline)
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 8)
-                                    .background(Color(hex: "4085F3"))
+                                    .background(Color(hex: SampleModeConfig.UIConstants.sampleButtonColor))
                                     .cornerRadius(8)
                                 }
                                 .padding(.horizontal, 60)
@@ -189,23 +188,15 @@ struct SocialNotesView: View {
                 DebugMenuView()
             }
             .confirmationDialog(
-                "选择一个用户场景。进入示例模式后，将会生成虚拟的示例数据，供你全面体验小日常的功能。示例模式不影响你的私有数据，退出示例模式后将恢复原状。",
+                SampleModeConfig.selectionDialogMessage,
                 isPresented: $showingSampleNoteDialog,
                 titleVisibility: .visible
             ) {
-                Button("换了一份新工作") {
-                    Task {
-                        await handleSampleModeSelection("换了一份新工作")
-                    }
-                }
-                Button("孩子进了新学校") {
-                    Task {
-                        await handleSampleModeSelection("孩子进了新学校")
-                    }
-                }
-                Button("打算职业转型") {
-                    Task {
-                        await handleSampleModeSelection("打算职业转型")
+                ForEach(SampleModeConfig.availableModes, id: \.id) { mode in
+                    Button(mode.title) {
+                        Task {
+                            await handleSampleModeSelection(mode)
+                        }
                     }
                 }
                 Button("取消", role: .cancel) {}
@@ -253,24 +244,10 @@ struct SocialNotesView: View {
         }
     }
     
-    private func handleSampleModeSelection(_ mode: String) async {
+    private func handleSampleModeSelection(_ mode: SampleModeConfig.ModeDefinition) async {
         print("\n[SocialNotesView] ===== Starting Sample Mode Selection =====")
-        print("[SocialNotesView] Selected mode: \(mode)")
-        
-        // Map the mode string to SeedDataScenario
-        let scenario: SeedDataScenario
-        switch mode {
-        case "换了一份新工作":
-            scenario = .changedJob
-        case "孩子进了新学校":
-            scenario = .changedSchool
-        case "打算职业转型":
-            scenario = .careerPivot
-        default:
-            print("[SocialNotesView] ❌ Unknown sample mode: \(mode)")
-            return
-        }
-        print("[SocialNotesView] Mapped to scenario: \(scenario.rawValue)")
+        print("[SocialNotesView] Selected mode: \(mode.title)")
+        print("[SocialNotesView] Mapped to scenario: \(mode.scenario.rawValue)")
         
         do {
             print("\n[SocialNotesView] 🧹 Clearing existing sample data...")
@@ -282,16 +259,16 @@ struct SocialNotesView: View {
             try viewContext.save()
             print("[SocialNotesView] ✅ Successfully cleared existing sample data")
             
-            print("\n[SocialNotesView] 📥 Starting data import for scenario: \(scenario.rawValue)")
+            print("\n[SocialNotesView] 📥 Starting data import for scenario: \(mode.scenario.rawValue)")
             // Import new sample data
-            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: scenario)
+            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: mode.scenario)
             print("[SocialNotesView] ✅ Successfully imported sample data")
             
             // Update UI
             print("\n[SocialNotesView] 🔄 Updating UI state...")
             await MainActor.run {
                 appModeManager.isSampleMode = true
-                appModeManager.sampleModeType = mode
+                appModeManager.sampleModeType = mode.title
                 refreshTrigger.toggle()
                 print("[SocialNotesView] ✅ UI state updated")
             }
@@ -300,8 +277,8 @@ struct SocialNotesView: View {
         } catch {
             print("\n[SocialNotesView] ❌ Error during sample mode setup:")
             print("- Error: \(error)")
-            print("- Mode: \(mode)")
-            print("- Scenario: \(scenario.rawValue)")
+            print("- Mode: \(mode.title)")
+            print("- Scenario: \(mode.scenario.rawValue)")
             // Handle error appropriately
         }
     }

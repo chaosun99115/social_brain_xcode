@@ -10,6 +10,7 @@ enum SeedDataScenario: String {
     case changedJob = "changed_job"
     case changedSchool = "changed_school"
     case careerPivot = "career_pivot"
+    case indie = "indie"
 }
 
 final class SeedDataManager {

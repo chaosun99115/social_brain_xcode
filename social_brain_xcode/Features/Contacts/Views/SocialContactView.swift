@@ -127,14 +127,14 @@ struct SocialContactView: View {
                             Task { await loadContacts() }
                         }) {
                             HStack(spacing: 6) {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                Text("退出示例模式")
+                                Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
+                                Text(SampleModeConfig.UIConstants.exitButtonTitle)
                             }
                             .font(.footnote)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 6)
-                            .background(Color(hex: "4085F3"))
+                            .background(Color(hex: SampleModeConfig.UIConstants.exitButtonColor))
                             .cornerRadius(6)
                             .padding(.horizontal, 100)
                         }
@@ -177,6 +177,7 @@ struct SocialContactView: View {
                             isRefreshing: isRefreshing,
                             searchText: $searchText,
                             onRefresh: { await refreshContacts() },
+                            onSampleModeSelected: { await refreshContacts() },
                             selectedTab: 0
                         )
                         .tag(0)
@@ -188,7 +189,8 @@ struct SocialContactView: View {
                             errorMessage: errorMessage,
                             isRefreshing: isRefreshing,
                             searchText: $searchText,
-                            onRefresh: { await refreshContacts() }
+                            onRefresh: { await refreshContacts() },
+                            onSampleModeSelected: { await refreshContacts() }
                         )
                         .tag(1)
                     }
@@ -230,12 +232,61 @@ struct SocialContactView: View {
             }
             .navigationTitle("社交关系")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_contacts".localized)
+            .confirmationDialog(
+                SampleModeConfig.selectionDialogMessage,
+                isPresented: $showingSampleDialog,
+                titleVisibility: .visible
+            ) {
+                ForEach(SampleModeConfig.availableModes, id: \.id) { mode in
+                    Button(mode.title) {
+                        Task { await handleSampleModeSelection(mode) }
+                    }
+                }
+                Button("取消", role: .cancel) {}
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .task {
             await loadContacts()
             await loadCircles()
         }
+    }
+    
+    @State private var showingSampleDialog = false
+    @State private var showingCreateContact = false // Placeholder for create action
+    @State private var isImportingSample = false
+    @State private var errorMessageSample: String? = nil
+    @Environment(\.managedObjectContext) private var viewContext
+    @State private var refreshTrigger = false
+    
+    private func handleSampleModeSelection(_ mode: SampleModeConfig.ModeDefinition) async {
+        isImportingSample = true
+        errorMessageSample = nil
+        
+        do {
+            // Clear existing sample data
+            let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Note.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "type == %d", 0)
+            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+            try viewContext.execute(deleteRequest)
+            try viewContext.save()
+            
+            // Import new sample data
+            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: mode.scenario)
+            
+            await MainActor.run {
+                appModeManager.isSampleMode = true
+                appModeManager.sampleModeType = mode.title
+                refreshTrigger.toggle()
+            }
+        } catch {
+            await MainActor.run {
+                errorMessageSample = error.localizedDescription
+            }
+        }
+        isImportingSample = false
+        // Optionally trigger refresh in parent
+        await refreshContacts()
     }
 }
 
@@ -247,6 +298,7 @@ struct ContactListView: View {
     let isRefreshing: Bool
     @Binding var searchText: String
     let onRefresh: () async -> Void
+    let onSampleModeSelected: () async -> Void
     let selectedTab: Int
     
     @State private var showingSampleDialog = false
@@ -287,13 +339,15 @@ struct ContactListView: View {
             }
         }
         .confirmationDialog(
-            "选择一个用户场景。进入示例模式后，将会生成虚拟的示例数据，供你全面体验小日常的功能。示例模式不影响你的私有数据，退出示例模式后将恢复原状。",
+            SampleModeConfig.selectionDialogMessage,
             isPresented: $showingSampleDialog,
             titleVisibility: .visible
         ) {
-            Button("换了一份新工作") { Task { await handleSampleModeSelection("换了一份新工作") } }
-            Button("孩子进了新学校") { Task { await handleSampleModeSelection("孩子进了新学校") } }
-            Button("打算职业转型") { Task { await handleSampleModeSelection("打算职业转型") } }
+            ForEach(SampleModeConfig.availableModes, id: \.id) { mode in
+                Button(mode.title) {
+                    Task { await handleSampleModeSelection(mode) }
+                }
+            }
             Button("取消", role: .cancel) {}
         }
         .alert(isPresented: Binding<Bool>(get: { errorMessageSample != nil }, set: { _ in errorMessageSample = nil })) {
@@ -393,22 +447,10 @@ struct ContactListView: View {
         }
     }
     
-    private func handleSampleModeSelection(_ mode: String) async {
+    private func handleSampleModeSelection(_ mode: SampleModeConfig.ModeDefinition) async {
         isImportingSample = true
         errorMessageSample = nil
-        let scenario: SeedDataScenario
-        switch mode {
-        case "换了一份新工作":
-            scenario = .changedJob
-        case "孩子进了新学校":
-            scenario = .changedSchool
-        case "打算职业转型":
-            scenario = .careerPivot
-        default:
-            isImportingSample = false
-            errorMessageSample = "未知示例场景"
-            return
-        }
+        
         do {
             // Clear existing sample data
             let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Note.fetchRequest()
@@ -416,11 +458,13 @@ struct ContactListView: View {
             let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
             try viewContext.execute(deleteRequest)
             try viewContext.save()
+            
             // Import new sample data
-            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: scenario)
+            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: mode.scenario)
+            
             await MainActor.run {
                 appModeManager.isSampleMode = true
-                appModeManager.sampleModeType = mode
+                appModeManager.sampleModeType = mode.title
                 refreshTrigger.toggle()
             }
         } catch {
@@ -430,7 +474,7 @@ struct ContactListView: View {
         }
         isImportingSample = false
         // Optionally trigger refresh in parent
-        await onRefresh()
+        await onSampleModeSelected()
     }
 }
 
@@ -520,6 +564,7 @@ struct CircleListView: View {
     let isRefreshing: Bool
     @Binding var searchText: String
     let onRefresh: () async -> Void
+    let onSampleModeSelected: () async -> Void
     
     @State private var showingCreateCircle = false
     @State private var showingSampleDialog = false
@@ -587,6 +632,21 @@ struct CircleListView: View {
             Text("创建圈子功能待实现")
                 .font(.title)
                 .padding()
+        }
+        .confirmationDialog(
+            SampleModeConfig.selectionDialogMessage,
+            isPresented: $showingSampleDialog,
+            titleVisibility: .visible
+        ) {
+            ForEach(SampleModeConfig.availableModes, id: \.id) { mode in
+                Button(mode.title) {
+                    Task { await handleSampleModeSelection(mode) }
+                }
+            }
+            Button("取消", role: .cancel) {}
+        }
+        .alert(isPresented: Binding<Bool>(get: { errorMessageSample != nil }, set: { _ in errorMessageSample = nil })) {
+            Alert(title: Text("导入示例数据失败"), message: Text(errorMessageSample ?? "未知错误"), dismissButton: .default(Text("确定")))
         }
     }
     
@@ -663,37 +723,12 @@ struct CircleListView: View {
             }
             Spacer()
         }
-        .confirmationDialog(
-            "选择一个用户场景。进入示例模式后，将会生成虚拟的示例数据，供你全面体验小日常的功能。示例模式不影响你的私有数据，退出示例模式后将恢复原状。",
-            isPresented: $showingSampleDialog,
-            titleVisibility: .visible
-        ) {
-            Button("换了一份新工作") { Task { await handleSampleModeSelection("换了一份新工作") } }
-            Button("孩子进了新学校") { Task { await handleSampleModeSelection("孩子进了新学校") } }
-            Button("打算职业转型") { Task { await handleSampleModeSelection("打算职业转型") } }
-            Button("取消", role: .cancel) {}
-        }
-        .alert(isPresented: Binding<Bool>(get: { errorMessageSample != nil }, set: { _ in errorMessageSample = nil })) {
-            Alert(title: Text("导入示例数据失败"), message: Text(errorMessageSample ?? "未知错误"), dismissButton: .default(Text("确定")))
-        }
     }
 
-    private func handleSampleModeSelection(_ mode: String) async {
+    private func handleSampleModeSelection(_ mode: SampleModeConfig.ModeDefinition) async {
         isImportingSample = true
         errorMessageSample = nil
-        let scenario: SeedDataScenario
-        switch mode {
-        case "换了一份新工作":
-            scenario = .changedJob
-        case "孩子进了新学校":
-            scenario = .changedSchool
-        case "打算职业转型":
-            scenario = .careerPivot
-        default:
-            isImportingSample = false
-            errorMessageSample = "未知示例场景"
-            return
-        }
+        
         do {
             // Clear existing sample data
             let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Note.fetchRequest()
@@ -701,11 +736,13 @@ struct CircleListView: View {
             let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
             try viewContext.execute(deleteRequest)
             try viewContext.save()
+            
             // Import new sample data
-            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: scenario)
+            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: mode.scenario)
+            
             await MainActor.run {
                 appModeManager.isSampleMode = true
-                appModeManager.sampleModeType = mode
+                appModeManager.sampleModeType = mode.title
                 refreshTrigger.toggle()
             }
         } catch {
@@ -715,7 +752,7 @@ struct CircleListView: View {
         }
         isImportingSample = false
         // Optionally trigger refresh in parent
-        await onRefresh()
+        await onSampleModeSelected()
     }
 }
 

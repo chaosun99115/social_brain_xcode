@@ -568,6 +568,63 @@
                     "insightIdentifier": "career_circle_insight_1"
                 }
             ]
+        },
+        "indie": {
+            "contacts": [
+                {
+                    "uniqueIdentifier": "indie_contact_1",
+                    "name": "王老师",
+                    "type": 0,
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "updatedAt": "2024-04-01T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_contact_2",
+                    "name": "李创业",
+                    "type": 0,
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "updatedAt": "2024-04-01T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "notes": [
+                {
+                    "uniqueIdentifier": "indie_note_1",
+                    "content": "和 @王老师 讨论了产品定位，他建议我先做用户访谈，明确目标客户的核心需求。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "updatedAt": "2024-04-01T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_note_2",
+                    "content": "@李创业 分享了他独立开发App的经验，建议我重视早期用户反馈，并持续优化产品。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "updatedAt": "2024-04-01T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "contactInsights": [],
+            "noteContactRelationships": [
+                {
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "contactIdentifier": "indie_contact_1",
+                    "noteIdentifier": "indie_note_1"
+                },
+                {
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "contactIdentifier": "indie_contact_2",
+                    "noteIdentifier": "indie_note_2"
+                }
+            ],
+            "insightContactRelationships": [],
+            "circles": [],
+            "circleInsights": [],
+            "insightCircleRelationships": []
         }
     }
 } 
