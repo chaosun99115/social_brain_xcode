@@ -573,7 +573,7 @@
             "contacts": [
                 {
                     "uniqueIdentifier": "indie_contact_1",
-                    "name": "王老师",
+                    "name": "小周",
                     "type": 0,
                     "createdAt": "2024-04-01T10:00:00Z",
                     "updatedAt": "2024-04-01T10:00:00Z",
@@ -581,7 +581,7 @@
                 },
                 {
                     "uniqueIdentifier": "indie_contact_2",
-                    "name": "李创业",
+                    "name": "小蔡",
                     "type": 0,
                     "createdAt": "2024-04-01T10:00:00Z",
                     "updatedAt": "2024-04-01T10:00:00Z",
@@ -591,7 +591,7 @@
             "notes": [
                 {
                     "uniqueIdentifier": "indie_note_1",
-                    "content": "和 @王老师 讨论了产品定位，他建议我先做用户访谈，明确目标客户的核心需求。",
+                    "content": "今天参加了 @小周 的生日聚会，认识了她的大学同学 @小蔡 。小蔡性格开朗，是个设计师。小蔡谈到她工作之余最大的爱好是陶艺，已经坚持了三年多。",
                     "type": 0,
                     "updateCompleted": 1,
                     "createdAt": "2024-04-01T10:00:00Z",
@@ -600,7 +600,25 @@
                 },
                 {
                     "uniqueIdentifier": "indie_note_2",
-                    "content": "@李创业 分享了他独立开发App的经验，建议我重视早期用户反馈，并持续优化产品。",
+                    "content": "今天参加了iOS独立开发者大会。我分享了\"社交大脑\"应用。现场的人对于\"你参加这么多行业活动后，如何记住并跟进所有重要联系人？\"这样的问题很有共鸣。收获了几个很有价值的反馈：\n几位开发者表示他们也有类似的社交记忆负担，特别是在参加像这样的行业大会后\n一位连续创业者提到，他最大的资产就是十年来积累的人脉，但缺乏系统化管理的工具",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "updatedAt": "2024-04-01T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_note_3",
+                    "content": "今天 @小蔡 分享了一个陶艺展览的朋友圈。我发了个评论，她在回复里提到下周六还有一个陶艺展览，问我是否有兴趣一起去。\n\n虽然我对陶艺了解不多，但这可能是个接触潜在用户的好机会。艺术家们需要维护广泛的人脉，可能是社交大脑app的理想用户。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "updatedAt": "2024-04-01T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_note_4",
+                    "content": "今天阅读了几篇关于艺术家职业发展的文章和采访，发现：\n\n艺术家平均每月参加3-5场行业活动\n\n他们的事业发展严重依赖人脉网络（画廊主、收藏家、评论家、同行）\n\n许多艺术家表示难以跟进所有重要关系\n\n艺术家是关系管理工具的理想用户，社交大脑的个人关系管理方法可能更受欢迎。",
                     "type": 0,
                     "updateCompleted": 1,
                     "createdAt": "2024-04-01T10:00:00Z",
@@ -618,12 +636,19 @@
                 {
                     "createdAt": "2024-04-01T10:00:00Z",
                     "contactIdentifier": "indie_contact_2",
-                    "noteIdentifier": "indie_note_2"
+                    "noteIdentifier": "indie_note_1"
+                },
+                {
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "contactIdentifier": "indie_contact_2",
+                    "noteIdentifier": "indie_note_3"
                 }
+                
             ],
             "insightContactRelationships": [],
             "circles": [],
             "circleInsights": [],
+            "circleContactRelationships": [],
             "insightCircleRelationships": []
         }
     }

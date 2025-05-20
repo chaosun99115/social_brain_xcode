@@ -17,6 +17,7 @@ enum SampleMode: String {
     case changedJob
     case changedSchool
     case careerPivot
+    case indieDev
     case none
 }
 
@@ -275,6 +276,48 @@ struct CareerPivotProvider: SampleModeProvider {
     }
 }
 
+// MARK: - Indie Dev Provider
+struct IndieDevProvider: SampleModeProvider {
+    var baseSystemPrompt: String {
+        SampleModePrompts.IndieDev.basePrompt
+    }
+    
+    func generateSystemPrompt(for context: PromptContext) async throws -> String {
+        var prompt = baseSystemPrompt
+        
+        if context.isContactSpecific {
+            prompt += "\n\n" + String(format: SampleModePrompts.IndieDev.contactSpecificGuidance, context.contact?.name ?? "the developer")
+        }
+        
+        // Fetch and append relevant notes
+        let notesContext = try await fetchRelevantNotes(for: context)
+        if !notesContext.isEmpty {
+            prompt += notesContext
+        }
+        
+        prompt += "\n\nUse the provided notes to give context-aware advice."
+        return prompt
+    }
+    
+    var suggestedQuestions: [SocialBrainMessage] {
+        [
+            SocialBrainMessage(content: "最近有没有需要跟进的互动？", isFromUser: false, timestamp: Date()),
+            SocialBrainMessage(content: "@小蔡 邀请我下周去参加陶艺展，帮我准备一下社交素材", isFromUser: false, timestamp: Date())
+        ]
+    }
+    
+    var contactSpecificQuestions: (Contact) -> [SocialBrainMessage] {
+        { contact in
+            [
+                SocialBrainMessage(content: "如何向\(contact.name ?? "这位开发者")请教独立开发经验？", isFromUser: false, timestamp: Date()),
+                SocialBrainMessage(content: "\(contact.name ?? "这位开发者")的独立开发项目有什么特点？", isFromUser: false, timestamp: Date()),
+                SocialBrainMessage(content: "如何与\(contact.name ?? "这位开发者")建立技术交流？", isFromUser: false, timestamp: Date()),
+                SocialBrainMessage(content: "如何向\(contact.name ?? "这位开发者")展示我的项目想法？", isFromUser: false, timestamp: Date())
+            ]
+        }
+    }
+}
+
 // MARK: - Sample Mode Provider Factory
 struct SampleModeProviderFactory {
     static func getProvider(for mode: String) -> SampleModeProvider? {
@@ -285,6 +328,8 @@ struct SampleModeProviderFactory {
             return ChangedSchoolProvider()
         case SampleMode.careerPivot.rawValue:
             return CareerPivotProvider()
+        case SampleMode.indieDev.rawValue:
+            return IndieDevProvider()
         default:
             return nil
         }
