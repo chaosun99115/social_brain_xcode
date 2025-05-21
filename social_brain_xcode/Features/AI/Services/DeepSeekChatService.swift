@@ -15,16 +15,20 @@ class DeepSeekChatService: AIChatServiceProtocol {
     }
     
     func sendMessage(_ message: String) async throws -> ChatCompletionResponse {
-        let messages = [
-            AIChatMessage(role: .system, content: "You are a helpful assistant."),
-            AIChatMessage(role: .user, content: message)
-        ]
-        return try await sendMessage(message, context: messages)
+        throw AIChatServiceError.apiError("DeepSeek only supports streaming mode. Use sendStreamingMessage.")
     }
     
     func sendMessage(_ message: String, context: [AIChatMessage]) async throws -> ChatCompletionResponse {
+        throw AIChatServiceError.apiError("DeepSeek only supports streaming mode. Use sendStreamingMessage.")
+    }
+    
+    func sendStreamingMessage(_ message: String, context: [AIChatMessage], onChunk: @escaping (String) -> Void) async throws {
+        print("[DeepSeekChatService] Starting streaming message request")
+        print("[DeepSeekChatService] Message: \(message)")
+        print("[DeepSeekChatService] Context messages count: \(context.count)")
+        
         guard let url = URL(string: baseURL) else {
-            print("[DeepSeekChatService] Invalid URL: \(baseURL)")
+            print("[DeepSeekChatService] ❌ Invalid URL: \(baseURL)")
             throw AIChatServiceError.invalidURL
         }
         
@@ -36,8 +40,13 @@ class DeepSeekChatService: AIChatServiceProtocol {
         let requestBody = ChatCompletionRequest(
             model: model,
             messages: context,
-            stream: false
+            stream: true  // Enable streaming
         )
+        
+        print("[DeepSeekChatService] Request configuration:")
+        print("- Model: \(model)")
+        print("- Stream: true")
+        print("- Messages count: \(context.count)")
         
         let encoder = JSONEncoder()
         do {
@@ -47,76 +56,104 @@ class DeepSeekChatService: AIChatServiceProtocol {
                 print("[DeepSeekChatService] Request Body: \(jsonString)")
             }
         } catch {
-            print("[DeepSeekChatService] Failed to encode request body: \(error)")
+            print("[DeepSeekChatService] ❌ Failed to encode request body: \(error)")
             throw AIChatServiceError.networkError(error)
         }
         
         do {
-            print("[DeepSeekChatService] Sending request to: \(url)")
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                print("[DeepSeekChatService] HTTP Status: \(httpResponse.statusCode)")
-            }
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("[DeepSeekChatService] Response Body: \(responseString)")
-            }
+            print("[DeepSeekChatService] 🚀 Sending streaming request to: \(url)")
+            let (bytes, response) = try await URLSession.shared.bytes(for: request)
             
             guard let httpResponse = response as? HTTPURLResponse else {
-                print("[DeepSeekChatService] Invalid HTTP response")
+                print("[DeepSeekChatService] ❌ Invalid HTTP response")
                 throw AIChatServiceError.invalidResponse
             }
+            
+            print("[DeepSeekChatService] Received HTTP response: \(httpResponse.statusCode)")
             
             // Handle different HTTP status codes
             switch httpResponse.statusCode {
             case 200:
-                let decoder = JSONDecoder()
-                do {
-                    let decoded = try decoder.decode(ChatCompletionResponse.self, from: data)
-                    print("[DeepSeekChatService] Decoded response successfully.")
-                    return decoded
-                } catch {
-                    print("[DeepSeekChatService] Decoding error: \(error)")
-                    throw AIChatServiceError.decodingError(error)
+                print("[DeepSeekChatService] ✅ Successfully connected to streaming endpoint")
+                var buffer = Data()
+                var iterator = bytes.makeAsyncIterator()
+                var chunkCount = 0
+                
+                while let byte = try await iterator.next() {
+                    buffer.append(byte)
+                    
+                    // Check if we have a complete line
+                    if byte == UInt8(ascii: "\n") {
+                        if let line = String(data: buffer, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                           !line.isEmpty {
+                            print("[DeepSeekChatService] Received chunk: \(line.prefix(100))...")
+                            
+                            // Remove "data: " prefix if present
+                            let jsonString = line.hasPrefix("data: ") ? String(line.dropFirst(6)) : line
+                            
+                            // Skip [DONE] message
+                            if jsonString.trimmingCharacters(in: .whitespacesAndNewlines) == "[DONE]" {
+                                print("[DeepSeekChatService] Received [DONE] signal")
+                                buffer.removeAll()
+                                continue
+                            }
+                            
+                            // Try to decode the JSON
+                            if let jsonData = jsonString.data(using: .utf8) {
+                                do {
+                                    let decoder = JSONDecoder()
+                                    let streamResponse = try decoder.decode(ChatCompletionStreamResponse.self, from: jsonData)
+                                    if let content = streamResponse.choices.first?.delta.content {
+                                        chunkCount += 1
+                                        print("[DeepSeekChatService] Processing chunk \(chunkCount): \(content.prefix(50))...")
+                                        onChunk(content)
+                                    } else {
+                                        print("[DeepSeekChatService] Empty content in chunk")
+                                    }
+                                } catch {
+                                    print("[DeepSeekChatService] ❌ Failed to decode streaming response: \(error)")
+                                    print("[DeepSeekChatService] Raw JSON: \(jsonString)")
+                                }
+                            }
+                        }
+                        buffer.removeAll()
+                    }
                 }
+                
+                print("[DeepSeekChatService] ✅ Streaming completed. Total chunks processed: \(chunkCount)")
+                
             case 401:
-                print("[DeepSeekChatService] Unauthorized (401)")
+                print("[DeepSeekChatService] ❌ Unauthorized (401)")
                 throw AIChatServiceError.unauthorized
             case 429:
-                print("[DeepSeekChatService] Rate limit exceeded (429)")
+                print("[DeepSeekChatService] ❌ Rate limit exceeded (429)")
                 throw AIChatServiceError.rateLimitExceeded
             case 500...599:
-                print("[DeepSeekChatService] Server error (\(httpResponse.statusCode))")
-                if let errorMessage = String(data: data, encoding: .utf8) {
+                print("[DeepSeekChatService] ❌ Server error (\(httpResponse.statusCode))")
+                throw AIChatServiceError.serverError(httpResponse.statusCode)
+            default:
+                print("[DeepSeekChatService] ❌ Unexpected status code: \(httpResponse.statusCode)")
+                // For non-200 responses, collect the error message
+                var errorData = Data()
+                var iterator = bytes.makeAsyncIterator()
+                while let byte = try await iterator.next() {
+                    errorData.append(byte)
+                }
+                
+                if let errorMessage = String(data: errorData, encoding: .utf8) {
                     print("[DeepSeekChatService] API error: \(errorMessage)")
                     throw AIChatServiceError.apiError(errorMessage)
                 } else {
                     print("[DeepSeekChatService] Unknown error, status: \(httpResponse.statusCode)")
-                    throw AIChatServiceError.serverError(httpResponse.statusCode)
-                }
-            default:
-                print("[DeepSeekChatService] Unexpected status code: \(httpResponse.statusCode)")
-                if let errorMessage = String(data: data, encoding: .utf8) {
-                    print("[DeepSeekChatService] API error: \(errorMessage)")
-                    throw AIChatServiceError.apiError(errorMessage)
-                } else {
                     throw AIChatServiceError.invalidResponse
                 }
             }
         } catch let error as AIChatServiceError {
-            print("[DeepSeekChatService] AIChatServiceError: \(error)")
+            print("[DeepSeekChatService] ❌ AIChatServiceError: \(error)")
             throw error
         } catch {
-            print("[DeepSeekChatService] Network error: \(error)")
+            print("[DeepSeekChatService] ❌ Network error: \(error)")
             throw AIChatServiceError.networkError(error)
-        }
-    }
-    
-    func sendStreamingMessage(_ message: String, context: [AIChatMessage], onChunk: @escaping (String) -> Void) async throws {
-        // DeepSeek doesn't support streaming, so we'll use the regular response
-        let response = try await sendMessage(message, context: context)
-        if let content = response.choices.first?.message.content {
-            onChunk(content)
         }
     }
 } 

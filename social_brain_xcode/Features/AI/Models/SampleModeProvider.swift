@@ -302,7 +302,7 @@ struct IndieDevProvider: SampleModeProvider {
     var suggestedQuestions: [SocialBrainMessage] {
         [
             SocialBrainMessage(content: "最近有没有需要跟进的互动？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "@小蔡 邀请我下周去参加陶艺展，帮我准备一下社交素材", isFromUser: false, timestamp: Date())
+            SocialBrainMessage(content: "@小蔡 邀请我下周去参加陶艺展，我想给陶艺展的艺术家介绍我的“社交大脑”，怎么介绍比较好", isFromUser: false, timestamp: Date())
         ]
     }
     

@@ -268,7 +268,7 @@ struct SocialNotesView: View {
             print("\n[SocialNotesView] 🔄 Updating UI state...")
             await MainActor.run {
                 appModeManager.isSampleMode = true
-                appModeManager.sampleModeType = mode.title
+                appModeManager.sampleModeType = (mode.id == "indie") ? "indieDev" : mode.id
                 refreshTrigger.toggle()
                 print("[SocialNotesView] ✅ UI state updated")
             }

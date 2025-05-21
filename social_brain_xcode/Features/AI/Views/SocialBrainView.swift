@@ -123,20 +123,30 @@ struct SocialBrainView: View {
     
     // Modify initializeSuggestedQuestions
     private func initializeSuggestedQuestions() {
+        print("[SocialBrainView] Initializing suggested questions...")
         if let sampleProvider = getSampleProvider() {
+            print("[SocialBrainView] Sample provider found: \(type(of: sampleProvider))")
             if let contact = contextContact {
-                // Use contact-specific questions when in sample mode and viewing a contact
-                suggestedQuestions = sampleProvider.contactSpecificQuestions(contact)
+                print("[SocialBrainView] Using contact-specific questions for contact: \(contact.name ?? "nil")")
+                let questions = sampleProvider.contactSpecificQuestions(contact)
+                print("[SocialBrainView] Contact-specific questions: \(questions.map { $0.content })")
+                suggestedQuestions = questions
             } else {
-                // Use general sample mode questions
-                suggestedQuestions = sampleProvider.suggestedQuestions
+                print("[SocialBrainView] Using general sample mode questions for mode: \(appModeManager.sampleModeType ?? "nil")")
+                let questions = sampleProvider.suggestedQuestions
+                print("[SocialBrainView] General sample mode questions: \(questions.map { $0.content })")
+                suggestedQuestions = questions
             }
         } else if sourceType == "contact" && sourceAction == "general" {
-            // Use existing contact-specific questions
-            suggestedQuestions = SuggestedQuestionsProvider.forContact(contextContact)
+            print("[SocialBrainView] Using fallback contact-specific questions.")
+            let questions = SuggestedQuestionsProvider.forContact(contextContact)
+            print("[SocialBrainView] Fallback contact-specific questions: \(questions.map { $0.content })")
+            suggestedQuestions = questions
         } else {
-            // Use existing general questions
-            suggestedQuestions = SuggestedQuestionsProvider.general()
+            print("[SocialBrainView] Using fallback general questions.")
+            let questions = SuggestedQuestionsProvider.general()
+            print("[SocialBrainView] Fallback general questions: \(questions.map { $0.content })")
+            suggestedQuestions = questions
         }
     }
     
@@ -376,11 +386,11 @@ struct SocialBrainView: View {
                     print("[SocialBrainView] Role: \(message.role), Content: \(message.content)")
                 }
                 
-                // Check if we should use streaming (only for Doubao)
+                // Check if we should use streaming (Doubao or DeepSeek)
                 if let doubaoService = chatService as? DoubaoChatService {
+                    print("[SocialBrainView] Using Doubao streaming mode")
                     isStreaming = true
                     currentStreamingMessage = ""
-                    
                     // Create a temporary message for streaming
                     let streamingMessage = SocialBrainMessage(
                         content: "",
@@ -388,38 +398,59 @@ struct SocialBrainView: View {
                         timestamp: Date()
                     )
                     messages.append(streamingMessage)
-                    
                     var isFirstChunk = true
                     try await doubaoService.sendStreamingMessage(trimmedText, context: chatMessages) { chunk in
                         Task { @MainActor in
+                            print("[SocialBrainView] 📥 Received chunk: \(chunk.prefix(50))...")
                             currentStreamingMessage += chunk
-                            // Update the last message with the current streaming content
                             if let lastIndex = messages.indices.last {
                                 messages[lastIndex].content = currentStreamingMessage
-                                
-                                // Dismiss loading on first chunk
                                 if isFirstChunk {
+                                    print("[SocialBrainView] ✅ First chunk received, dismissing loading state")
                                     isLoading = false
                                     isFirstChunk = false
                                 }
                             }
                         }
                     }
-                    
-                    // Streaming completed
+                    isStreaming = false
+                    isLoading = false
+                } else if let deepSeekService = chatService as? DeepSeekChatService {
+                    print("[SocialBrainView] Using DeepSeek streaming mode")
+                    isStreaming = true
+                    currentStreamingMessage = ""
+                    let streamingMessage = SocialBrainMessage(
+                        content: "",
+                        isFromUser: false,
+                        timestamp: Date()
+                    )
+                    messages.append(streamingMessage)
+                    var isFirstChunk = true
+                    try await deepSeekService.sendStreamingMessage(trimmedText, context: chatMessages) { chunk in
+                        Task { @MainActor in
+                            print("[SocialBrainView] 📥 Received chunk: \(chunk.prefix(50))...")
+                            currentStreamingMessage += chunk
+                            if let lastIndex = messages.indices.last {
+                                messages[lastIndex].content = currentStreamingMessage
+                                if isFirstChunk {
+                                    print("[SocialBrainView] ✅ First chunk received, dismissing loading state")
+                                    isLoading = false
+                                    isFirstChunk = false
+                                }
+                            }
+                        }
+                    }
                     isStreaming = false
                     isLoading = false
                 } else {
-                    // Non-streaming response
+                    print("[SocialBrainView] Using non-streaming mode")
                     let response = try await chatService.sendMessage(trimmedText, context: chatMessages)
-                    
                     print("[SocialBrainView] Received response from LLM:")
                     if let firstChoice = response.choices.first {
                         print("[SocialBrainView] \(firstChoice.message.content)")
                     } else {
                         print("[SocialBrainView] No content in response")
                     }
-                    
                     await MainActor.run {
                         let aiMessage = aiServiceManager.convertToSocialBrainMessage(response)
                         messages.append(aiMessage)
@@ -590,6 +621,13 @@ struct MessageBubble: View {
                 )
                 .cornerRadius(10)
                 .shadow(color: Color.primaryText.opacity(0.05), radius: 1, x: 0, y: 1)
+                .contextMenu {
+                    Button(action: {
+                        UIPasteboard.general.string = text
+                    }) {
+                        Label("Copy", systemImage: "doc.on.doc")
+                    }
+                }
         }
         .padding(.horizontal, 0)
         .opacity(0.95)
@@ -644,6 +682,13 @@ struct AiBubble: View {
                     .foregroundColor(.primaryText)
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .contextMenu {
+                        Button(action: {
+                            UIPasteboard.general.string = text
+                        }) {
+                            Label("Copy", systemImage: "doc.on.doc")
+                        }
+                    }
                 // Action button
                 if let actionText = actionText {
                     // Divider with proper padding
