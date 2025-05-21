@@ -628,6 +628,7 @@ struct MessageBubble: View {
                         Label("Copy", systemImage: "doc.on.doc")
                     }
                 }
+                .markdownTheme(.compactMessage)
         }
         .padding(.horizontal, 0)
         .opacity(0.95)
@@ -689,6 +690,7 @@ struct AiBubble: View {
                             Label("Copy", systemImage: "doc.on.doc")
                         }
                     }
+                    .markdownTheme(.compactMessage)
                 // Action button
                 if let actionText = actionText {
                     // Divider with proper padding
@@ -753,4 +755,37 @@ struct SocialBrainView_Previews: PreviewProvider {
         .environment(\.colorScheme, .dark)
         .environmentObject(LocalizationManager())
     }
+}
+
+private extension Theme {
+    static let compactMessage = Theme()
+        .heading1 { label in
+            label
+                .markdownTextStyle {
+                    FontWeight(.semibold)
+                    FontSize(.em(1.15)) // smaller than default
+                }
+                .markdownMargin(top: .em(0.8), bottom: .em(0.5))
+        }
+        .heading2 { label in
+            label
+                .markdownTextStyle {
+                    FontWeight(.semibold)
+                    FontSize(.em(1.05))
+                }
+                .markdownMargin(top: .em(0.7), bottom: .em(0.4))
+        }
+        .heading3 { label in
+            label
+                .markdownTextStyle {
+                    FontWeight(.medium)
+                    FontSize(.em(1.0))
+                }
+                .markdownMargin(top: .em(0.6), bottom: .em(0.3))
+        }
+        .paragraph { label in
+            label
+                .relativeLineSpacing(.em(0.18))
+                .markdownMargin(top: .zero, bottom: .em(0.5))
+        }
 }
