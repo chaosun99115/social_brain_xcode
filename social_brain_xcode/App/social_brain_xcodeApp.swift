@@ -9,16 +9,8 @@ import SwiftUI
 import CoreData
 
 class AppModeManager: ObservableObject {
-    @Published var isSampleMode: Bool = false {
-        didSet {
-            print("[AppModeManager] isSampleMode changed to \(isSampleMode)")
-        }
-    }
-    @Published var sampleModeType: String? = nil {
-        didSet {
-            print("[AppModeManager] sampleModeType changed to \(String(describing: sampleModeType))")
-        }
-    }
+    @Published var isSampleMode: Bool = false
+    @Published var sampleModeType: String? = nil
 }
 
 @main

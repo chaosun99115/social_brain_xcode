@@ -134,8 +134,26 @@ class DoubaoChatService: AIChatServiceProtocol {
         do {
             let encodedBody = try encoder.encode(requestBody)
             request.httpBody = encodedBody
-            if let jsonString = String(data: encodedBody, encoding: .utf8) {
-                print("[DoubaoChatService] Request Body: \(jsonString)")
+            
+            // Create a sanitized version of the request for logging
+            // that doesn't show the actual content of messages
+            var sanitizedMessages: [[String: String]] = []
+            for message in context {
+                sanitizedMessages.append([
+                    "role": String(describing: message.role),
+                    "content": "[CONTENT REDACTED]"
+                ])
+            }
+            
+            let sanitizedRequest: [String: Any] = [
+                "model": modelType.modelId,
+                "stream": true,
+                "messages": sanitizedMessages
+            ]
+            
+            if let sanitizedJson = try? JSONSerialization.data(withJSONObject: sanitizedRequest),
+               let sanitizedJsonString = String(data: sanitizedJson, encoding: .utf8) {
+                print("[DoubaoChatService] Request Body: \(sanitizedJsonString)")
             }
         } catch {
             print("[DoubaoChatService] Failed to encode request body: \(error)")

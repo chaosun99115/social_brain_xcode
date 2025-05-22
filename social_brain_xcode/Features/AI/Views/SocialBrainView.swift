@@ -45,8 +45,6 @@ struct SocialBrainView: View {
     
     // System prompt generation
     private func generateSystemPrompt() async throws {
-        print("==== Generating system prompt for sourceType: \(sourceType), sourceAction: \(sourceAction) ====")
-        
         // First check if we're in sample mode
         if let sampleProvider = getSampleProvider() {
             // Use the new prompt generation system with notes
@@ -56,7 +54,6 @@ struct SocialBrainView: View {
                 contact: contextContact
             )
             systemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
-            print("[SocialBrainView] Generated System Prompt: \(systemPrompt)")
             return
         }
         
@@ -130,28 +127,45 @@ struct SocialBrainView: View {
         print("[SocialBrainView] Initializing suggested questions...")
         if let sampleProvider = getSampleProvider() {
             print("[SocialBrainView] Sample provider found: \(type(of: sampleProvider))")
-            if let contact = contextContact {
-                print("[SocialBrainView] Using contact-specific questions for contact: \(contact.name ?? "nil")")
-                let questions = sampleProvider.contactSpecificQuestions(contact)
-                print("[SocialBrainView] Contact-specific questions: \(questions.map { $0.content })")
-                suggestedQuestions = questions
-            } else {
-                print("[SocialBrainView] Using general sample mode questions for mode: \(appModeManager.sampleModeType ?? "nil")")
-                let questions = sampleProvider.suggestedQuestions
-                print("[SocialBrainView] General sample mode questions: \(questions.map { $0.content })")
-                suggestedQuestions = questions
-            }
-        } else if sourceType == "contact" && sourceAction == "general" {
-            print("[SocialBrainView] Using fallback contact-specific questions.")
-            let questions = SuggestedQuestionsProvider.forContact(contextContact)
-            print("[SocialBrainView] Fallback contact-specific questions: \(questions.map { $0.content })")
+            print("[SocialBrainView] Using general sample mode questions for mode: \(appModeManager.sampleModeType ?? "nil")")
+            let questions = sampleProvider.suggestedQuestions
+            print("[SocialBrainView] General sample mode questions: \(questions.map { $0.content })")
             suggestedQuestions = questions
         } else {
             print("[SocialBrainView] Using fallback general questions.")
-            let questions = SuggestedQuestionsProvider.general()
+            let questions = SuggestedQuestionsProvider.forContact(contextContact)
             print("[SocialBrainView] Fallback general questions: \(questions.map { $0.content })")
             suggestedQuestions = questions
         }
+    }
+    
+    // Improve the extraction function to be more robust
+    private func extractUserQuestion(from text: String) -> String {
+        // Check if the text contains any of the possible note markers
+        let noteMarkers = ["相关笔记如下:", "笔记如下", "Notes:"]
+        
+        for marker in noteMarkers {
+            if let range = text.range(of: marker) {
+                // Return only the part before the marker
+                let questionPart = String(text[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                // If the extracted part is empty, return a default message
+                return questionPart.isEmpty ? "请分析这些笔记" : questionPart
+            }
+        }
+        return text
+    }
+    
+    // Extract notes from text
+    private func extractNotes(from text: String) -> String? {
+        let noteMarkers = ["相关笔记如下:", "笔记如下", "Notes:"]
+        
+        for marker in noteMarkers {
+            if let range = text.range(of: marker) {
+                // Return the part after the marker
+                return String(text[range.lowerBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+        return nil
     }
     
     var body: some View {
@@ -354,14 +368,19 @@ struct SocialBrainView: View {
         guard !trimmedText.isEmpty else { return }
         let limitedText = String(trimmedText.prefix(1000)) // Limit length here
         
+        // Extract just the question part without notes
+        let userQuestion = extractUserQuestion(from: limitedText)
+        // Extract notes if present
+        let extractedNotes = extractNotes(from: limitedText)
+        
         // If not in conversation mode, switch to it
         if !isConversationActive {
             isConversationActive = true
         }
         
-        // Add user message
+        // Add user message with only the question part
         let userMessage = SocialBrainMessage(
-            content: limitedText,
+            content: userQuestion, // Use the extracted question only
             isFromUser: true,
             timestamp: Date()
         )
@@ -379,14 +398,32 @@ struct SocialBrainView: View {
                     throw AIChatServiceError.unauthorized
                 }
                 
-                // Regenerate system prompt with the new question
+                // Regenerate system prompt with the new question and notes
                 if let sampleProvider = getSampleProvider() {
+                    // For sample mode - modify the question to include notes if present
+                    var contextQuestion = userQuestion
+                    if let notes = extractedNotes {
+                        // If the question is empty or a default, just use the notes
+                        if userQuestion == "请分析这些笔记" {
+                            contextQuestion = notes
+                        } else {
+                            // Otherwise append the notes to the question
+                            contextQuestion = userQuestion + "\n\n相关笔记如下:\n" + notes
+                        }
+                    }
+                    
                     let context = PromptContext(
                         mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
-                        question: limitedText,  // Use the actual question
+                        question: contextQuestion,  // Include the notes in the question
                         contact: contextContact
                     )
                     systemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
+                } else {
+                    // For non-sample mode, update system prompt if notes are present
+                    if let notes = extractedNotes {
+                        // Update systemPrompt to include notes but not duplicate them
+                        try await updateSystemPromptWithNotes(notes)
+                    }
                 }
                 
                 // Prepare messages with system prompt
@@ -413,12 +450,11 @@ struct SocialBrainView: View {
                     var isFirstChunk = true
                     try await doubaoService.sendStreamingMessage(limitedText, context: chatMessages) { chunk in
                         Task { @MainActor in
-                            print("[SocialBrainView] 📥 Received chunk: \(chunk.prefix(50))...")
+                            // No logging chunks
                             currentStreamingMessage += chunk
                             if let lastIndex = messages.indices.last {
                                 messages[lastIndex].content = currentStreamingMessage
                                 if isFirstChunk {
-                                    print("[SocialBrainView] ✅ First chunk received, dismissing loading state")
                                     isLoading = false
                                     isFirstChunk = false
                                 }
@@ -440,12 +476,11 @@ struct SocialBrainView: View {
                     var isFirstChunk = true
                     try await deepSeekService.sendStreamingMessage(limitedText, context: chatMessages) { chunk in
                         Task { @MainActor in
-                            print("[SocialBrainView] 📥 Received chunk: \(chunk.prefix(50))...")
+                            // No logging chunks
                             currentStreamingMessage += chunk
                             if let lastIndex = messages.indices.last {
                                 messages[lastIndex].content = currentStreamingMessage
                                 if isFirstChunk {
-                                    print("[SocialBrainView] ✅ First chunk received, dismissing loading state")
                                     isLoading = false
                                     isFirstChunk = false
                                 }
@@ -536,6 +571,23 @@ struct SocialBrainView: View {
     
     private func cleanupKeyboardObservers() {
         NotificationCenter.default.removeObserver(self)
+    }
+    
+    // Helper function to update system prompt with notes for non-sample mode
+    private func updateSystemPromptWithNotes(_ notes: String) async throws {
+        // First check if the system prompt already contains these notes
+        if !systemPrompt.contains(notes) {
+            // If not, append them or update accordingly
+            if !systemPrompt.contains("相关笔记如下:") {
+                systemPrompt += "\n\n相关笔记如下:\n" + notes
+            } else {
+                // If it already has notes section but different notes, replace it
+                let components = systemPrompt.components(separatedBy: "相关笔记如下:")
+                if components.count > 1 {
+                    systemPrompt = components[0] + "相关笔记如下:\n" + notes
+                }
+            }
+        }
     }
 }
 

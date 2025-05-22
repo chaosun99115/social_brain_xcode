@@ -245,41 +245,30 @@ struct SocialNotesView: View {
     }
     
     private func handleSampleModeSelection(_ mode: SampleModeConfig.ModeDefinition) async {
-        print("\n[SocialNotesView] ===== Starting Sample Mode Selection =====")
-        print("[SocialNotesView] Selected mode: \(mode.title)")
-        print("[SocialNotesView] Mapped to scenario: \(mode.scenario.rawValue)")
-        
+        // Remove debug logs
         do {
-            print("\n[SocialNotesView] 🧹 Clearing existing sample data...")
             // Clear existing sample data if any
             let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Note.fetchRequest()
             fetchRequest.predicate = NSPredicate(format: "type == %d", 0)
             let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
             try viewContext.execute(deleteRequest)
             try viewContext.save()
-            print("[SocialNotesView] ✅ Successfully cleared existing sample data")
             
-            print("\n[SocialNotesView] 📥 Starting data import for scenario: \(mode.scenario.rawValue)")
             // Import new sample data
             try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: mode.scenario)
-            print("[SocialNotesView] ✅ Successfully imported sample data")
             
             // Update UI
-            print("\n[SocialNotesView] 🔄 Updating UI state...")
             await MainActor.run {
                 appModeManager.isSampleMode = true
                 appModeManager.sampleModeType = (mode.id == "indie") ? "indieDev" : mode.id
                 refreshTrigger.toggle()
-                print("[SocialNotesView] ✅ UI state updated")
             }
-            
-            print("\n[SocialNotesView] ===== Sample Mode Selection Completed =====")
         } catch {
+            // Keep error logging for debugging purposes
             print("\n[SocialNotesView] ❌ Error during sample mode setup:")
             print("- Error: \(error)")
             print("- Mode: \(mode.title)")
             print("- Scenario: \(mode.scenario.rawValue)")
-            // Handle error appropriately
         }
     }
     

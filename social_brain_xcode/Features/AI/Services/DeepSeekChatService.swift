@@ -52,8 +52,26 @@ class DeepSeekChatService: AIChatServiceProtocol {
         do {
             let encodedBody = try encoder.encode(requestBody)
             request.httpBody = encodedBody
-            if let jsonString = String(data: encodedBody, encoding: .utf8) {
-                print("[DeepSeekChatService] Request Body: \(jsonString)")
+            
+            // Create a sanitized version of the request for logging
+            // that doesn't show the actual content of messages
+            var sanitizedMessages: [[String: String]] = []
+            for message in context {
+                sanitizedMessages.append([
+                    "role": String(describing: message.role),
+                    "content": "[CONTENT REDACTED]"
+                ])
+            }
+            
+            let sanitizedRequest: [String: Any] = [
+                "model": model,
+                "stream": true,
+                "messages": sanitizedMessages
+            ]
+            
+            if let sanitizedJson = try? JSONSerialization.data(withJSONObject: sanitizedRequest),
+               let sanitizedJsonString = String(data: sanitizedJson, encoding: .utf8) {
+                print("[DeepSeekChatService] Request Body: \(sanitizedJsonString)")
             }
         } catch {
             print("[DeepSeekChatService] ❌ Failed to encode request body: \(error)")
@@ -86,14 +104,11 @@ class DeepSeekChatService: AIChatServiceProtocol {
                     if byte == UInt8(ascii: "\n") {
                         if let line = String(data: buffer, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
                            !line.isEmpty {
-                            print("[DeepSeekChatService] Received chunk: \(line.prefix(100))...")
-                            
                             // Remove "data: " prefix if present
                             let jsonString = line.hasPrefix("data: ") ? String(line.dropFirst(6)) : line
                             
                             // Skip [DONE] message
                             if jsonString.trimmingCharacters(in: .whitespacesAndNewlines) == "[DONE]" {
-                                print("[DeepSeekChatService] Received [DONE] signal")
                                 buffer.removeAll()
                                 continue
                             }
@@ -105,10 +120,8 @@ class DeepSeekChatService: AIChatServiceProtocol {
                                     let streamResponse = try decoder.decode(ChatCompletionStreamResponse.self, from: jsonData)
                                     if let content = streamResponse.choices.first?.delta.content {
                                         chunkCount += 1
-                                        print("[DeepSeekChatService] Processing chunk \(chunkCount): \(content.prefix(50))...")
+                                        // Don't log individual chunks
                                         onChunk(content)
-                                    } else {
-                                        print("[DeepSeekChatService] Empty content in chunk")
                                     }
                                 } catch {
                                     print("[DeepSeekChatService] ❌ Failed to decode streaming response: \(error)")
