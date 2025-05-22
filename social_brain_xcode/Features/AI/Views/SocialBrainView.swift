@@ -26,6 +26,10 @@ struct SocialBrainView: View {
     @State private var errorMessage: String?
     @State private var showError = false
     
+    // Add keyboard handling state
+    @State private var keyboardHeight: CGFloat = 0
+    @State private var isKeyboardVisible = false
+    
     @State private var currentStreamingMessage: String = ""
     @State private var isStreaming = false
     
@@ -200,7 +204,7 @@ struct SocialBrainView: View {
                             }
                             
                             // Spacer at the bottom for input field
-                            Spacer().frame(height: 60)
+                            Spacer().frame(height: 1)
                                 .id(scrollToBottomID)
                         }
                         .padding(.horizontal)
@@ -223,7 +227,7 @@ struct SocialBrainView: View {
                         }
                     }
                     .onChange(of: isConversationActive) { active in
-                        if !active {
+                        if (!active) {
                             // When returning to default view, scroll to top
                             withAnimation {
                                 scrollProxy.scrollTo(scrollToTopID, anchor: .top)
@@ -232,9 +236,7 @@ struct SocialBrainView: View {
                     }
                 }
                 
-                Spacer()
-                
-                // Input area
+                // Input area (always at the bottom)
                 VStack(spacing: 0) {
                     if isConversationActive {
                         // New chat button
@@ -261,14 +263,22 @@ struct SocialBrainView: View {
                     
                     // Input bar
                     HStack {
-                        TextField("hint_text".localized, text: $inputText)
+                        TextField("输入您的问题...", text: $inputText)
                             .font(.body)
                             .padding(16)
                             .background(Color.inputBackground)
                             .cornerRadius(25)
                             .focused($isInputFocused)
+                            .keyboardType(.default)
+                            .submitLabel(.send)
                             .onSubmit {
                                 sendMessage()
+                            }
+                            .onAppear {
+                                setupKeyboardObservers()
+                            }
+                            .onDisappear {
+                                cleanupKeyboardObservers()
                             }
                         
                         Button(action: sendMessage) {
@@ -284,6 +294,7 @@ struct SocialBrainView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 10)
+                    .animation(.easeInOut(duration: 0.25), value: isKeyboardVisible)
                 }
                 .background(Color.primaryBackground)
             }
@@ -341,6 +352,7 @@ struct SocialBrainView: View {
     private func sendMessage() {
         let trimmedText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
+        let limitedText = String(trimmedText.prefix(1000)) // Limit length here
         
         // If not in conversation mode, switch to it
         if !isConversationActive {
@@ -349,7 +361,7 @@ struct SocialBrainView: View {
         
         // Add user message
         let userMessage = SocialBrainMessage(
-            content: trimmedText,
+            content: limitedText,
             isFromUser: true,
             timestamp: Date()
         )
@@ -371,7 +383,7 @@ struct SocialBrainView: View {
                 if let sampleProvider = getSampleProvider() {
                     let context = PromptContext(
                         mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
-                        question: trimmedText,  // Use the actual question
+                        question: limitedText,  // Use the actual question
                         contact: contextContact
                     )
                     systemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
@@ -399,7 +411,7 @@ struct SocialBrainView: View {
                     )
                     messages.append(streamingMessage)
                     var isFirstChunk = true
-                    try await doubaoService.sendStreamingMessage(trimmedText, context: chatMessages) { chunk in
+                    try await doubaoService.sendStreamingMessage(limitedText, context: chatMessages) { chunk in
                         Task { @MainActor in
                             print("[SocialBrainView] 📥 Received chunk: \(chunk.prefix(50))...")
                             currentStreamingMessage += chunk
@@ -426,7 +438,7 @@ struct SocialBrainView: View {
                     )
                     messages.append(streamingMessage)
                     var isFirstChunk = true
-                    try await deepSeekService.sendStreamingMessage(trimmedText, context: chatMessages) { chunk in
+                    try await deepSeekService.sendStreamingMessage(limitedText, context: chatMessages) { chunk in
                         Task { @MainActor in
                             print("[SocialBrainView] 📥 Received chunk: \(chunk.prefix(50))...")
                             currentStreamingMessage += chunk
@@ -444,7 +456,7 @@ struct SocialBrainView: View {
                     isLoading = false
                 } else {
                     print("[SocialBrainView] Using non-streaming mode")
-                    let response = try await chatService.sendMessage(trimmedText, context: chatMessages)
+                    let response = try await chatService.sendMessage(limitedText, context: chatMessages)
                     print("[SocialBrainView] Received response from LLM:")
                     if let firstChoice = response.choices.first {
                         print("[SocialBrainView] \(firstChoice.message.content)")
@@ -498,6 +510,32 @@ struct SocialBrainView: View {
         )
         
         messages.append(actionResponse)
+    }
+    
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+                isKeyboardVisible = true
+            }
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            keyboardHeight = 0
+            isKeyboardVisible = false
+        }
+    }
+    
+    private func cleanupKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self)
     }
 }
 

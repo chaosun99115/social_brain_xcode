@@ -56,13 +56,13 @@ enum AIConfig {
     static func configure() {
         switch currentServiceType {
         case .deepSeek:
-            print("[AIConfig] Using DeepSeek API Key: \(deepSeekAPIKey.prefix(8))... (length: \(deepSeekAPIKey.count))")
+            print("[AIConfig] Using DeepSeek API Key")
             AIServiceManager.shared.configure(with: deepSeekAPIKey, serviceType: .deepSeek)
         case .kimi:
-            print("[AIConfig] Using KIMI API Key: \(kimiAPIKey.prefix(8))... (length: \(kimiAPIKey.count))")
+            print("[AIConfig] Using KIMI API Key")
             AIServiceManager.shared.configure(with: kimiAPIKey, serviceType: .kimi)
         case .doubao_1_5_lite, .doubao_1_5_pro, .doubao_1_5_pro_256k, .doubao_pro_256k:
-            print("[AIConfig] Using Doubao API Key: \(doubaoAPIKey.prefix(8))... (length: \(doubaoAPIKey.count))")
+            print("[AIConfig] Using Doubao API Key")
             AIServiceManager.shared.configure(with: doubaoAPIKey, serviceType: currentServiceType)
         }
     }

@@ -329,7 +329,7 @@
             "notes": [
                 {
                     "uniqueIdentifier": "school_note_1",
-                    "content": "和 @王教授 第一次见面，他提到对我的研究方向很感兴趣。他说话温和，但问问题很深入，看得出对学术要求很高。记得之后讨论研究计划要准备充分的理论基础。",
+                    "content": "今天是 @淘淘 开学第一天，班主任 @林老师 站在教室门口迎接每一位小朋友。她看起来40岁左右，说话语气温柔但很有条理。王老师蹲下来和 =淘淘 打招呼，问她暑假做了什么好玩的事， =淘淘 说起了我们暑假旅游的事情。\n\n放学后和几位等孩子的家长简单打了招呼，有个戴眼镜的妈妈主动来搭话，是 @小雨妈妈 ，说她女儿小雨和淘淘分到了同一组。她提到自己女儿认字已经挺多了，大概有500多个，语气中带着一点炫耀。",
                     "type": 0,
                     "updateCompleted": 1,
                     "createdAt": "2024-03-20T10:00:00Z",
@@ -338,7 +338,43 @@
                 },
                 {
                     "uniqueIdentifier": "school_note_2",
-                    "content": "和 @李同学 一起准备小组报告，她主动承担了大部分工作，还帮我修改了英文摘要。发现她不仅学习能力强，还很会照顾团队氛围。",
+                    "content": "今天放学又遇到了 @小雨妈妈 ，多聊了几句。她说她老公在外企做技术，平时工作忙，基本都是她负责孩子的学习。小雨从4岁开始学英语，现在还在学钢琴和围棋，感觉小雨妈妈给人一种'不能输在起跑线'的焦虑感。回家路上，我问淘淘对小雨印象如何，他说小雨很聪明但很少笑。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "school_note_3",
+                    "content": "今天参加了班级第一次家长会，见到了所有家长。 @林老师 详细介绍了教学计划，她提到希望家长们不要过分焦虑，一年级更多是培养兴趣的阶段。\n\n 注意到 会上 @小凯爸爸 提了不少关于教材和课程进度的问题，特别关心数学和语文什么时候会教到哪些内容。\n\n 会后和几位家长互加了微信。@静静妈妈 找到我说说她孩子和陶陶关系比较好，静静平时比较内向，但是和陶陶能玩到一起，有机会可以约个周末一起玩。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "school_note_4",
+                    "content": "今天提前半小时到校，碰到了 @王老师 ,趁机问了淘淘在校表现，她说淘淘很有礼貌，就是课堂发言不够积极，建议在家多鼓励他表达自己的想法。接陶陶的过程中时认识了另一位家长 @小杰爸爸，他儿子小杰 和 淘淘 坐同桌。聊天得知他在一所中学教物理。他说现在家长太焦虑，一年级就报很多培训班其实没必要，反而应该培养孩子的阅读习惯和动手能力。@小杰爸爸提到他周末会带孩子去图书馆，有时也去科技馆，问我们要不要一起。相比之前接触的几个家长，@小杰爸爸 的教育理念让我觉得压力小多了，也更符合我的想法。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "school_note_5",
+                    "content": "周末和 @小杰爸爸 一家一起去了科技馆，孩子们玩得很开心。 @小杰妈妈 是儿科医生，人很随和。她说很多家长过于关注分数，忽视了孩子的身心健康，还分享了好几个她门诊遇到的案例，都是因为学习压力大导致的身体问题。\n\n 晚上查看了班级家长群，发现大家在讨论要不要给班里添置新的图书角。@小凯爸爸 主动提出可以捐赠一批新书，还特意强调是'知识类图书，不是那种没营养的故事书'。看来是想在班里树立一定影响力，群里也有好几个家长附和了。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "school_note_5",
+                    "content": "周末又和 @小杰爸爸 一家活动了， 一起去了图书馆，聊天中了解到很多家长的情况：@小凯爸爸 是做教育培训的；@小雨妈妈 现在是全职妈妈，以前在金融公司工作。@小杰爸爸 告诉我班上有个小圈子，主要成员是几个特别重视‘赢在起跑线’的家长，经常会交流各种补习班和竞赛信息。他建议我不必太在意，按自己的教育理念来就好。@小雨妈妈 估计就是这个圈子里的。",
                     "type": 0,
                     "updateCompleted": 1,
                     "createdAt": "2024-03-20T10:00:00Z",
@@ -349,7 +385,7 @@
             "contacts": [
                 {
                     "uniqueIdentifier": "school_contact_1",
-                    "name": "王教授",
+                    "name": "林老师",
                     "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -357,7 +393,39 @@
                 },
                 {
                     "uniqueIdentifier": "school_contact_2",
-                    "name": "李同学",
+                    "name": "陶陶",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "school_contact_3",
+                    "name": "小雨妈妈",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "school_contact_4",
+                    "name": "小凯爸爸",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "school_contact_5",
+                    "name": "静静妈妈",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "school_contact_6",
+                    "name": "小杰爸爸",
                     "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -384,8 +452,63 @@
                 },
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_1",
+                    "noteIdentifier": "school_note_3"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_1",
+                    "noteIdentifier": "school_note_4"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
                     "contactIdentifier": "school_contact_2",
+                    "noteIdentifier": "school_note_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_3",
                     "noteIdentifier": "school_note_2"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_3",
+                    "noteIdentifier": "school_note_6"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_4",
+                    "noteIdentifier": "school_note_3"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_4",
+                    "noteIdentifier": "school_note_5"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_4",
+                    "noteIdentifier": "school_note_6"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_5",
+                    "noteIdentifier": "school_note_3"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_6",
+                    "noteIdentifier": "school_note_4"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_6",
+                    "noteIdentifier": "school_note_5"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_6",
+                    "noteIdentifier": "school_note_6"
                 }
             ],
             "insightContactRelationships": [
@@ -398,16 +521,8 @@
             "circles": [
                 {
                     "uniqueIdentifier": "school_circle_1",
-                    "name": "学术导师",
+                    "name": "陶陶的新学校",
                     "type": 0,
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "school_circle_2",
-                    "name": "学习伙伴",
-                    "type": 1,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
                     "recordStatus": 1
@@ -436,7 +551,27 @@
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
                     "contactIdentifier": "school_contact_2",
-                    "circleIdentifier": "school_circle_2"
+                    "circleIdentifier": "school_circle_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_3",
+                    "circleIdentifier": "school_circle_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_4",
+                    "circleIdentifier": "school_circle_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_5",
+                    "circleIdentifier": "school_circle_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "school_contact_6",
+                    "circleIdentifier": "school_circle_1"
                 }
             ],
             "insightCircleRelationships": [
@@ -451,19 +586,82 @@
             "notes": [
                 {
                     "uniqueIdentifier": "career_note_1",
-                    "content": "和 @张导师 讨论职业转型计划，他建议我先从兼职开始尝试新领域，积累经验。他分享了很多转型案例，特别强调要平衡好现有工作和新方向。",
+                    "content": "今天与 @林伟 一起完成了数据可视化产品的收尾工作。这已经是我们共事的第三个项目。\n\n项目结束后，团队一起吃了火锅，他聊到他女儿刚考上市重点小学，他很自豪，还提到想培养女儿学钢琴。",
                     "type": 0,
                     "updateCompleted": 1,
-                    "createdAt": "2024-03-20T10:00:00Z",
+                    "createdAt": "2023-09-15T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
                     "recordStatus": 1
                 },
                 {
                     "uniqueIdentifier": "career_note_2",
-                    "content": "参加 @李教练 的转型工作坊，学到了很多实用的职业规划工具。她建议我先做SWOT分析，明确自己的优势和机会。",
+                    "content": "今天是 @林伟 的离职聚餐，他打算跳槽到另外一家大数据公司，职位升格成产品总监了，还有了期权。我送了一本我最近在读的 马斯克的传记 作为离职礼物，他很喜欢。",
                     "type": 0,
                     "updateCompleted": 1,
-                    "createdAt": "2024-03-20T10:00:00Z",
+                    "createdAt": "2024-02-10T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "career_note_3",
+                    "content": "今天公司宣布新一轮裁员计划，这已经是半年内第二轮裁员了，公司前景令人担忧。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-05T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "career_note_4",
+                    "content": "今天约了大学同学 @王志明 在星巴克见面。他现在是某独角兽公司的技术总监。我俩毕业后联系不多，这次找他也是厚着脸皮。\n\n我提起了最近想跳槽的想法，他听后也说现在经济形势确实不太好，包括他自己的公司也在裁员。他提到可以给我介绍一个他认识的猎头。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-10T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "career_note_5",
+                    "content": "今天 @王志明 把我拉进了一个小群，认识了@赵宇。赵宇确实是个资深猎头，做IT和互联网方向已经8年了。赵宇建议我要多了解一些关于关于大语言模型和AI Agent相关的信息，这方面的机会现在市场上有一些。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-15T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "career_note_6",
+                    "content": "晚上收到 @赵宇 的微信，他说有个产品经理的职位可能比较适合我。他特别提醒我准备关于大模型应用和AI Agent的相关经验，对方公司很看重这一点。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "career_note_7",
+                    "content": "今天约了给前同事 @林伟 发了微信，说了我想跳槽的想法，他说约个时间当面好好聊聊。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-25T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "career_note_8",
+                    "content": "周末给 @王志明 发了信息感谢他的引荐，他回复说让我别着急，慢慢来，等有合适的内推机会一定第一时间想到我。这种时候真感觉朋友圈很重要，没有这些人脉可能连面试机会都难得到。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-30T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "career_note_9",
+                    "content": "今天收到了面试通知，是下周二。立刻给 @赵宇 发了消息，他很快回电话给我，说了一下面试建议。他提醒我：一定要准备充分，尤其是对公司产品的了解。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-06-05T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
                     "recordStatus": 1
                 }
@@ -471,7 +669,7 @@
             "contacts": [
                 {
                     "uniqueIdentifier": "career_contact_1",
-                    "name": "张导师",
+                    "name": "林伟",
                     "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -479,7 +677,15 @@
                 },
                 {
                     "uniqueIdentifier": "career_contact_2",
-                    "name": "李教练",
+                    "name": "王志明",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "career_contact_3",
+                    "name": "赵宇",
                     "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -506,8 +712,38 @@
                 },
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "career_contact_2",
+                    "contactIdentifier": "career_contact_1",
                     "noteIdentifier": "career_note_2"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "career_contact_2",
+                    "noteIdentifier": "career_note_4"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "career_contact_2",
+                    "noteIdentifier": "career_note_5"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "career_contact_3",
+                    "noteIdentifier": "career_note_6"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "career_contact_1",
+                    "noteIdentifier": "career_note_7"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "career_contact_2",
+                    "noteIdentifier": "career_note_8"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "career_contact_3",
+                    "noteIdentifier": "career_note_9"
                 }
             ],
             "insightContactRelationships": [
@@ -520,7 +756,7 @@
             "circles": [
                 {
                     "uniqueIdentifier": "career_circle_1",
-                    "name": "职业导师",
+                    "name": "同事",
                     "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -528,7 +764,15 @@
                 },
                 {
                     "uniqueIdentifier": "career_circle_2",
-                    "name": "转型伙伴",
+                    "name": "同学",
+                    "type": 1,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "career_circle_3",
+                    "name": "猎头",
                     "type": 1,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -559,6 +803,11 @@
                     "createdAt": "2024-03-20T10:00:00Z",
                     "contactIdentifier": "career_contact_2",
                     "circleIdentifier": "career_circle_2"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "career_contact_3",
+                    "circleIdentifier": "career_circle_3"
                 }
             ],
             "insightCircleRelationships": [

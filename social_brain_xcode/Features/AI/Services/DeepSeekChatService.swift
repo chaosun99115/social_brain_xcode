@@ -8,10 +8,10 @@ class DeepSeekChatService: AIChatServiceProtocol {
     init(apiKey: String) {
         self.apiKey = apiKey
         // Debug: Print API key info (do not print full key)
-        print("[DeepSeekChatService] API Key Length: \(apiKey.count)")
-        print("[DeepSeekChatService] API Key (first 8): \(apiKey.prefix(8))")
-        print("[DeepSeekChatService] API Key (last 4): \(apiKey.suffix(4))")
-        print("[DeepSeekChatService] API Key Unicode Scalars: \(apiKey.unicodeScalars.map { $0.value })")
+        // print("[DeepSeekChatService] API Key Length: \(apiKey.count)")
+        // print("[DeepSeekChatService] API Key (first 8): \(apiKey.prefix(8))")
+        // print("[DeepSeekChatService] API Key (last 4): \(apiKey.suffix(4))")
+        // print("[DeepSeekChatService] API Key Unicode Scalars: \(apiKey.unicodeScalars.map { $0.value })")
     }
     
     func sendMessage(_ message: String) async throws -> ChatCompletionResponse {

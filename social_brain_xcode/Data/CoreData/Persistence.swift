@@ -65,9 +65,9 @@ class PersistenceController {
             if FileManager.default.fileExists(atPath: storeURL.path) {
                 do {
                     try container.persistentStoreCoordinator.destroyPersistentStore(at: storeURL, ofType: NSSQLiteStoreType, options: nil)
-                    print("Successfully deleted existing store")
+                    // print("Successfully deleted existing store")
                 } catch {
-                    print("Error deleting store: \(error)")
+                    // print("Error deleting store: \(error)")
                 }
             }
         }

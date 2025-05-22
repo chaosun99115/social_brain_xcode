@@ -234,13 +234,15 @@ struct CareerPivotProvider: SampleModeProvider {
         var prompt = baseSystemPrompt
         
         if context.isContactSpecific {
-            prompt += "\n\n" + String(format: SampleModePrompts.CareerPivot.contactSpecificGuidance, context.contact?.name ?? "the mentor")
+            prompt += "\n\n" + String(format: SampleModePrompts.CareerPivot.review, context.contact?.name ?? "the mentor")
         }
         
-        if context.question.contains("技能") {
-            prompt += "\n\n" + SampleModePrompts.CareerPivot.skillAssessmentGuidance
-        } else if context.question.contains("人脉") {
-            prompt += "\n\n" + SampleModePrompts.CareerPivot.networkBuildingGuidance
+        if context.question.contains("回顾") {
+            prompt += "\n\n" + SampleModePrompts.CareerPivot.review
+        }
+
+        if context.question.contains("社交备忘录") {
+            prompt += "\n\n" + SampleModePrompts.CareerPivot.contact
         }
         
         // Fetch and append relevant notes
@@ -255,12 +257,8 @@ struct CareerPivotProvider: SampleModeProvider {
     
     var suggestedQuestions: [SocialBrainMessage] {
         [
-            SocialBrainMessage(content: "如何评估我的技能在新领域的价值？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "如何建立新的职业人脉？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "如何平衡当前工作与转型准备？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "如何制定可行的转型计划？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "如何准备面试和简历？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "如何管理转型期的压力？", isFromUser: false, timestamp: Date())
+            SocialBrainMessage(content: "回顾我最近的社交？", isFromUser: false, timestamp: Date()),
+            SocialBrainMessage(content: "明天我要跟 林伟 聊聊，帮我回顾下关于他的社交备忘录", isFromUser: false, timestamp: Date())
         ]
     }
     
@@ -285,8 +283,22 @@ struct IndieDevProvider: SampleModeProvider {
     func generateSystemPrompt(for context: PromptContext) async throws -> String {
         var prompt = baseSystemPrompt
         
+        // Add contact-specific guidance if applicable
         if context.isContactSpecific {
             prompt += "\n\n" + String(format: SampleModePrompts.IndieDev.contactSpecificGuidance, context.contact?.name ?? "the developer")
+        }
+        
+        // Add question-specific guidance based on patterns
+        let question = context.question.lowercased()
+        if question.contains("回顾") || question.contains("最近") {
+            print("[IndieDevProvider] Matched follow-up question pattern")
+            prompt += "\n\n" + SampleModePrompts.IndieDev.followUpGuidance
+        } else if question.contains("陶艺展") || question.contains("展览") {
+            print("[IndieDevProvider] Matched exhibition question pattern")
+            prompt += "\n\n" + SampleModePrompts.IndieDev.exhibitionGuidance
+        } else if question.contains("项目") || question.contains("介绍") || question.contains("展示") {
+            print("[IndieDevProvider] Matched project showcase question pattern")
+            prompt += "\n\n" + SampleModePrompts.IndieDev.projectShowcaseGuidance
         }
         
         // Fetch and append relevant notes
@@ -301,8 +313,8 @@ struct IndieDevProvider: SampleModeProvider {
     
     var suggestedQuestions: [SocialBrainMessage] {
         [
-            SocialBrainMessage(content: "最近有没有需要跟进的互动？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "@小蔡 邀请我下周去参加陶艺展，我想给陶艺展的艺术家介绍我的“社交大脑”，怎么介绍比较好", isFromUser: false, timestamp: Date())
+            SocialBrainMessage(content: "回顾我最近的社交互动？", isFromUser: false, timestamp: Date()),
+            SocialBrainMessage(content: "@小蔡 邀请我下周去参加陶艺展，我想给陶艺展的艺术家介绍我的 社交大脑 ，怎么介绍比较好", isFromUser: false, timestamp: Date()),
         ]
     }
     
