@@ -312,45 +312,36 @@ struct SocialBrainDialogView: View {
                 // Input bar - fixed at the bottom, positioned above keyboard
                 VStack(spacing: 0) {
                     HStack(spacing: 8) {
-                        TextField("hint_text".localized, text: $inputText)
-                            .font(.body)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                            .frame(height: 44) // Standard iOS touch target height
-                            .background(Color.inputBackground)
-                            .cornerRadius(22) // Half of height for consistent circular ends
-                            .onSubmit {
-                                sendMessage()
-                                // Keep focus on the text field
-                                keepKeyboardVisible()
+                        ZStack(alignment: .topLeading) {
+                            TextEditor(text: $inputText)
+                                .font(.body)
+                                .frame(minHeight: 44, maxHeight: 120)
+                                .padding(8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(12)
+                            if inputText.isEmpty {
+                                Text("请输入您的问题…")
+                                    .foregroundColor(.gray)
+                                    .padding(.top, 12)
+                                    .padding(.leading, 16)
                             }
-                        
+                        }
                         Button(action: {
                             sendMessage()
-                            // Keep focus on the text field
-                            keepKeyboardVisible()
                         }) {
                             Image(systemName: "arrow.up")
-                                .font(.system(size: 20, weight: .semibold))
                                 .foregroundColor(.white)
-                                .frame(width: 44, height: 44) // Standard iOS touch target size
-                                .background(Color.primaryAction)
+                                .frame(width: 44, height: 44)
+                                .background(Color.blue)
                                 .clipShape(SwiftUI.Circle())
-                                .shadow(color: Color.primaryText.opacity(0.1), radius: 2, x: 0, y: 1)
                         }
                         .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8) // Standard 8pt spacing per HIG
-                    .padding(.bottom, 0)
-                    .background(Color.primaryBackground)
-                    .opacity(animationCompleted ? 1 : 0)
-                    .offset(y: animationCompleted ? 0 : 20)
+                    .padding()
                 }
-                // Remove extra padding, only use safe area inset when keyboard is not visible
                 .padding(.bottom, isKeyboardVisible ? 0 : safeAreaInsets.bottom)
                 .background(Color.primaryBackground)
-                .zIndex(1) // Ensure input bar stays above the scroll content
+                .zIndex(1)
             }
         }
         .preference(key: NoteContentPreferenceKey.self, value: userMessageContent)

@@ -36,6 +36,9 @@ struct SocialBrainView: View {
     private let aiServiceManager = AIServiceManager.shared
     @EnvironmentObject var appModeManager: AppModeManager
     
+    @State private var textEditorHeight: CGFloat = 48
+    let maxTextEditorHeight: CGFloat = 120
+    
     // Add helper method to get provider
     private func getSampleProvider() -> SampleModeProvider? {
         guard appModeManager.isSampleMode,
@@ -277,27 +280,20 @@ struct SocialBrainView: View {
                     
                     // Input bar
                     HStack {
-                        TextField("输入您的问题...", text: $inputText)
-                            .font(.body)
-                            .padding(16)
-                            .background(Color.inputBackground)
-                            .cornerRadius(25)
-                            .focused($isInputFocused)
-                            .keyboardType(.default)
-                            .submitLabel(.send)
-                            .onSubmit {
-                                sendMessage()
+                        ZStack(alignment: .topLeading) {
+                            GrowingTextView(text: $inputText, height: $textEditorHeight, maxHeight: maxTextEditorHeight)
+                                .frame(height: textEditorHeight)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(12)
+                            if inputText.isEmpty {
+                                Text("输入您的问题...")
+                                    .foregroundColor(.gray)
+                                    .padding(.top, 12)
+                                    .padding(.leading, 16)
                             }
-                            .onAppear {
-                                setupKeyboardObservers()
-                            }
-                            .onDisappear {
-                                cleanupKeyboardObservers()
-                            }
-                        
+                        }
                         Button(action: sendMessage) {
                             Image(systemName: "arrow.up")
-                                .font(.system(size: 20, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(width: 44, height: 44)
                                 .background(Color.primaryAction)
@@ -308,6 +304,7 @@ struct SocialBrainView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 10)
+                    .padding(.bottom, 8)
                     .animation(.easeInOut(duration: 0.25), value: isKeyboardVisible)
                 }
                 .background(Color.primaryBackground)
@@ -878,4 +875,50 @@ private extension Theme {
                 .relativeLineSpacing(.em(0.18))
                 .markdownMargin(top: .zero, bottom: .em(0.5))
         }
+}
+
+struct GrowingTextView: UIViewRepresentable {
+    @Binding var text: String
+    @Binding var height: CGFloat
+    let maxHeight: CGFloat
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.isScrollEnabled = false
+        textView.font = UIFont.systemFont(ofSize: 17)
+        textView.backgroundColor = .clear
+        textView.delegate = context.coordinator
+        textView.textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
+        textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return textView
+    }
+
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        if uiView.text != text {
+            uiView.text = text
+        }
+        // Update height
+        let size = uiView.sizeThatFits(CGSize(width: uiView.frame.width, height: .greatestFiniteMagnitude))
+        height = min(size.height, maxHeight)
+        uiView.isScrollEnabled = height >= maxHeight
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, UITextViewDelegate {
+        var parent: GrowingTextView
+
+        init(_ parent: GrowingTextView) {
+            self.parent = parent
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            parent.text = textView.text
+            let size = textView.sizeThatFits(CGSize(width: textView.frame.width, height: .greatestFiniteMagnitude))
+            parent.height = min(size.height, parent.maxHeight)
+            textView.isScrollEnabled = parent.height >= parent.maxHeight
+        }
+    }
 }
