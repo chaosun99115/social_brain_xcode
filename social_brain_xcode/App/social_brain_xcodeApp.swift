@@ -21,6 +21,14 @@ struct social_brain_xcodeApp: App {
     
     init() {
         AIConfig.configure()
+        // Set consistent tab bar appearance
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.systemGray6
+        UITabBar.appearance().standardAppearance = appearance
+        if #available(iOS 15.0, *) {
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
     }
     
     var body: some Scene {

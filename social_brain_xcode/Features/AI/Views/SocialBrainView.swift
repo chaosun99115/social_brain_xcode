@@ -314,7 +314,7 @@ struct SocialBrainView: View {
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 6)
-                .padding(.bottom, isKeyboardVisible ? 0 : safeAreaBottomInset)
+                .padding(.bottom, 12)
                 .animation(.easeInOut(duration: 0.25), value: isKeyboardVisible)
             }
             .background(Color.primaryBackground)
