@@ -86,29 +86,15 @@ struct SocialNotesView: View {
                                         Text(SampleModeConfig.UIConstants.sampleButtonTitle)
                                     }
                                     .font(.subheadline)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 8)
-                                    .background(Color(hex: SampleModeConfig.UIConstants.sampleButtonColor))
-                                    .cornerRadius(8)
-                                }
-                                .padding(.horizontal, 60)
-
-                                Button(action: {
-                                    showingSimpleNoteModal = true
-                                }) {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "square.and.pencil")
-                                        Text("创建笔记")
-                                    }
-                                    .font(.subheadline)
                                     .foregroundColor(Color.primaryAction)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 8)
+                                    .background(Color.white)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 8)
                                             .stroke(Color.primaryAction, lineWidth: 1)
                                     )
+                                    .cornerRadius(8)
                                 }
                                 .padding(.horizontal, 60)
                             }
@@ -136,25 +122,23 @@ struct SocialNotesView: View {
                     }
                 }
                 // Floating Action Button
-                if !filteredNotes.isEmpty && !appModeManager.isSampleMode {
-                    VStack {
+                VStack {
+                    Spacer()
+                    HStack {
                         Spacer()
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                showingSimpleNoteModal = true
-                            }) {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 22, weight: .bold, design: .default))
-                                    .foregroundColor(.white)
-                                    .frame(width: 56, height: 56)
-                                    .background(Color.primaryAction)
-                                    .clipShape(SwiftUI.Circle())
-                                    .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
-                            }
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 20)
+                        Button(action: {
+                            showingSimpleNoteModal = true
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 22, weight: .bold, design: .default))
+                                .foregroundColor(.white)
+                                .frame(width: 56, height: 56)
+                                .background(Color.primaryAction)
+                                .clipShape(SwiftUI.Circle())
+                                .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
                         }
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 20)
                     }
                 }
             }

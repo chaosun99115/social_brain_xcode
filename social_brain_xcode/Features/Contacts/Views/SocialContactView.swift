@@ -198,25 +198,23 @@ struct SocialContactView: View {
                 }
                 
                 // Floating Action Button
-                if !filteredContacts.isEmpty && !appModeManager.isSampleMode {
-                    VStack {
+                VStack {
+                    Spacer()
+                    HStack {
                         Spacer()
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                // Add contact action
-                            }) {
-                                Image(systemName: "person.badge.plus")
-                                    .font(.system(size: 22, weight: .bold, design: .default))
-                                    .foregroundColor(.white)
-                                    .frame(width: 56, height: 56)
-                                    .background(Color.primaryAction)
-                                    .clipShape(SwiftUI.Circle())
-                                    .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
-                            }
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 20)
+                        Button(action: {
+                            // Add contact action
+                        }) {
+                            Image(systemName: "person.badge.plus")
+                                .font(.system(size: 22, weight: .bold, design: .default))
+                                .foregroundColor(.white)
+                                .frame(width: 56, height: 56)
+                                .background(Color.primaryAction)
+                                .clipShape(SwiftUI.Circle())
+                                .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
                         }
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 20)
                     }
                 }
                 
@@ -417,28 +415,15 @@ struct ContactListView: View {
                         Text(selectedTab == 0 ? "查看示例熟人" : "查看示例圈子")
                     }
                     .font(.subheadline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(Color(hex: "4085F3"))
-                    .cornerRadius(8)
-                }
-                .padding(.horizontal, 60)
-                Button(action: {
-                    showingCreateContact = true
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: selectedTab == 0 ? "person.crop.circle.badge.plus" : "plus.circle")
-                        Text(selectedTab == 0 ? "创建熟人" : "创建圈子")
-                    }
-                    .font(.subheadline)
                     .foregroundColor(Color.primaryAction)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
+                    .background(Color.white)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(Color.primaryAction, lineWidth: 1)
                     )
+                    .cornerRadius(8)
                 }
                 .padding(.horizontal, 60)
             }
@@ -695,28 +680,15 @@ struct CircleListView: View {
                         Text("查看示例圈子")
                     }
                     .font(.subheadline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(Color(hex: "4085F3"))
-                    .cornerRadius(8)
-                }
-                .padding(.horizontal, 60)
-                Button(action: {
-                    showingCreateCircle = true
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus.circle")
-                        Text("创建圈子")
-                    }
-                    .font(.subheadline)
                     .foregroundColor(Color.primaryAction)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
+                    .background(Color.white)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(Color.primaryAction, lineWidth: 1)
                     )
+                    .cornerRadius(8)
                 }
                 .padding(.horizontal, 60)
             }
