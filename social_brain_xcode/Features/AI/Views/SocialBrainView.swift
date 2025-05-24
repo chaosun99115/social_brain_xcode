@@ -250,6 +250,8 @@ struct SocialBrainView: View {
                                 scrollProxy.scrollTo(scrollToTopID, anchor: .top)
                             }
                         }
+                        // Always reset input field height for consistency
+                        textEditorHeight = 56
                     }
                 }
             }
@@ -272,10 +274,10 @@ struct SocialBrainView: View {
                                 .font(.system(size: 18))
                             
                             Text("新对话")
-                                .font(.system(size: 16, weight: .medium))
+                                .font(.system(size: 14, weight: .medium))
                         }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
                         .foregroundColor(.primary)
                         .background(Color.clear)
                         .overlay(
@@ -283,8 +285,9 @@ struct SocialBrainView: View {
                                 .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                         )
                     }
+                    .padding(.top, 8)
                     .padding(.horizontal)
-                    .padding(.bottom, 10)
+                    .padding(.bottom, 8)
                 }
                 
                 // Input bar
