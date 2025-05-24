@@ -5,7 +5,6 @@ struct SocialBrainDialogView: View {
     // For standalone usage
     @State private var inputText = ""
     @State private var messages: [DialogMessage] = []
-    @EnvironmentObject var localizationManager: LocalizationManager
     @Environment(\.colorScheme) private var colorScheme
     
     // For transition animation
@@ -489,9 +488,9 @@ private func generateAiResponse(to userInput: String) -> DialogMessage {
     }else {
         // Default response
         return DialogMessage(
-            content: "dialog_manager_project".localized,
+            content: "李经理在5天前的互动里提到了他的部门最近在准备一个项目，接下来三个月会比较忙。你可以打听一下相关情况，可能能帮你找到新的工作机会。",
             isFromUser: false,
-            actionText: "dialog_view_original_note".localized
+            actionText: "查看原笔记"
         )
     }
 }
@@ -511,22 +510,22 @@ struct DialogMessage: Identifiable, Equatable {
     // Sample conversations
     static let sampleMessages: [DialogMessage] = [
         DialogMessage(
-            content: "dialog_recent_interactions".localized,
+            content: "帮我回顾最近我有什么需要回顾的社交互动吗?",
             isFromUser: true
         ),
         DialogMessage(
-            content: "dialog_manager_project".localized,
+            content: "李经理在5天前的互动里提到了他的部门最近在准备一个项目，接下来三个月会比较忙。你可以打听一下相关情况，可能能帮你找到新的工作机会。",
             isFromUser: false,
-            actionText: "dialog_view_original_note".localized
+            actionText: "查看原笔记"
         ),
         DialogMessage(
-            content: "dialog_manager_status".localized,
+            content: "李经理有什么近况?",
             isFromUser: true
         ),
         DialogMessage(
-            content: "dialog_manager_daughter".localized,
+            content: "李经理的女儿刚开始学轮滑，你可以询问孩子的学习体验。你没有记录过轮滑相关的话题，可以让AI调研一下有什么可以聊的内容",
             isFromUser: false,
-            actionText: "dialog_ai_research".localized
+            actionText: "AI调研"
         )
     ]
     
@@ -662,12 +661,10 @@ struct SocialBrainDialogView_Previews: PreviewProvider {
             // Preview the standalone view
             SocialBrainDialogView()
                 .environment(\.colorScheme, .light)
-                .environmentObject(LocalizationManager())
                 .previewDisplayName("Light Mode")
             
             SocialBrainDialogView()
                 .environment(\.colorScheme, .dark)
-                .environmentObject(LocalizationManager())
                 .previewDisplayName("Dark Mode")
         }
     }
