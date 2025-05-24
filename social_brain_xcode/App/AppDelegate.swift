@@ -1,4 +1,4 @@
-import UIKit
+import UIKit  
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     static let shared = AppDelegate()
