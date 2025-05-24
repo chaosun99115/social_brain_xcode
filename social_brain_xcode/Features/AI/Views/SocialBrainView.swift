@@ -36,7 +36,7 @@ struct SocialBrainView: View {
     private let aiServiceManager = AIServiceManager.shared
     @EnvironmentObject var appModeManager: AppModeManager
     
-    @State private var textEditorHeight: CGFloat = 48
+    @State private var textEditorHeight: CGFloat = 56
     let maxTextEditorHeight: CGFloat = 120
     
     // Add helper method to get provider
