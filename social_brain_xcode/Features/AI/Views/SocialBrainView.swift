@@ -39,6 +39,11 @@ struct SocialBrainView: View {
     @State private var textEditorHeight: CGFloat = 56
     let maxTextEditorHeight: CGFloat = 120
     
+    // Add this computed property to get the safe area bottom inset
+    private var safeAreaBottomInset: CGFloat {
+        UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
+    }
+    
     // Add helper method to get provider
     private func getSampleProvider() -> SampleModeProvider? {
         guard appModeManager.isSampleMode,
@@ -172,13 +177,9 @@ struct SocialBrainView: View {
     }
     
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Color.primaryBackground
                 .ignoresSafeArea()
-                .onTapGesture {
-                    // Dismiss keyboard when tapping empty areas
-                    isInputFocused = false
-                }
             
             VStack(spacing: 0) {
                 // Chat area
@@ -252,69 +253,72 @@ struct SocialBrainView: View {
                         }
                     }
                 }
-                
-                // Input area (always at the bottom)
-                VStack(spacing: 0) {
-                    if isConversationActive {
-                        // New chat button
-                        Button(action: startNewConversation) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle")
-                                    .font(.system(size: 18))
-                                
-                                Text("new_chat".localized)
-                                    .font(.system(size: 16, weight: .medium))
-                            }
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 16)
-                            .foregroundColor(.primary)
-                            .background(Color.clear)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                        }
-                        .padding(.horizontal)
-                        .padding(.bottom, 10)
+            }
+            // Tap-capturing layer above chat area but below input bar
+            if isKeyboardVisible {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        isInputFocused = false
                     }
-                    
-                    // Input bar
-                    HStack {
-                        ZStack(alignment: .topLeading) {
-                            GrowingTextView(text: $inputText, height: $textEditorHeight, maxHeight: maxTextEditorHeight)
-                                .frame(height: textEditorHeight)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(12)
-                            if inputText.isEmpty {
-                                Text("输入您的问题...")
-                                    .foregroundColor(.gray)
-                                    .padding(.top, 12)
-                                    .padding(.leading, 16)
-                            }
+                    .ignoresSafeArea(edges: .all)
+            }
+            // Input area (always at the bottom)
+            VStack(spacing: 0) {
+                if isConversationActive {
+                    // New chat button
+                    Button(action: startNewConversation) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "plus.circle")
+                                .font(.system(size: 18))
+                            
+                            Text("new_chat".localized)
+                                .font(.system(size: 16, weight: .medium))
                         }
-                        Button(action: sendMessage) {
-                            Image(systemName: "arrow.up")
-                                .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(Color.primaryAction)
-                                .clipShape(SwiftUI.Circle())
-                                .shadow(color: Color.primaryText.opacity(0.1), radius: 2, x: 0, y: 1)
-                        }
-                        .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 16)
+                        .foregroundColor(.primary)
+                        .background(Color.clear)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
                     }
                     .padding(.horizontal)
-                    .padding(.vertical, 10)
-                    .padding(.bottom, 8)
-                    .animation(.easeInOut(duration: 0.25), value: isKeyboardVisible)
+                    .padding(.bottom, 10)
                 }
-                .background(Color.primaryBackground)
+                
+                // Input bar
+                HStack {
+                    ZStack(alignment: .topLeading) {
+                        GrowingTextView(text: $inputText, height: $textEditorHeight, maxHeight: maxTextEditorHeight)
+                            .frame(height: textEditorHeight)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                            .focused($isInputFocused)
+                        if inputText.isEmpty {
+                            Text("输入您的问题...")
+                                .foregroundColor(.gray)
+                                .padding(.top, 12)
+                                .padding(.leading, 16)
+                        }
+                    }
+                    Button(action: sendMessage) {
+                        Image(systemName: "arrow.up")
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.primaryAction)
+                            .clipShape(SwiftUI.Circle())
+                            .shadow(color: Color.primaryText.opacity(0.1), radius: 2, x: 0, y: 1)
+                    }
+                    .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 6)
+                .padding(.bottom, isKeyboardVisible ? 0 : safeAreaBottomInset)
+                .animation(.easeInOut(duration: 0.25), value: isKeyboardVisible)
             }
-            .contentShape(Rectangle()) // Make entire content area tappable
-            .onTapGesture {
-                // Dismiss keyboard when tapping anywhere in the content
-                isInputFocused = false
-            }
-            
+            .background(Color.primaryBackground)
             // Loading modal overlay
             if showLoadingModal {
                 LoadingModal()
@@ -343,6 +347,13 @@ struct SocialBrainView: View {
                     showError = true
                 }
             }
+            
+            // Setup keyboard observers for keyboard dismissal
+            setupKeyboardObservers()
+        }
+        .onDisappear {
+            // Cleanup keyboard observers
+            cleanupKeyboardObservers()
         }
         .onChange(of: isLoading) { loading in
             if loading {
