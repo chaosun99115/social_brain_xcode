@@ -295,6 +295,5 @@ struct SocialNoteModalView_Previews: PreviewProvider {
     static var previews: some View {
         SocialNoteModalView()
             .environmentObject(NoteManager.shared)
-            .environmentObject(LocalizationManager())
     }
 } 

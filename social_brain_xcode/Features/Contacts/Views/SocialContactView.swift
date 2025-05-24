@@ -4,7 +4,6 @@ import CoreData
 struct SocialContactView: View {
     @State private var searchText = ""
     @State private var selectedTab = 0 // 0 for 熟人, 1 for 圈子
-    @EnvironmentObject var localizationManager: LocalizationManager
     @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var contactManager = ContactManager.shared
     @StateObject private var circleManager = CircleManager.shared
@@ -231,7 +230,7 @@ struct SocialContactView: View {
                 }
             }
             .navigationTitle("社交关系")
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_contacts".localized)
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_contacts")
             .confirmationDialog(
                 SampleModeConfig.selectionDialogMessage,
                 isPresented: $showingSampleDialog,
@@ -787,10 +786,8 @@ struct SocialContactView_Previews: PreviewProvider {
     static var previews: some View {
         SocialContactView()
             .environment(\.colorScheme, .light)
-            .environmentObject(LocalizationManager())
         
         SocialContactView()
             .environment(\.colorScheme, .dark)
-            .environmentObject(LocalizationManager())
     }
 }

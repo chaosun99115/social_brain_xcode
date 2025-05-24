@@ -99,30 +99,3 @@ extension Color {
     static let errorElement = AppTheme.Colors.errorElement
     static let infoElement = AppTheme.Colors.infoElement
 }
-
-// MARK: - Localization Extension
-extension String {
-    var localized: String {
-        return NSLocalizedString(self, comment: "")
-    }
-    
-    func localized(with arguments: CVarArg...) -> String {
-        return String(format: self.localized, arguments: arguments)
-    }
-}
-
-// MARK: - Bundle Extension for Localization
-extension Bundle {
-    // Returns the localized bundle to use based on language settings
-    static func localizedBundle() -> Bundle {
-        let languageCode = Locale.preferredLanguages.first?.components(separatedBy: "-").first ?? "en"
-        
-        if let path = Bundle.main.path(forResource: languageCode, ofType: "lproj"),
-           let bundle = Bundle(path: path) {
-            return bundle
-        }
-        
-        // Fallback to main bundle
-        return Bundle.main
-    }
-}

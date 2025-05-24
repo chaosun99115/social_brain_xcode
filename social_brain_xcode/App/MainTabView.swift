@@ -2,7 +2,6 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab = 1 // Default to Social Notes (middle tab)
-    @EnvironmentObject var localizationManager: LocalizationManager
     @EnvironmentObject var appModeManager: AppModeManager
     
     var body: some View {
@@ -36,7 +35,6 @@ struct MainTabView: View {
 struct MainTabView_Previews: PreviewProvider {
     static var previews: some View {
         MainTabView()
-            .environmentObject(LocalizationManager())
             .environmentObject(AppModeManager())
     }
 } 

@@ -16,7 +16,6 @@ class AppModeManager: ObservableObject {
 @main
 struct social_brain_xcodeApp: App {
     let persistenceController = PersistenceController.shared
-    @StateObject private var localizationManager = LocalizationManager()
     @StateObject private var noteManager = NoteManager.shared
     @StateObject private var appModeManager = AppModeManager()
     
@@ -28,26 +27,8 @@ struct social_brain_xcodeApp: App {
         WindowGroup {
             MainTabView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
-                .environmentObject(localizationManager)
                 .environmentObject(noteManager)
                 .environmentObject(appModeManager)
         }
-    }
-}
-
-// MARK: - Localization Manager
-class LocalizationManager: ObservableObject {
-    @Published var currentLanguage: String {
-        didSet {
-            UserDefaults.standard.set(currentLanguage, forKey: "AppLanguage")
-        }
-    }
-    
-    init() {
-        self.currentLanguage = UserDefaults.standard.string(forKey: "AppLanguage") ?? "en"
-    }
-    
-    func setLanguage(_ language: String) {
-        currentLanguage = language
     }
 }

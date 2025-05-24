@@ -16,7 +16,6 @@ struct SocialBrainView: View {
     @State private var inputText = ""
     @State private var messages = [SocialBrainMessage]()
     @State private var suggestedQuestions: [SocialBrainMessage] = []
-    @EnvironmentObject var localizationManager: LocalizationManager
     @State private var isConversationActive = false
     @State private var scrollToBottomID = UUID()
     @State private var scrollToTopID = "topID"
@@ -272,7 +271,7 @@ struct SocialBrainView: View {
                             Image(systemName: "plus.circle")
                                 .font(.system(size: 18))
                             
-                            Text("new_chat".localized)
+                            Text("新对话")
                                 .font(.system(size: 16, weight: .medium))
                         }
                         .padding(.vertical, 10)
@@ -843,7 +842,6 @@ struct SocialBrainView_Previews: PreviewProvider {
             sourceId: "preview-id"
         )
         .environment(\.colorScheme, .light)
-        .environmentObject(LocalizationManager())
         
         SocialBrainView(
             sourceType: "contact",
@@ -851,7 +849,6 @@ struct SocialBrainView_Previews: PreviewProvider {
             sourceId: "preview-id"
         )
         .environment(\.colorScheme, .dark)
-        .environmentObject(LocalizationManager())
     }
 }
 

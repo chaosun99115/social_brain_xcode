@@ -30,8 +30,6 @@
 		AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA2761B2DB0362C00C29B81 /* MentionTextView.swift */; };
 		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
 		AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E42DA70C770066907B /* InfoPlist.strings */; };
-		AFBD50F02DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E92DA70C770066907B /* Localizable.strings */; };
-		AFBD50F12DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50EB2DA70C770066907B /* InfoPlist.strings */; };
 		AFBD50F42DA70DDC0066907B /* SocialContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F22DA70DDC0066907B /* SocialContactView.swift */; };
 		AFBD50F52DA70DDC0066907B /* SocialContact.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F32DA70DDC0066907B /* SocialContact.swift */; };
 		AFBD50F92DA715550066907B /* SocialBrainDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */; };
@@ -87,8 +85,6 @@
 		AFA2761B2DB0362C00C29B81 /* MentionTextView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MentionTextView.swift; sourceTree = "<group>"; };
 		AFBD50E32DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
 		AFBD50E52DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = InfoPlist.strings; sourceTree = "<group>"; };
-		AFBD50EA2DA70C770066907B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = Localizable.strings; sourceTree = "<group>"; };
-		AFBD50EC2DA70C770066907B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = InfoPlist.strings; sourceTree = "<group>"; };
 		AFBD50F22DA70DDC0066907B /* SocialContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContactView.swift; sourceTree = "<group>"; };
 		AFBD50F32DA70DDC0066907B /* SocialContact.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContact.swift; sourceTree = "<group>"; };
 		AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialBrainDialogView.swift; sourceTree = "<group>"; };
@@ -223,9 +219,9 @@
 		AFA276222DB03C8C00C29B81 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				AFDDDC932DD2759200425764 /* SuggestedQuestionsProvider.swift */,
 				AFF98BD22DA4453F0001DD70 /* SocialBrainView.swift */,
 				AFBD50F72DA715550066907B /* SocialBrainDialogView.swift */,
+				AFDDDC932DD2759200425764 /* SuggestedQuestionsProvider.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -338,8 +334,6 @@
 		AFBD50E82DA70C770066907B /* en.lproj */ = {
 			isa = PBXGroup;
 			children = (
-				AFBD50E92DA70C770066907B /* Localizable.strings */,
-				AFBD50EB2DA70C770066907B /* InfoPlist.strings */,
 			);
 			path = en.lproj;
 			sourceTree = "<group>";
@@ -475,8 +469,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AFBD50F02DA70C770066907B /* Localizable.strings in Resources */,
-				AFBD50F12DA70C770066907B /* InfoPlist.strings in Resources */,
 				AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */,
 				AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */,
 				AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */,
@@ -556,22 +548,6 @@
 			isa = PBXVariantGroup;
 			children = (
 				AFBD50E52DA70C770066907B /* zh-Hans */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-		AFBD50E92DA70C770066907B /* Localizable.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				AFBD50EA2DA70C770066907B /* en */,
-			);
-			name = Localizable.strings;
-			sourceTree = "<group>";
-		};
-		AFBD50EB2DA70C770066907B /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				AFBD50EC2DA70C770066907B /* en */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";

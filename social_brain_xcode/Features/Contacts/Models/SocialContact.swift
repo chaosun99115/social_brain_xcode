@@ -125,25 +125,25 @@ extension SocialContact {
     
     static let mockContacts = [
         SocialContact(
-            name: "contact_1".localized,
+            name: "contact_1",
             createdAt: Calendar.current.date(byAdding: .hour, value: -3, to: Date()) ?? Date(),
             updatedAt: Date(),
             recordStatus: 0
         ),
         SocialContact(
-            name: "contact_2".localized,
+            name: "contact_2",
             createdAt: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date(),
             updatedAt: Date(),
             recordStatus: 0
         ),
         SocialContact(
-            name: "contact_3".localized,
+            name: "contact_3",
             createdAt: Calendar.current.date(byAdding: .day, value: -4, to: Date()) ?? Date(),
             updatedAt: Date(),
             recordStatus: 0
         ),
         SocialContact(
-            name: "contact_4".localized,
+            name: "contact_4",
             createdAt: Calendar.current.date(byAdding: .day, value: -12, to: Date()) ?? Date(),
             updatedAt: Date(),
             recordStatus: 0

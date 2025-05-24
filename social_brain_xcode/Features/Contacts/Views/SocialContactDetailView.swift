@@ -5,7 +5,6 @@ struct SocialContactDetailView: View {
     let contact: Contact
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject var localizationManager: LocalizationManager
     @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var contactManager = ContactManager.shared
     @StateObject private var insightManager = ContactInsightManager.shared
@@ -122,7 +121,7 @@ struct SocialContactDetailView: View {
                     HStack(spacing: 5) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 17))
-                        Text("back".localized)
+                        Text("back")
                             .font(.system(size: 17))
                     }
                     .foregroundColor(.primaryAction)
@@ -482,7 +481,7 @@ struct SocialContactDetailView: View {
     private var relatedNotesView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("related_notes".localized)
+                Text("related_notes")
                     .font(.headline)
                     .foregroundColor(.primaryText)
                 
@@ -503,7 +502,7 @@ struct SocialContactDetailView: View {
             }
             
             if notes.isEmpty {
-                Text("no_notes".localized)
+                Text("no_notes")
                     .font(.subheadline)
                     .foregroundColor(.tertiaryText)
                     .padding(.vertical, 10)
@@ -511,7 +510,7 @@ struct SocialContactDetailView: View {
                 Button(action: {
                     // View all notes action
                 }) {
-                    Text("view_all_notes".localized)
+                    Text("view_all_notes")
                         .font(.subheadline)
                         .foregroundColor(.primaryAction)
                         .padding(.vertical, 10)
@@ -656,7 +655,6 @@ struct SocialContactDetailView_Previews: PreviewProvider {
         contact.createdAt = Date()
         
         return SocialContactDetailView(contact: contact)
-            .environmentObject(LocalizationManager())
             .environment(\.colorScheme, .light)
     }
 }
