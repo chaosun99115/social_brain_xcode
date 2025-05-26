@@ -258,9 +258,7 @@ struct SimpleNoteModalView: View {
             removeKeyboardObservers()
         }
         .onChange(of: showingContactSelection) { isShowing in
-            if isShowing {
-                print("\n[SimpleNoteModalView] 📱 Showing contact selection sheet")
-            }
+            // Contact selection sheet state changed
         }
         .sheet(isPresented: $showingContactSelection) {
             ContactSelectionView { contact in
@@ -438,7 +436,6 @@ struct TextViewWrapper: UIViewRepresentable {
     var onDone: () -> Void
     
     func makeUIView(context: Context) -> UITextView {
-        print("\n[TextViewWrapper] 📝 Creating UITextView")
         let textView = UITextView()
         textView.font = UIFont.systemFont(ofSize: 17)
         textView.backgroundColor = .clear

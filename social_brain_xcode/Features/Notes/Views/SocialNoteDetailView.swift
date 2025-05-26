@@ -250,14 +250,6 @@ struct SocialNoteDetailView: View {
             insight1.order < insight2.order
         }
         
-        print("\n--- ContactInsight Debug Log ---")
-        print("Current Note ID: \(note.noteId?.uuidString ?? "nil")")
-        print("Related insights count: \(contactInsights.count)")
-        for insight in contactInsights {
-            print("Insight [id: \(insight.insightId?.uuidString ?? "nil")] category: \(insight.category ?? "nil") content: \(insight.content ?? "nil")")
-        }
-        print("--- End ContactInsight Debug Log ---\n")
-        
         isLoadingInsights = false
     }
 }

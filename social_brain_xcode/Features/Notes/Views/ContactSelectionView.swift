@@ -22,9 +22,6 @@ struct ContactSelectionView: View {
             List {
                 ForEach(filteredContacts, id: \.contactId) { contact in
                     Button(action: {
-                        print("\n[ContactSelectionView] 🔍 Contact selected:")
-                        print("[ContactSelectionView] - Name: \(contact.name ?? "nil")")
-                        print("[ContactSelectionView] - ID: \(contact.contactId?.uuidString ?? "nil")")
                         onSelect(contact)
                         dismiss()
                     }) {
@@ -44,21 +41,13 @@ struct ContactSelectionView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("返回") {
-                        print("[ContactSelectionView] ⬅️ Back button tapped")
                         dismiss()
                     }
                 }
             }
         }
         .task {
-            print("\n[ContactSelectionView] 📱 View appeared, fetching contacts...")
             contacts = contactManager.fetchContacts()
-            print("[ContactSelectionView] 📊 Fetched \(contacts.count) contacts")
-            for (index, contact) in contacts.enumerated() {
-                print("[ContactSelectionView] Contact \(index + 1):")
-                print("  - Name: \(contact.name ?? "nil")")
-                print("  - ID: \(contact.contactId?.uuidString ?? "nil")")
-            }
         }
     }
 } 

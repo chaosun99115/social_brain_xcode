@@ -232,14 +232,6 @@ struct SocialContactDetailView: View {
             a.order < b.order
         }
         
-        print("\n--- ContactInsight Debug Log ---")
-        print("Current Contact ID: \(contactId)")
-        print("Related insights count: \(contactInsights.count)")
-        for insight in contactInsights {
-            print("Insight [id: \(insight.insightId?.uuidString ?? "nil")] category: \(insight.category ?? "nil") content: \(insight.content ?? "nil")")
-        }
-        print("--- End ContactInsight Debug Log ---\n")
-        
         isLoadingInsights = false
     }
     

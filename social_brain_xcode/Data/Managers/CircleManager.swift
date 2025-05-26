@@ -222,10 +222,6 @@ class CircleManager: ObservableObject {
         
         do {
             let relationships = try context.fetch(request)
-            print("[DEBUG] getInsightsForCircle: Found \(relationships.count) relationships for circleId=\(circleId)")
-            for rel in relationships {
-                print("[DEBUG] Relationship: relationshipId=\(rel.relationshipId?.uuidString ?? "nil"), insightId=\(rel.insights?.insightId?.uuidString ?? "nil"), content=\(rel.insights?.content ?? "nil")")
-            }
             return relationships.compactMap { $0.insights }
         } catch {
             print("Error fetching insights for circle: \(error)")
@@ -302,22 +298,16 @@ class CircleManager: ObservableObject {
     }
     
     func removeContactFromCircle(circleId: UUID, contactId: UUID) -> Bool {
-        print("\n[DEBUG] Removing contact from circle")
-        debugCircleContacts(circleId: circleId, contextDescription: "Before removing contact")
-        
         let request: NSFetchRequest<CircleContactRelationship> = CircleContactRelationship.fetchRequest()
         request.predicate = NSPredicate(format: "circles.circleId == %@ AND contacts.contactId == %@",
                                       circleId as CVarArg, contactId as CVarArg)
         
         do {
             let relationships = try context.fetch(request)
-            print("[DEBUG] Found \(relationships.count) relationships to remove")
             for relationship in relationships {
                 context.delete(relationship)
             }
             try context.save()
-            print("[DEBUG] Successfully removed contact from circle")
-            debugCircleContacts(circleId: circleId, contextDescription: "After removing contact")
             return true
         } catch {
             print("Error removing contact from circle: \(error)")
@@ -370,10 +360,9 @@ class CircleManager: ObservableObject {
         request.predicate = NSPredicate(format: "contacts.contactId == %@", contactId as CVarArg)
         do {
             let relationships = try context.fetch(request)
-            let circles = relationships.compactMap { $0.circles }
-            return circles
+            return relationships.compactMap { $0.circles }
         } catch {
-            print("[DEBUG] Error fetching circles for contact: \(error)")
+            print("Error fetching circles for contact: \(error)")
             return []
         }
     }
