@@ -213,7 +213,7 @@ struct SimpleNoteModalView: View {
                         Button(action: {
                             showingCircleSelection = true
                         }) {
-                            Text("#圈子")
+                            Text("# 圈子")
                                 .font(.system(size: 17))
                                 .foregroundColor(.blue)
                                 .frame(maxWidth: .infinity)

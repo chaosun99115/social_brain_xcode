@@ -181,6 +181,32 @@ struct SocialBrainView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
+                if appModeManager.isSampleMode {
+                    Button(action: {
+                        appModeManager.isSampleMode = false
+                        appModeManager.sampleModeType = nil
+                        // Reset conversation state
+                        isConversationActive = false
+                        messages.removeAll()
+                        inputText = ""
+                        initializeSuggestedQuestions()
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
+                            Text(SampleModeConfig.UIConstants.exitButtonTitle)
+                        }
+                        .font(.footnote)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(Color(hex: SampleModeConfig.UIConstants.exitButtonColor))
+                        .cornerRadius(6)
+                        .padding(.horizontal, 100)
+                    }
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+                }
+
                 // Chat area
                 ScrollViewReader { scrollProxy in
                     ScrollView {
