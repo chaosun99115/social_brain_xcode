@@ -49,7 +49,10 @@ struct SimpleNoteModalView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
     
-    @State private var noteText: String = ""
+    let initialText: String
+    let onSave: (String) -> Void  // Make onSave non-optional since it's required for editing
+    
+    @State private var noteText: String
     @State private var textEditorHeight: CGFloat = 100
     @State private var showingKeyboard: Bool = false
     @State private var keyboardHeight: CGFloat = 0
@@ -64,6 +67,14 @@ struct SimpleNoteModalView: View {
     @State private var unmatchedMentions: [String] = []
     @State private var showingMentionConfirmation = false
     @State private var isSaving = false
+    
+    // Initialize with required initial text and save handler
+    init(initialText: String, onSave: @escaping (String) -> Void) {
+        print("SimpleNoteModalView init with text: \(initialText)")  // Debug log
+        self.initialText = initialText
+        self.onSave = onSave
+        self._noteText = State(initialValue: initialText)
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -86,17 +97,12 @@ struct SimpleNoteModalView: View {
                     
                     // Text editor - using a minimalist style
                     ZStack(alignment: .topLeading) {
-                        // Use ZStack to place custom background behind TextEditor
                         Color(.systemBackground)
                             .frame(height: min(textEditorHeight, maxTextEditorHeight))
                         
-                        // Custom UITextView for immediate focus
-                        TextViewWrapper(text: $noteText, isFirstResponder: true, onDone: {
-                            // This is now only used for custom completion, not for return key
-                        }, textEditorRef: $textEditorRef)
+                        TextViewWrapper(text: $noteText, isFirstResponder: true, onDone: {}, textEditorRef: $textEditorRef)
                             .frame(height: min(textEditorHeight, maxTextEditorHeight))
                             .onChange(of: noteText) { newValue in
-                                // Calculate new height based on text content
                                 let estimatedHeight = newValue.isEmpty ? 100 : min(newValue.height(width: UIScreen.main.bounds.width * 0.9, font: .systemFont(ofSize: 17)), maxTextEditorHeight)
                                 textEditorHeight = max(100, estimatedHeight)
                             }
@@ -116,7 +122,7 @@ struct SimpleNoteModalView: View {
                     Divider()
                         .padding(.horizontal, 0)
                     
-                    // Action buttons - matched to screenshot
+                    // Action buttons
                     HStack(spacing: 0) {
                         Button(action: {
                             // Add contact action
@@ -138,23 +144,14 @@ struct SimpleNoteModalView: View {
                         Button(action: {
                             saveNote()
                         }) {
-                            if isSaving {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .frame(width: 80, height: 40)
-                                    .background(Color.blue)
-                                    .cornerRadius(8)
-                            } else {
-                                Text("保存")
-                                    .font(.system(size: 17))
-                                    .foregroundColor(.white)
-                                    .frame(width: 80, height: 40)
-                                    .background(Color.blue)
-                                    .cornerRadius(8)
-                            }
+                            Text("保存")
+                                .font(.system(size: 17))
+                                .foregroundColor(.white)
+                                .frame(width: 80, height: 40)
+                                .background(Color.blue)
+                                .cornerRadius(8)
                         }
                         .frame(maxWidth: .infinity)
-                        .disabled(isSaving)
                     }
                     .padding(.vertical, 12)
                 }
@@ -175,8 +172,8 @@ struct SimpleNoteModalView: View {
         }
         .edgesIgnoringSafeArea(.all)
         .onAppear {
+            print("SimpleNoteModalView appeared with noteText: \(noteText)")  // Debug log
             setupKeyboardObservers()
-            // Force keyboard to show immediately
             forceShowKeyboard()
         }
         .onDisappear {
@@ -242,26 +239,13 @@ struct SimpleNoteModalView: View {
     
     private func saveNote() {
         guard !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        
-        // Extract mentions
-        let mentions = extractMentions(from: noteText)
-        
-        // Check for unmatched mentions
-        let unmatched = mentions.filter { mention in
-            !ContactManager.shared.contactExists(withName: mention)
-        }
-        
-        if !unmatched.isEmpty {
-            unmatchedMentions = unmatched
-            showingMentionConfirmation = true
-        } else {
-            saveNoteWithMentions(mentions: mentions)
-        }
+        isSaving = true
+        onSave(noteText)
+        isSaving = false
+        dismiss()
     }
     
     private func extractMentions(from text: String) -> [String] {
-        print("[SimpleNoteModalView] Starting mention extraction from text: \(text)")
-        
         // Match @ followed by one or more of: Chinese, English, numbers, underscore, hyphen, full-width parenthesis
         // Stop at whitespace or common punctuation
         let pattern = "@([\\u4e00-\\u9fa5A-Za-z0-9_\\-（）()]+)"
@@ -269,19 +253,16 @@ struct SimpleNoteModalView: View {
         let nsString = text as NSString
         let results = regex?.matches(in: text, range: NSRange(location: 0, length: nsString.length)) ?? []
         
-        let mentions = results.map { match in
+        return results.map { match in
             return nsString.substring(with: match.range(at: 1))
         }
-        
-        print("[SimpleNoteModalView] Found \(mentions.count) mentions: \(mentions)")
-        return mentions
     }
     
     private func saveNoteWithMentions(mentions: [String]) {
         isSaving = true
         
         Task {
-            // Create note with mentions
+            // Create note with mentions directly
             if let _ = await noteManager.createNoteWithMentions(content: noteText, type: .social, mentions: mentions) {
                 isSaving = false
                 dismiss()
@@ -310,6 +291,7 @@ struct TextViewWrapper: UIViewRepresentable {
         textView.isScrollEnabled = true
         textView.autocorrectionType = .yes
         textView.returnKeyType = .default
+        textView.text = text  // Set initial text here
         
         // Store reference to directly access later
         self.textEditorRef = textView
@@ -323,8 +305,15 @@ struct TextViewWrapper: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UITextView, context: Context) {
+        // Only update text if it's different to avoid cursor position reset
         if uiView.text != text {
+            // Store cursor position
+            let selectedRange = uiView.selectedTextRange
             uiView.text = text
+            // Restore cursor position if possible
+            if let selectedRange = selectedRange {
+                uiView.selectedTextRange = selectedRange
+            }
         }
         
         // Ensure focus is maintained
@@ -384,7 +373,7 @@ extension String {
 
 struct SimpleNoteModalView_Previews: PreviewProvider {
     static var previews: some View {
-        SimpleNoteModalView()
+        SimpleNoteModalView(initialText: "Test note") { _ in }
             .environmentObject(NoteManager.shared)
     }
 } 

@@ -19,14 +19,13 @@ struct SocialNotesView: View {
         let allNotes = noteManager.fetchNotes()
             .map { SocialNote(from: $0) }
             .filter { !$0.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        
         if appModeManager.isSampleMode {
-            // Show all notes (including sample)
             if searchText.isEmpty {
                 return allNotes
             }
             return allNotes.filter { $0.content.localizedCaseInsensitiveContains(searchText) }
         } else {
-            // Hide sample notes (type == 0)
             let userNotes = allNotes.filter { $0.type.rawValue != 0 }
             if searchText.isEmpty {
                 return userNotes
@@ -155,18 +154,25 @@ struct SocialNotesView: View {
                 }
             }
             .sheet(isPresented: $showingNoteModal) {
-                SocialNoteModalView(initialPrompt: "今天你想记录什么？")
-                    .environmentObject(noteManager)
-                    .onDisappear {
-                        refreshTrigger.toggle()
+                SimpleNoteModalView(initialText: "") { noteText in
+                    // Handle the new note creation
+                    Task {
+                        if let _ = await noteManager.createNoteWithMentions(content: noteText, type: .social, mentions: []) {
+                            // Post notification to refresh the notes list
+                            NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
+                        }
                     }
+                }
             }
             .sheet(isPresented: $showingSimpleNoteModal) {
-                SimpleNoteModalView()
-                    .environmentObject(noteManager)
-                    .onDisappear {
-                        refreshTrigger.toggle()
+                SimpleNoteModalView(initialText: "") { noteText in
+                    // Handle the new note creation
+                    Task {
+                        if let _ = await noteManager.createNoteWithMentions(content: noteText, type: .social, mentions: []) {
+                            refreshTrigger.toggle()
+                        }
                     }
+                }
             }
             .sheet(isPresented: $showingDebugMenu) {
                 DebugMenuView()
@@ -200,8 +206,18 @@ struct SocialNotesView: View {
                 )
             )
         }
+        .onChange(of: showingSimpleNoteModal) { newValue in
+            if !newValue {
+                // Refresh when modal is dismissed
+                DispatchQueue.main.async {
+                    refreshTrigger.toggle()
+                }
+            }
+        }
         .onAppear {
             setupNotificationObservers()
+            // Initial refresh
+            refreshTrigger.toggle()
         }
         .onDisappear {
             removeNotificationObservers()

@@ -62,7 +62,8 @@ class NoteManager: ObservableObject {
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false)]
         
         do {
-            return try context.fetch(request)
+            let notes = try context.fetch(request)
+            return notes
         } catch {
             print("Error fetching notes: \(error)")
             return []
@@ -196,121 +197,59 @@ class NoteManager: ObservableObject {
         }
     }
     
+    // MARK: - Helper Methods
+    private func extractMentions(from text: String) -> [String] {
+        // Match @ followed by one or more of: Chinese, English, numbers, underscore, hyphen, full-width parenthesis
+        // Stop at whitespace or common punctuation
+        let pattern = "@([\\u4e00-\\u9fa5A-Za-z0-9_\\-（）()]+)"
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+        let nsString = text as NSString
+        let results = regex.matches(in: text, range: NSRange(location: 0, length: nsString.length))
+        
+        return results.map { match in
+            return nsString.substring(with: match.range(at: 1))
+        }
+    }
+    
     // MARK: - Background Processing
-    private func processNoteInBackground(note: Note) async {
-        
-        print("==== Starting background processing for note: \(note.noteId?.uuidString ?? "unknown") ====")
-        print("📝 Note content: \(note.content ?? "")")
-        
-        // Create a background context
-        let backgroundContext = CoreDataManager.shared.newBackgroundContext()
+    private func processNoteInBackground(_ note: Note) async {
+        let context = note.managedObjectContext!
+        let backgroundContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
+        backgroundContext.parent = context
         
         do {
-            // Fetch the note in the background context
+            // Get the note in background context
             let backgroundNote = try await backgroundContext.perform {
-                let request: NSFetchRequest<Note> = Note.fetchRequest()
-                request.predicate = NSPredicate(format: "noteId == %@", note.noteId! as CVarArg)
-                return try backgroundContext.fetch(request).first
-            }
-            
-            guard let backgroundNote = backgroundNote else {
-                print("❌ Could not find note in background context")
-                return
-            }
-            
-            // Extract mentions from note text
-            print("🔍 Extracting mentions from note...")
-            let mentions = try await backgroundContext.perform {
-                guard let content = backgroundNote.content else { return [] }
-                // Match @ followed by one or more of: Chinese, English, numbers, underscore, hyphen, full-width parenthesis
-                // Stop at whitespace or common punctuation
-                let pattern = "@([\\u4e00-\\u9fa5A-Za-z0-9_\\-（）()]+)"
-                let regex = try NSRegularExpression(pattern: pattern)
-                let nsString = content as NSString
-                let results = regex.matches(in: content, range: NSRange(location: 0, length: nsString.length))
-                
-                return results.map { match in
-                    return nsString.substring(with: match.range(at: 1))
+                guard let backgroundNote = try backgroundContext.existingObject(with: note.objectID) as? Note else {
+                    throw NSError(domain: "NoteManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to get note in background context"])
                 }
+                return backgroundNote
             }
-            print("🔍 Found mentions in text: \(mentions)")
             
-            // Fetch contacts based on mentions
-            print("👥 Fetching contacts for mentions...")
+            // Extract mentions from the note
+            let mentions = extractMentions(from: backgroundNote.content ?? "")
+            
+            // Fetch contacts for mentions
             let relatedContacts = try await backgroundContext.perform {
                 let request: NSFetchRequest<Contact> = Contact.fetchRequest()
                 request.predicate = NSPredicate(format: "name IN %@", mentions)
                 return try backgroundContext.fetch(request)
             }
-            print("👥 Found related contacts: \(relatedContacts)")
             
-            // Fetch notes related to these contacts
-            print("📚 Fetching notes related to contacts...")
-            let relatedNotes = try await backgroundContext.perform {
-                let request: NSFetchRequest<Note> = Note.fetchRequest()
-                request.predicate = NSPredicate(format: "ANY contacts.contacts IN %@", relatedContacts)
-                request.sortDescriptors = [NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false)]
-                return try backgroundContext.fetch(request)
-            }
-            print("📚 Found \(relatedNotes.count) related notes")
-            
-            // Generate system and user prompts
-            let systemPrompt = SystemPrompts.General.noteUpdateSytemPrompt()
-            print("🤖 System Prompt: \(systemPrompt)")
-            
-            // Log the note text and related data before generating user prompt
-            print("📝 Original note text: \(backgroundNote.content ?? "nil")")
-            print("👥 Related contacts count: \(relatedContacts.count)")
-            let contactNames = relatedContacts.compactMap { $0.name }
-            for name in contactNames {
-                print("👥 Contact name: \(name)")
-            }
-            print("📚 Related notes count: \(relatedNotes.count)")
-            
-            let userPrompt = SystemPrompts.General.noteupdateUserPrompt(
-                noteText: backgroundNote.content ?? "",
-                relatedNotes: relatedNotes,
-                contactNames: contactNames
-            )
-            print("🤖 User Prompt: \(userPrompt)")
-            
-            // Get AI service and send request
-            guard let chatService = AIServiceManager.shared.getChatService() else {
-                print("❌ No AI service configured")
-                throw AIChatServiceError.unauthorized
+            // Update the note in background context
+            try await backgroundContext.perform {
+                backgroundNote.updateCompleted = 1
+                try backgroundContext.save()
             }
             
-            let messages = [
-                AIChatMessage(role: .system, content: systemPrompt),
-                AIChatMessage(role: .user, content: userPrompt)
-            ]
-            
-            print("🤖 Sending request to LLM...")
-            let response = try await chatService.sendMessage(userPrompt, context: messages)
-            
-            if let firstChoice = response.choices.first {
-                print("🤖 Received LLM response: \(firstChoice.message.content)")
-                
-                // Update the note in background context
-                try await backgroundContext.perform {
-                    backgroundNote.updateCompleted = 1
-                    try backgroundContext.save()
-                }
-                
-                // Update the main context
-                await MainActor.run {
-                    note.updateCompleted = 1
-                    try? context.save()
-                }
-                
-                print("✅ Successfully processed note with LLM")
-            } else {
-                print("❌ No content in LLM response")
-                throw AIChatServiceError.invalidResponse
+            // Update the main context
+            await MainActor.run {
+                note.updateCompleted = 1
+                try? context.save()
             }
             
         } catch {
-            print("❌ Error processing note: \(error.localizedDescription)")
+            print("Error processing note: \(error.localizedDescription)")
             // Update error state on main thread
             await MainActor.run {
                 note.updateCompleted = 0
@@ -320,79 +259,61 @@ class NoteManager: ObservableObject {
     }
 
     func createNoteWithMentions(content: String, type: NoteType = .social, mentions: [String]) async -> Note? {
-        print("[NoteManager] Starting note creation with \(mentions.count) mentions")
-        print("[NoteManager] Note content: \(content)")
-        print("[NoteManager] Note type: \(type)")
+        let backgroundContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
+        backgroundContext.parent = context
         
-        let note = Note(context: context)
-        note.noteId = UUID()
-        note.content = content
-        note.createdAt = Date()
-        note.updatedAt = Date()
-        note.recordStatus = 0 // unsynced
-        note.type = Int16(type.rawValue)
-        note.updateCompleted = 0 // false
-        
-        print("[NoteManager] Created note object with ID: \(note.noteId?.uuidString ?? "nil")")
-        
-        // Add contacts
-        for mention in mentions {
-            print("[NoteManager] Processing mention: \(mention)")
+        return await backgroundContext.perform {
+            let note = Note(context: backgroundContext)
+            note.noteId = UUID()
+            note.content = content
+            note.createdAt = Date()
+            note.updatedAt = Date()
+            note.recordStatus = 0 // unsynced
+            note.type = Int16(type.rawValue)
+            note.updateCompleted = 0 // false
             
-            // Get or create contact
-            let contact: Contact
-            if let existingContact = ContactManager.shared.fetchContact(withName: mention) {
-                print("[NoteManager] Found existing contact: \(mention)")
-                contact = existingContact
-            } else {
-                print("[NoteManager] Creating new contact: \(mention)")
-                // Create new contact if it doesn't exist
-                guard let newContact = ContactManager.shared.createContact(name: mention) else {
-                    print("[NoteManager] Failed to create contact: \(mention)")
-                    continue
+            // Add contacts
+            for mention in mentions {
+                // Get or create contact
+                let contact: Contact
+                if let existingContact = ContactManager.shared.fetchContact(withName: mention) {
+                    contact = existingContact
+                } else {
+                    guard let newContact = ContactManager.shared.createContact(name: mention) else {
+                        print("Failed to create contact: \(mention)")
+                        continue
+                    }
+                    contact = newContact
                 }
-                contact = newContact
+                
+                // Create relationship in the same context
+                let relationship = NoteContactRelationship(context: backgroundContext)
+                relationship.relationshipId = UUID()
+                relationship.createdAt = Date()
+                relationship.notes = note
+                relationship.contacts = contact
             }
             
-            // Create relationship in the same context
-            let relationship = NoteContactRelationship(context: context)
-            relationship.relationshipId = UUID()
-            relationship.createdAt = Date()
-            
-            // Set up both sides of the relationship
-            relationship.notes = note
-            relationship.contacts = contact
-            
-            print("[NoteManager] Created relationship between note and contact: \(mention)")
-            
-            // Save immediately to ensure relationships are established
             do {
-                try context.save()
-                print("[NoteManager] Saved relationship for contact: \(mention)")
+                // Save the background context
+                try backgroundContext.save()
+                
+                // Save the parent context
+                try self.context.save()
+                
+                // Process note in background (fire-and-forget)
+                let noteId = note.noteId
+                Task.detached { [weak self] in
+                    guard let self = self, let noteId = noteId, let note = self.fetchNote(withId: noteId) else { return }
+                    await self.processNoteInBackground(note)
+                }
+                
+                return note
             } catch {
-                print("[NoteManager] Error saving relationship for \(mention): \(error)")
-                continue
+                print("Error saving note: \(error)")
+                backgroundContext.delete(note)
+                return nil
             }
-        }
-        
-        do {
-            try context.save()
-            note.updateCompleted = 1 // true
-            print("[NoteManager] Successfully saved note with all relationships")
-            
-            // Process note in background (fire-and-forget)
-            print("[NoteManager] Starting background processing for note")
-            let noteId = note.noteId
-            Task.detached { [weak self] in
-                guard let self = self, let noteId = noteId, let note = self.fetchNote(withId: noteId) else { return }
-                await self.processNoteInBackground(note: note)
-            }
-            
-            return note
-        } catch {
-            print("[NoteManager] Error creating note with mentions: \(error)")
-            context.delete(note) // Clean up if save fails
-            return nil
         }
     }
     

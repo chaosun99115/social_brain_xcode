@@ -3,9 +3,6 @@ import CoreData
 
 struct SocialNoteDetailView: View {
     let note: Note
-    @State private var aiSuggestions: [AISuggestion] = []
-    @State private var isLoadingSuggestions: Bool = true
-    @State private var isSuggestionExpanded: Bool = false
     @State private var showingEditModal: Bool = false
     @State private var showingArchiveConfirmation: Bool = false
     @State private var scrollResetID = UUID()
@@ -16,6 +13,7 @@ struct SocialNoteDetailView: View {
     @State private var contactInsights: [ContactInsight] = []
     @State private var isLoadingInsights = true
     @State private var showingSocialBrain = false
+    @State private var editingNoteText: String = ""
     
     // Add namespace for scroll position control
     private let topID = "top"
@@ -38,19 +36,12 @@ struct SocialNoteDetailView: View {
                                     .font(.body)
                                     .foregroundColor(.primaryText)
                                     .lineSpacing(4)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .multilineTextAlignment(.leading)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
                             .padding(.bottom, 16)
-                            // Divider between note and suggestions
-                            Color(.systemGray5)
-                                .frame(height: 12)
-                                .padding(.vertical, 8)
-                            // AI Suggestions section
-                            VStack(alignment: .leading, spacing: 0) {
-                                aiSuggestionsSection
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 16)
                             // Extra bottom padding to ensure content isn't covered by the bottom toolbar
                             Spacer(minLength: 80)
                         }
@@ -83,9 +74,11 @@ struct SocialNoteDetailView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         
-                        // Add Note button
+                        // Edit Note button
                         Button(action: {
-                            // Add note action
+                            editingNoteText = note.content ?? ""
+                            print("Debug - Setting editingNoteText to: \(editingNoteText)")
+                            showingEditModal = true
                         }) {
                             Image(systemName: "square.and.pencil")
                                 .font(.system(size: 24))
@@ -116,14 +109,6 @@ struct SocialNoteDetailView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarItems(leading: backButton)
         .onAppear {
-            // Start with loading state for 2 seconds, then show collapsed
-            isLoadingSuggestions = true
-            isSuggestionExpanded = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                aiSuggestions = AISuggestion.mockSuggestions
-                isLoadingSuggestions = false
-                isSuggestionExpanded = false
-            }
             loadContactInsights()
             // Hide the tab bar
             hideTabBar(true)
@@ -134,8 +119,17 @@ struct SocialNoteDetailView: View {
         }
         .edgesIgnoringSafeArea(.bottom)
         .sheet(isPresented: $showingEditModal) {
-            // Present the EditNoteModalView with existing note content
-            EditNoteModalView(initialText: note.content ?? "", noteId: note.noteId ?? UUID())
+            SimpleNoteModalView(initialText: editingNoteText) { updatedText in
+                print("Debug - Received updated text: \(updatedText)")
+                if !updatedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    guard let noteId = note.noteId else { return }
+                    if noteManager.updateNote(noteId: noteId, text: updatedText) {
+                        // Post notification to refresh the notes list
+                        NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
+                    }
+                }
+            }
+            .id(editingNoteText)
         }
         .alert(isPresented: $showingArchiveConfirmation) {
             Alert(
@@ -151,11 +145,6 @@ struct SocialNoteDetailView: View {
                 },
                 secondaryButton: .cancel(Text("取消"))
             )
-        }
-        .refreshable {
-            await refreshSuggestions()
-            scrollResetID = UUID()
-            shouldScrollToTop = true
         }
         .onChange(of: scrollResetID) { _ in
             shouldScrollToTop = false
@@ -229,116 +218,6 @@ struct SocialNoteDetailView: View {
         }
     }
     
-    private var aiSuggestionsSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if isLoadingSuggestions {
-                HStack(spacing: 8) {
-                    ProgressView()
-                        .scaleEffect(0.9)
-                        .padding(.trailing, 2)
-                    Text("笔记建议")
-                        .font(.headline)
-                        .foregroundColor(.secondaryText)
-                }
-                .padding(.vertical, 8)
-                .padding(.leading, 2)
-            } else {
-                // Collapsed/Expanded header
-                Button(action: {
-                    withAnimation(.easeInOut) {
-                        isSuggestionExpanded.toggle()
-                    }
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: isSuggestionExpanded ? "chevron.down" : "chevron.right")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.blue)
-                        Text("笔记建议")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.blue)
-                        Spacer()
-                    }
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 12)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .padding(.bottom, 0)
-                // No divider in any state
-                // Expanded state
-                ZStack(alignment: .top) {
-                    if isSuggestionExpanded {
-                        Group {
-                            if aiSuggestions.isEmpty {
-                                noSuggestionsCard
-                            } else {
-                                VStack(spacing: 12) {
-                                    ForEach(aiSuggestions) { suggestion in
-                                        suggestionCard(suggestion: suggestion)
-                                    }
-                                }
-                            }
-                        }
-                        .transition(
-                            .asymmetric(
-                                insertion: .opacity.combined(with: .scale(scale: 0.95, anchor: .top)),
-                                removal: .opacity
-                            )
-                        )
-                    }
-                }
-            }
-        }
-    }
-    
-    private var noSuggestionsCard: some View {
-        Text("暂无此笔记的建议，请稍后再试。")
-            .font(.body)
-            .foregroundColor(.secondaryText)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(Color.cardBackground)
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.divider, lineWidth: 0.5)
-            )
-            .shadow(color: Color.primaryText.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-    
-    private func suggestionCard(suggestion: AISuggestion) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(suggestion.content)
-                .font(.body)
-                .foregroundColor(.primaryText)
-                .lineSpacing(4)
-            
-            // Custom divider with same specifications as the main one
-            Rectangle()
-                .fill(Color(.systemGray5))
-                .frame(height: 2)
-                .padding(.vertical, 8)
-            
-            // Centered button container
-            HStack {
-                Spacer()
-                Button("查看笔记") {
-                    // Handle view note action
-                }
-                .font(.system(size: 18, weight: .regular))
-                .foregroundColor(.accentColor)
-                Spacer()
-            }
-        }
-        .padding(16)
-        .background(Color.cardBackground)
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.divider, lineWidth: 0.5)
-        )
-        .shadow(color: Color.primaryText.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-    
     private func formattedTimestamp(date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MM-dd HH:mm"
@@ -365,40 +244,6 @@ struct SocialNoteDetailView: View {
         print("--- End ContactInsight Debug Log ---\n")
         
         isLoadingInsights = false
-    }
-    
-    private func refreshSuggestions() async {
-        isLoadingSuggestions = true
-        
-        // Simulate network request with async/await
-        try? await Task.sleep(nanoseconds: 1_500_000_000)
-        
-        // Update on main thread
-        await MainActor.run {
-            aiSuggestions = AISuggestion.mockSuggestions
-            isLoadingSuggestions = false
-        }
-    }
-}
-
-// Model for AI Suggestions
-struct AISuggestion: Identifiable {
-    let id = UUID()
-    let content: String
-    let type: SuggestionType
-    
-    enum SuggestionType {
-        case followUp
-        case topicIdea
-        case insightful
-    }
-    
-    static var mockSuggestions: [AISuggestion] {
-        [
-            AISuggestion(content: "基于你们之前的对话，你可能想要跟进他们下周的新项目发布会。", type: .followUp),
-            AISuggestion(content: "这个人提到喜欢徒步旅行。考虑讨论户外活动作为潜在的对话话题。", type: .topicIdea),
-            AISuggestion(content: "你本月已经在三个不同的活动中遇到了这个人。考虑通过一对一会面来加强这种关系。", type: .insightful)
-        ]
     }
 }
 

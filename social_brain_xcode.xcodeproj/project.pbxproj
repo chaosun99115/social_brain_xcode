@@ -28,6 +28,7 @@
 		AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4252DC942E500BD66D5 /* ContactInsightManager.swift */; };
 		AFA2761A2DB0349C00C29B81 /* SocialNotesList.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA276192DB0349C00C29B81 /* SocialNotesList.swift */; };
 		AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA2761B2DB0362C00C29B81 /* MentionTextView.swift */; };
+		AFAE46DE2DE4BA7700DD10E0 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = AFAE46DD2DE4BA7700DD10E0 /* MarkdownUI */; };
 		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
 		AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E42DA70C770066907B /* InfoPlist.strings */; };
 		AFBD50F42DA70DDC0066907B /* SocialContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F22DA70DDC0066907B /* SocialContactView.swift */; };
@@ -39,7 +40,6 @@
 		AFBF98962DCAA44300AF626E /* AIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98932DCAA44300AF626E /* AIChatService.swift */; };
 		AFBF98972DCAA44300AF626E /* DeepSeekChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */; };
 		AFDDDC8F2DCE7B0900425764 /* SystemPrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */; };
-		AFDDDC922DCEA93E00425764 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = AFDDDC912DCEA93E00425764 /* MarkdownUI */; };
 		AFDDDC942DD2759200425764 /* SuggestedQuestionsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC932DD2759200425764 /* SuggestedQuestionsProvider.swift */; };
 		AFDDDC982DD289A100425764 /* ConfirmationDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC972DD289A100425764 /* ConfirmationDialog.swift */; };
 		AFDDDC9B2DD393DF00425764 /* CircleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC992DD393DC00425764 /* CircleManager.swift */; };
@@ -122,7 +122,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AFDDDC922DCEA93E00425764 /* MarkdownUI in Frameworks */,
+				AFAE46DE2DE4BA7700DD10E0 /* MarkdownUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -421,7 +421,7 @@
 			);
 			name = social_brain_xcode;
 			packageProductDependencies = (
-				AFDDDC912DCEA93E00425764 /* MarkdownUI */,
+				AFAE46DD2DE4BA7700DD10E0 /* MarkdownUI */,
 			);
 			productName = social_brain_xcode;
 			productReference = AFF98BB32DA075720001DD70 /* social_brain_xcode.app */;
@@ -453,7 +453,7 @@
 			);
 			mainGroup = AFF98BAA2DA075720001DD70;
 			packageReferences = (
-				AFDDDC902DCEA93E00425764 /* XCRemoteSwiftPackageReference "MarkdownUI" */,
+				AFAE46DC2DE4BA7700DD10E0 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 			);
 			productRefGroup = AFF98BB42DA075720001DD70 /* Products */;
 			projectDirPath = "";
@@ -753,9 +753,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		AFDDDC902DCEA93E00425764 /* XCRemoteSwiftPackageReference "MarkdownUI" */ = {
+		AFAE46DC2DE4BA7700DD10E0 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/gonzalezreal/MarkdownUI";
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.0.0;
@@ -764,9 +764,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		AFDDDC912DCEA93E00425764 /* MarkdownUI */ = {
+		AFAE46DD2DE4BA7700DD10E0 /* MarkdownUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = AFDDDC902DCEA93E00425764 /* XCRemoteSwiftPackageReference "MarkdownUI" */;
+			package = AFAE46DC2DE4BA7700DD10E0 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
 			productName = MarkdownUI;
 		};
 /* End XCSwiftPackageProductDependency section */
