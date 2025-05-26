@@ -61,42 +61,57 @@ struct SocialNoteDetailView: View {
                 // Fixed bottom toolbar that respects safe areas
                 VStack(spacing: 0) {
                     Divider()
-                    
-                    // Bottom toolbar content
                     HStack(spacing: 0) {
                         // Archive button
                         Button(action: {
                             showingArchiveConfirmation = true
                         }) {
-                            Image(systemName: "archivebox")
-                                .font(.system(size: 24))
-                                .foregroundColor(.accentColor)
-                                .frame(maxWidth: .infinity)
+                            VStack(spacing: 2) {
+                                Image(systemName: "archivebox")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.accentColor)
+                                Text("删除")
+                                    .font(.caption)
+                                    .foregroundColor(.accentColor)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
-                        
                         // Edit Note button
                         Button(action: {
                             editingNoteText = note.content ?? ""
                             print("Debug - Setting editingNoteText to: \(editingNoteText)")
                             showingEditModal = true
                         }) {
-                            Image(systemName: "square.and.pencil")
-                                .font(.system(size: 24))
-                                .foregroundColor(.accentColor)
-                                .frame(maxWidth: .infinity)
+                            VStack(spacing: 2) {
+                                Image(systemName: "square.and.pencil")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.accentColor)
+                                Text("编辑")
+                                    .font(.caption)
+                                    .foregroundColor(.accentColor)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
-                        
                         // AI button
                         Button(action: {
                             showingSocialBrain = true
                         }) {
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 24))
-                                .foregroundColor(.accentColor)
-                                .frame(maxWidth: .infinity)
+                            VStack(spacing: 2) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.accentColor)
+                                Text("探索")
+                                    .font(.caption)
+                                    .foregroundColor(.accentColor)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
                     }
-                    .frame(height: 44)
+                    .frame(height: 56)
+                    .padding(.top, 4)
                     .padding(.bottom, safeAreaPadding)
                 }
                 .background(
@@ -272,7 +287,7 @@ struct EditNoteModalView: View {
     let initialText: String
     let noteId: UUID
     
-    @State private var noteText: String
+    @StateObject private var textState = TextEditorState()
     @State private var textEditorHeight: CGFloat = 100
     @State private var showingKeyboard: Bool = false
     @State private var keyboardHeight: CGFloat = 0
@@ -281,14 +296,11 @@ struct EditNoteModalView: View {
     private let maxTextEditorHeight: CGFloat = UIScreen.main.bounds.height * 0.4
     private let backgroundOpacity: Double = 0.6
     
-    // Reference to text editor for direct keyboard focus
-    @State private var textEditorRef: UITextView?
-    
     // Initialize with the existing note content
     init(initialText: String, noteId: UUID) {
         self.initialText = initialText
         self.noteId = noteId
-        self._noteText = State(initialValue: initialText)
+        _textState = StateObject(wrappedValue: TextEditorState())
     }
     
     var body: some View {
@@ -317,17 +329,15 @@ struct EditNoteModalView: View {
                             .frame(height: min(textEditorHeight, maxTextEditorHeight))
                         
                         // Custom UITextView for immediate focus
-                        TextViewWrapper(text: $noteText, isFirstResponder: true, onDone: {
-                            // This is now only used for custom completion, not for return key
-                        }, textEditorRef: $textEditorRef)
+                        TextViewWrapper(state: textState, isFirstResponder: true, onDone: {})
                             .frame(height: min(textEditorHeight, maxTextEditorHeight))
-                            .onChange(of: noteText) { newValue in
+                            .onChange(of: textState.text) { newValue in
                                 // Calculate new height based on text content
                                 let estimatedHeight = newValue.isEmpty ? 100 : min(newValue.height(width: UIScreen.main.bounds.width * 0.9, font: .systemFont(ofSize: 17)), maxTextEditorHeight)
                                 textEditorHeight = max(100, estimatedHeight)
                             }
                         
-                        if noteText.isEmpty {
+                        if textState.text.isEmpty {
                             Text("现在的想法是...")
                                 .font(.system(size: 17))
                                 .foregroundColor(.gray)
@@ -392,8 +402,8 @@ struct EditNoteModalView: View {
         }
         .edgesIgnoringSafeArea(.all)
         .onAppear {
+            textState.text = initialText
             setupKeyboardObservers()
-            // Force keyboard to show immediately
             forceShowKeyboard()
         }
         .onDisappear {
@@ -407,7 +417,7 @@ struct EditNoteModalView: View {
         
         // Force UIKit keyboard to appear
         DispatchQueue.main.async {
-            self.textEditorRef?.becomeFirstResponder()
+            self.textState.textView?.becomeFirstResponder()
         }
     }
     
@@ -432,16 +442,16 @@ struct EditNoteModalView: View {
     
     private func dismiss() {
         isTextFieldFocused = false
-        textEditorRef?.resignFirstResponder()
+        textState.textView?.resignFirstResponder()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             presentationMode.wrappedValue.dismiss()
         }
     }
     
     private func saveNote() {
-        if !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if !textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             // Update the existing note and handle the result
-            let success = noteManager.updateNote(noteId: noteId, text: noteText)
+            let success = noteManager.updateNote(noteId: noteId, text: textState.text)
             if !success {
                 // Handle the error case if needed
                 print("Failed to update note")

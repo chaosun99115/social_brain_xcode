@@ -45,35 +45,57 @@ struct MentionConfirmationModal: View {
     }
 }
 
+// Add this class to maintain stable text view reference
+class TextEditorState: ObservableObject {
+    @Published var text: String = ""
+    weak var textView: UITextView?
+    
+    func insertText(_ text: String, at position: Int) {
+        guard let textView = textView else { return }
+        
+        // Get current text
+        let currentText = textView.text ?? ""
+        let nsText = currentText as NSString
+        
+        // Insert new text
+        let newText = nsText.replacingCharacters(in: NSRange(location: position, length: 0), with: text)
+        
+        // Update both the text view and published text
+        textView.text = newText
+        self.text = newText
+        
+        // Update cursor position
+        if let newPosition = textView.position(from: textView.beginningOfDocument, offset: position + text.count) {
+            textView.selectedTextRange = textView.textRange(from: newPosition, to: newPosition)
+        }
+    }
+}
+
 struct SimpleNoteModalView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
     
     let initialText: String
-    let onSave: (String) -> Void  // Make onSave non-optional since it's required for editing
+    let onSave: (String) -> Void
     
-    @State private var noteText: String
+    @StateObject private var textState = TextEditorState()
     @State private var textEditorHeight: CGFloat = 100
     @State private var showingKeyboard: Bool = false
     @State private var keyboardHeight: CGFloat = 0
+    @State private var showingContactSelection = false
     @FocusState private var isTextFieldFocused: Bool
     
     private let maxTextEditorHeight: CGFloat = UIScreen.main.bounds.height * 0.4
     private let backgroundOpacity: Double = 0.6
     
-    // Reference to text editor for direct keyboard focus
-    @State private var textEditorRef: UITextView?
-    
     @State private var unmatchedMentions: [String] = []
     @State private var showingMentionConfirmation = false
     @State private var isSaving = false
     
-    // Initialize with required initial text and save handler
     init(initialText: String, onSave: @escaping (String) -> Void) {
-        print("SimpleNoteModalView init with text: \(initialText)")  // Debug log
         self.initialText = initialText
         self.onSave = onSave
-        self._noteText = State(initialValue: initialText)
+        _textState = StateObject(wrappedValue: TextEditorState())
     }
     
     var body: some View {
@@ -95,19 +117,19 @@ struct SimpleNoteModalView: View {
                         .padding(.top, 8)
                         .padding(.bottom, 16)
                     
-                    // Text editor - using a minimalist style
+                    // Text editor
                     ZStack(alignment: .topLeading) {
                         Color(.systemBackground)
                             .frame(height: min(textEditorHeight, maxTextEditorHeight))
                         
-                        TextViewWrapper(text: $noteText, isFirstResponder: true, onDone: {}, textEditorRef: $textEditorRef)
+                        TextViewWrapper(state: textState, isFirstResponder: true, onDone: {})
                             .frame(height: min(textEditorHeight, maxTextEditorHeight))
-                            .onChange(of: noteText) { newValue in
+                            .onChange(of: textState.text) { newValue in
                                 let estimatedHeight = newValue.isEmpty ? 100 : min(newValue.height(width: UIScreen.main.bounds.width * 0.9, font: .systemFont(ofSize: 17)), maxTextEditorHeight)
                                 textEditorHeight = max(100, estimatedHeight)
                             }
                         
-                        if noteText.isEmpty {
+                        if textState.text.isEmpty {
                             Text("现在的想法是...")
                                 .font(.system(size: 17))
                                 .foregroundColor(.gray)
@@ -125,9 +147,9 @@ struct SimpleNoteModalView: View {
                     // Action buttons
                     HStack(spacing: 0) {
                         Button(action: {
-                            // Add contact action
+                            showingContactSelection = true
                         }) {
-                            Text("添加联系人")
+                            Text("@熟人")
                                 .font(.system(size: 17))
                                 .foregroundColor(.blue)
                                 .frame(maxWidth: .infinity)
@@ -172,12 +194,22 @@ struct SimpleNoteModalView: View {
         }
         .edgesIgnoringSafeArea(.all)
         .onAppear {
-            print("SimpleNoteModalView appeared with noteText: \(noteText)")  // Debug log
+            textState.text = initialText
             setupKeyboardObservers()
             forceShowKeyboard()
         }
         .onDisappear {
             removeKeyboardObservers()
+        }
+        .onChange(of: showingContactSelection) { isShowing in
+            if isShowing {
+                print("\n[SimpleNoteModalView] 📱 Showing contact selection sheet")
+            }
+        }
+        .sheet(isPresented: $showingContactSelection) {
+            ContactSelectionView { contact in
+                insertContactMention(contact)
+            }
         }
         .overlay {
             if showingMentionConfirmation {
@@ -206,7 +238,7 @@ struct SimpleNoteModalView: View {
         
         // Force UIKit keyboard to appear
         DispatchQueue.main.async {
-            self.textEditorRef?.becomeFirstResponder()
+            self.textState.textView?.becomeFirstResponder()
         }
     }
     
@@ -231,16 +263,16 @@ struct SimpleNoteModalView: View {
     
     private func dismiss() {
         isTextFieldFocused = false
-        textEditorRef?.resignFirstResponder()
+        textState.textView?.resignFirstResponder()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             presentationMode.wrappedValue.dismiss()
         }
     }
     
     private func saveNote() {
-        guard !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard !textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         isSaving = true
-        onSave(noteText)
+        onSave(textState.text)
         isSaving = false
         dismiss()
     }
@@ -263,7 +295,7 @@ struct SimpleNoteModalView: View {
         
         Task {
             // Create note with mentions directly
-            if let _ = await noteManager.createNoteWithMentions(content: noteText, type: .social, mentions: mentions) {
+            if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: .social, mentions: mentions) {
                 isSaving = false
                 dismiss()
             } else {
@@ -272,16 +304,47 @@ struct SimpleNoteModalView: View {
             }
         }
     }
+    
+    private func insertContactMention(_ contact: Contact) {
+        guard let name = contact.name else { return }
+        
+        if let textView = textState.textView,
+           let selectedRange = textView.selectedTextRange {
+            var currentText = textView.text ?? ""
+            var cursorPosition = textView.offset(from: textView.beginningOfDocument, to: selectedRange.start)
+
+            // Remove whitespace before cursor
+            while cursorPosition > 0 && currentText[currentText.index(currentText.startIndex, offsetBy: cursorPosition - 1)].isWhitespace {
+                currentText.remove(at: currentText.index(currentText.startIndex, offsetBy: cursorPosition - 1))
+                cursorPosition -= 1
+            }
+            // Remove whitespace after cursor
+            while cursorPosition < currentText.count && currentText[currentText.index(currentText.startIndex, offsetBy: cursorPosition)].isWhitespace {
+                currentText.remove(at: currentText.index(currentText.startIndex, offsetBy: cursorPosition))
+            }
+
+            // Insert mention with exactly one space on both sides
+            let mention = " @\(name) "
+            let nsText = currentText as NSString
+            let newText = nsText.replacingCharacters(in: NSRange(location: cursorPosition, length: 0), with: mention)
+            textView.text = newText
+            textState.text = newText
+
+            // Move cursor to after the mention
+            if let newPosition = textView.position(from: textView.beginningOfDocument, offset: cursorPosition + mention.count) {
+                textView.selectedTextRange = textView.textRange(from: newPosition, to: newPosition)
+            }
+        }
+    }
 }
 
-// UITextView wrapper to ensure immediate keyboard focus
 struct TextViewWrapper: UIViewRepresentable {
-    @Binding var text: String
+    @ObservedObject var state: TextEditorState
     var isFirstResponder: Bool = false
     var onDone: () -> Void
-    @Binding var textEditorRef: UITextView?
     
     func makeUIView(context: Context) -> UITextView {
+        print("\n[TextViewWrapper] 📝 Creating UITextView")
         let textView = UITextView()
         textView.font = UIFont.systemFont(ofSize: 17)
         textView.backgroundColor = .clear
@@ -291,12 +354,11 @@ struct TextViewWrapper: UIViewRepresentable {
         textView.isScrollEnabled = true
         textView.autocorrectionType = .yes
         textView.returnKeyType = .default
-        textView.text = text  // Set initial text here
+        textView.text = state.text
         
-        // Store reference to directly access later
-        self.textEditorRef = textView
+        // Store reference
+        state.textView = textView
         
-        // Force focus immediately
         if isFirstResponder {
             textView.becomeFirstResponder()
         }
@@ -305,43 +367,41 @@ struct TextViewWrapper: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UITextView, context: Context) {
-        // Only update text if it's different to avoid cursor position reset
-        if uiView.text != text {
-            // Store cursor position
+        // Only update if text is different
+        if uiView.text != state.text {
             let selectedRange = uiView.selectedTextRange
-            uiView.text = text
-            // Restore cursor position if possible
+            uiView.text = state.text
             if let selectedRange = selectedRange {
                 uiView.selectedTextRange = selectedRange
             }
         }
         
-        // Ensure focus is maintained
+        // Update reference if needed
+        if state.textView !== uiView {
+            state.textView = uiView
+        }
+        
+        // Maintain focus
         if isFirstResponder && !uiView.isFirstResponder {
             uiView.becomeFirstResponder()
         }
     }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(text: $text, onDone: onDone)
+        Coordinator(state: state, onDone: onDone)
     }
     
     class Coordinator: NSObject, UITextViewDelegate {
-        @Binding var text: String
+        @ObservedObject var state: TextEditorState
         var onDone: () -> Void
         
-        init(text: Binding<String>, onDone: @escaping () -> Void) {
-            self._text = text
+        init(state: TextEditorState, onDone: @escaping () -> Void) {
+            self.state = state
             self.onDone = onDone
         }
         
         func textViewDidChange(_ textView: UITextView) {
-            text = textView.text
-        }
-        
-        func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-            // Remove the special handling for return key to allow line breaks
-            return true
+            state.text = textView.text
         }
     }
 }
@@ -377,3 +437,4 @@ struct SimpleNoteModalView_Previews: PreviewProvider {
             .environmentObject(NoteManager.shared)
     }
 } 
+
