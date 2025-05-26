@@ -71,6 +71,60 @@ class TextEditorState: ObservableObject {
     }
 }
 
+// Add CircleSelectionView before SimpleNoteModalView
+struct CircleSelectionView: View {
+    let onSelect: (Circle) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var circleManager = CircleManager.shared
+    @State private var circles: [Circle] = []
+    @State private var searchText = ""
+    
+    var filteredCircles: [Circle] {
+        if searchText.isEmpty {
+            return circles
+        }
+        return circles.filter { circle in
+            guard let name = circle.name else { return false }
+            return name.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+    
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach(filteredCircles, id: \.circleId) { circle in
+                    Button(action: {
+                        onSelect(circle)
+                        dismiss()
+                    }) {
+                        HStack {
+                            Text(circle.name ?? "圈子")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                                .font(.system(size: 14))
+                        }
+                    }
+                }
+            }
+            .navigationTitle("选择圈子")
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, prompt: "搜索圈子")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("取消") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .task {
+            circles = circleManager.fetchCircles()
+        }
+    }
+}
+
 struct SimpleNoteModalView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
@@ -84,6 +138,7 @@ struct SimpleNoteModalView: View {
     @State private var keyboardHeight: CGFloat = 0
     @State private var showingContactSelection = false
     @FocusState private var isTextFieldFocused: Bool
+    @State private var showingCircleSelection = false
     
     private let maxTextEditorHeight: CGFloat = UIScreen.main.bounds.height * 0.4
     private let backgroundOpacity: Double = 0.6
@@ -155,13 +210,14 @@ struct SimpleNoteModalView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         
-                        Text("添加标签")
-                            .font(.system(size: 17))
-                            .foregroundColor(.blue)
-                            .frame(maxWidth: .infinity)
-                            .onTapGesture {
-                                // Add tag action
-                            }
+                        Button(action: {
+                            showingCircleSelection = true
+                        }) {
+                            Text("#圈子")
+                                .font(.system(size: 17))
+                                .foregroundColor(.blue)
+                                .frame(maxWidth: .infinity)
+                        }
                         
                         Button(action: {
                             saveNote()
@@ -209,6 +265,11 @@ struct SimpleNoteModalView: View {
         .sheet(isPresented: $showingContactSelection) {
             ContactSelectionView { contact in
                 insertContactMention(contact)
+            }
+        }
+        .sheet(isPresented: $showingCircleSelection) {
+            CircleSelectionView { circle in
+                insertCircleMention(circle)
             }
         }
         .overlay {
@@ -325,6 +386,39 @@ struct SimpleNoteModalView: View {
 
             // Insert mention with exactly one space on both sides
             let mention = " @\(name) "
+            let nsText = currentText as NSString
+            let newText = nsText.replacingCharacters(in: NSRange(location: cursorPosition, length: 0), with: mention)
+            textView.text = newText
+            textState.text = newText
+
+            // Move cursor to after the mention
+            if let newPosition = textView.position(from: textView.beginningOfDocument, offset: cursorPosition + mention.count) {
+                textView.selectedTextRange = textView.textRange(from: newPosition, to: newPosition)
+            }
+        }
+    }
+    
+    // Add new function for circle mentions
+    private func insertCircleMention(_ circle: Circle) {
+        guard let name = circle.name else { return }
+        
+        if let textView = textState.textView,
+           let selectedRange = textView.selectedTextRange {
+            var currentText = textView.text ?? ""
+            var cursorPosition = textView.offset(from: textView.beginningOfDocument, to: selectedRange.start)
+
+            // Remove whitespace before cursor
+            while cursorPosition > 0 && currentText[currentText.index(currentText.startIndex, offsetBy: cursorPosition - 1)].isWhitespace {
+                currentText.remove(at: currentText.index(currentText.startIndex, offsetBy: cursorPosition - 1))
+                cursorPosition -= 1
+            }
+            // Remove whitespace after cursor
+            while cursorPosition < currentText.count && currentText[currentText.index(currentText.startIndex, offsetBy: cursorPosition)].isWhitespace {
+                currentText.remove(at: currentText.index(currentText.startIndex, offsetBy: cursorPosition))
+            }
+
+            // Insert mention with exactly one space on both sides
+            let mention = " #\(name) "
             let nsText = currentText as NSString
             let newText = nsText.replacingCharacters(in: NSRange(location: cursorPosition, length: 0), with: mention)
             textView.text = newText
