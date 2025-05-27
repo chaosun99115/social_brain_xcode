@@ -33,6 +33,7 @@
 		AFAE46ED2DE6309600DD10E0 /* AddContactSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46EC2DE6309600DD10E0 /* AddContactSheet.swift */; };
 		AFAE46EF2DE646B300DD10E0 /* AddCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46EE2DE646B300DD10E0 /* AddCircleView.swift */; };
 		AFAE46F12DE648D500DD10E0 /* EditCircleContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46F02DE648D500DD10E0 /* EditCircleContactsSheet.swift */; };
+		AFAE46F32DE65B4700DD10E0 /* FaceIDAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46F22DE65B4700DD10E0 /* FaceIDAuthView.swift */; };
 		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
 		AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E42DA70C770066907B /* InfoPlist.strings */; };
 		AFBD50F42DA70DDC0066907B /* SocialContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F22DA70DDC0066907B /* SocialContactView.swift */; };
@@ -91,6 +92,7 @@
 		AFAE46EC2DE6309600DD10E0 /* AddContactSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddContactSheet.swift; sourceTree = "<group>"; };
 		AFAE46EE2DE646B300DD10E0 /* AddCircleView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddCircleView.swift; sourceTree = "<group>"; };
 		AFAE46F02DE648D500DD10E0 /* EditCircleContactsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditCircleContactsSheet.swift; sourceTree = "<group>"; };
+		AFAE46F22DE65B4700DD10E0 /* FaceIDAuthView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaceIDAuthView.swift; sourceTree = "<group>"; };
 		AFBD50E32DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
 		AFBD50E52DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = InfoPlist.strings; sourceTree = "<group>"; };
 		AFBD50F22DA70DDC0066907B /* SocialContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContactView.swift; sourceTree = "<group>"; };
@@ -279,6 +281,7 @@
 		AFA276272DB03E6400C29B81 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				AFAE46F22DE65B4700DD10E0 /* FaceIDAuthView.swift */,
 				AF56DC2A2DCBE25900F56D6E /* AppDelegate.swift */,
 				AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */,
 				AFF98BD82DA45DA00001DD70 /* AppTheme.swift */,
@@ -522,6 +525,7 @@
 				AF56DC282DCBE13D00F56D6E /* SeedDataExample.swift in Sources */,
 				AFF98BD52DA4496C0001DD70 /* SocialBrainMessage.swift in Sources */,
 				AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */,
+				AFAE46F32DE65B4700DD10E0 /* FaceIDAuthView.swift in Sources */,
 				AF84F4242DC942D200BD66D5 /* ContactInsightDebugView.swift in Sources */,
 				AF84F41B2DC582C600BD66D5 /* CircleDebugView.swift in Sources */,
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,

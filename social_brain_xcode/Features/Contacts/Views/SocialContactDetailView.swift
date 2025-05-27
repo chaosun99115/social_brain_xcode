@@ -100,8 +100,6 @@ struct SocialContactDetailView: View {
                 // Fixed bottom toolbar that respects safe areas
                 VStack(spacing: 0) {
                     Divider()
-                    
-                    // Bottom toolbar content
                     HStack(spacing: 0) {
                         // AI Insights button
                         Button(action: {
@@ -118,11 +116,11 @@ struct SocialContactDetailView: View {
                         }
                     }
                     .frame(height: 44)
-                    .padding(.bottom, safeAreaPadding)
+                    .padding(.bottom, safeAreaInset) // Only add safe area inset, no extra padding
                 }
                 .background(
                     VisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
-                        .ignoresSafeArea()
+                        .ignoresSafeArea(edges: .bottom)
                 )
             }
         }
@@ -189,20 +187,15 @@ struct SocialContactDetailView: View {
         .edgesIgnoringSafeArea(.bottom)
     }
     
-    // Dynamic safe area padding for different devices
-    private var safeAreaPadding: CGFloat {
-        // Get the bottom safe area inset
+    // Dynamic safe area inset for different devices (HIG compliant)
+    private var safeAreaInset: CGFloat {
         let keyWindow = UIApplication.shared.connectedScenes
             .filter { $0.activationState == .foregroundActive }
             .compactMap { $0 as? UIWindowScene }
             .first?.windows
             .filter { $0.isKeyWindow }
             .first
-            
-        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
-        
-        // Add padding based on whether device has home indicator
-        return bottomInset > 0 ? bottomInset + 8 : 8
+        return keyWindow?.safeAreaInsets.bottom ?? 0
     }
     
     // UIViewRepresentable wrapper for UIVisualEffectView to use blur effects

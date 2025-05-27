@@ -16,5 +16,7 @@
 	<string>en</string>
 	<key>LSHasLocalizedDisplayName</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Social Brain uses Face ID to protect your personal relationship data and ensure only you can access your information.</string>
 </dict>
 </plist>

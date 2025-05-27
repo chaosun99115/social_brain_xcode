@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreData
+import LocalAuthentication
 
 class AppModeManager: ObservableObject {
     @Published var isSampleMode: Bool = false
@@ -18,6 +19,8 @@ struct social_brain_xcodeApp: App {
     let persistenceController = PersistenceController.shared
     @StateObject private var noteManager = NoteManager.shared
     @StateObject private var appModeManager = AppModeManager()
+    @State private var isAuthenticated = false
+    @State private var authError: String?
     
     init() {
         AIConfig.configure()
@@ -33,10 +36,14 @@ struct social_brain_xcodeApp: App {
     
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
-                .environmentObject(noteManager)
-                .environmentObject(appModeManager)
+            if isAuthenticated {
+                MainTabView()
+                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                    .environmentObject(noteManager)
+                    .environmentObject(appModeManager)
+            } else {
+                FaceIDAuthView(isAuthenticated: $isAuthenticated, authError: $authError)
+            }
         }
     }
 }

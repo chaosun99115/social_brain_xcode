@@ -247,6 +247,7 @@ struct SimpleNoteModalView: View {
                         }
                     }
                     .padding(.vertical, 12)
+                    .padding(.bottom, geometry.safeAreaInsets.bottom)
                 }
                 .frame(maxWidth: .infinity, maxHeight: geometry.size.height - (showingKeyboard ? keyboardHeight : 0))
                 .background(Color(.systemBackground))
