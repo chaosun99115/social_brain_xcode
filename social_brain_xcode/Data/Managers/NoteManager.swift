@@ -274,15 +274,31 @@ class NoteManager: ObservableObject {
             
             // Add contacts
             for mention in mentions {
-                // Get or create contact
+                // Get or create contact in the background context
                 let contact: Contact
                 if let existingContact = ContactManager.shared.fetchContact(withName: mention) {
-                    contact = existingContact
-                } else {
-                    guard let newContact = ContactManager.shared.createContact(name: mention) else {
-                        print("Failed to create contact: \(mention)")
+                    // Get the contact in the background context
+                    guard let contactInBackgroundContext = try? backgroundContext.existingObject(with: existingContact.objectID) as? Contact else {
                         continue
                     }
+                    contact = contactInBackgroundContext
+                } else {
+                    // Create new contact in the background context
+                    let newContact = Contact(context: backgroundContext)
+                    newContact.contactId = UUID()
+                    newContact.name = mention
+                    newContact.createdAt = Date()
+                    newContact.updatedAt = Date()
+                    newContact.recordStatus = 0 // unsynced
+                    newContact.type = 0 // default type
+                    
+                    // Save the background context to ensure the contact is properly created
+                    do {
+                        try backgroundContext.save()
+                    } catch {
+                        continue
+                    }
+                    
                     contact = newContact
                 }
                 
@@ -310,7 +326,6 @@ class NoteManager: ObservableObject {
                 
                 return note
             } catch {
-                print("Error saving note: \(error)")
                 backgroundContext.delete(note)
                 return nil
             }

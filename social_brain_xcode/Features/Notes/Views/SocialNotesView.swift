@@ -154,24 +154,14 @@ struct SocialNotesView: View {
                 }
             }
             .sheet(isPresented: $showingNoteModal) {
-                SimpleNoteModalView(initialText: "") { noteText in
-                    // Handle the new note creation
-                    Task {
-                        if let _ = await noteManager.createNoteWithMentions(content: noteText, type: .social, mentions: []) {
-                            // Post notification to refresh the notes list
-                            NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
-                        }
-                    }
+                SocialNoteModalView(initialPrompt: "今天遇到了哪些事，认识了哪些人？") { noteText in
+                    // Only refresh the notes list
+                    NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
                 }
             }
             .sheet(isPresented: $showingSimpleNoteModal) {
                 SimpleNoteModalView(initialText: "") { noteText in
-                    // Handle the new note creation
-                    Task {
-                        if let _ = await noteManager.createNoteWithMentions(content: noteText, type: .social, mentions: []) {
-                            refreshTrigger.toggle()
-                        }
-                    }
+                    refreshTrigger.toggle()
                 }
             }
             .sheet(isPresented: $showingDebugMenu) {

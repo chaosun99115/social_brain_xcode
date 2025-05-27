@@ -28,12 +28,12 @@ struct SocialContactView: View {
         }
         
         let fetchedContacts = contactManager.fetchContacts()
+        
         let validContacts = fetchedContacts.filter { contact in
             do {
                 try contactManager.validateContactRelationships(contact)
                 return true
             } catch {
-                print("Invalid relationships for contact: \(contact.name ?? "Unknown")")
                 return false
             }
         }
@@ -62,7 +62,6 @@ struct SocialContactView: View {
                 try circleManager.validateCircleRelationships(circle)
                 return true
             } catch {
-                print("Invalid relationships for circle: \(circle.name ?? "Unknown")")
                 return false
             }
         }
@@ -96,10 +95,9 @@ struct SocialContactView: View {
                 let notes = ContactManager.shared.getNotesForContact(contactId: contactId)
                 let hasValidNotes = notes.contains(where: { $0.type != 0 })
                 
-                // For 熟人 tab (selectedTab == 0), show contacts with type 1 notes
-                // For 圈子 tab (selectedTab == 1), show contacts with type 2 notes
-                let noteType = selectedTab == 0 ? 1 : 2
-                return hasValidNotes && notes.contains(where: { $0.type == noteType })
+                // Show contacts in both tabs if they have any valid notes
+                // The tab selection will be used to filter the notes shown in the detail view
+                return hasValidNotes
             }
         }
         
@@ -241,12 +239,17 @@ struct SocialContactView: View {
                 }
                 Button("取消", role: .cancel) {}
             }
+            .task {
+                await loadContacts()
+                await loadCircles()
+            }
+            .onChange(of: refreshTrigger) { _ in
+                Task {
+                    await loadContacts()
+                }
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
-        .task {
-            await loadContacts()
-            await loadCircles()
-        }
     }
     
     @State private var showingSampleDialog = false
@@ -559,28 +562,19 @@ struct CircleListView: View {
     @State private var refreshTrigger = false
     
     var filteredCircles: [Circle] {
-        print("[CircleListView] appModeManager.isSampleMode = \(appModeManager.isSampleMode)")
-        print("[CircleListView] circles count before filtering: \(circles.count)")
-        print("[CircleListView] circles types: \(circles.map { $0.type })")
         let base: [Circle]
         if appModeManager.isSampleMode {
             base = circles
-            print("[CircleListView] In sample mode, showing all circles.")
         } else {
             base = circles.filter { $0.type != 0 }
-            print("[CircleListView] Not in sample mode, filtered circles count: \(base.count)")
-            print("[CircleListView] Filtered circles types: \(base.map { $0.type })")
         }
         if searchText.isEmpty {
-            print("[CircleListView] Returning \(base.count) circles after filtering by type.")
             return base
         }
-        let filtered = base.filter { circle in
+        return base.filter { circle in
             guard let name = circle.name else { return false }
             return name.localizedCaseInsensitiveContains(searchText)
         }
-        print("[CircleListView] Returning \(filtered.count) circles after filtering by search text '", searchText, "'.")
-        return filtered
     }
     
     var body: some View {

@@ -124,39 +124,21 @@ class ContactManager: ObservableObject {
     
     // MARK: - Relationships
     func getNotesForContact(contactId: UUID) -> [Note] {
-        print("\n[ContactManager] 🔍 Getting notes for contact ID: \(contactId)")
-        
         let request: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
         request.predicate = NSPredicate(format: "contacts.contactId == %@", contactId as CVarArg)
         
         do {
             let relationships = try context.fetch(request)
-            print("[ContactManager] 📊 Found \(relationships.count) note-contact relationships")
-            
-            // Log each relationship
-            for (index, relationship) in relationships.enumerated() {
-                print("[ContactManager] Relationship \(index + 1):")
-                print("  - Relationship ID: \(relationship.relationshipId?.uuidString ?? "nil")")
-                print("  - Note ID: \(relationship.notes?.noteId?.uuidString ?? "nil")")
-                print("  - Note Type: \(relationship.notes?.type ?? -1)")
-                print("  - Note Content: \(relationship.notes?.content?.prefix(30) ?? "nil")...")
-            }
-            
-            let notes = relationships.compactMap { $0.notes }
-            print("[ContactManager] ✅ Returning \(notes.count) notes")
-            return notes
+            return relationships.compactMap { $0.notes }
         } catch {
-            print("[ContactManager] ❌ Error fetching notes for contact: \(error)")
+            print("Error fetching notes for contact: \(error)")
             return []
         }
     }
     
     // MARK: - Note Count
     func getNotesCount(forContactId contactId: UUID) -> Int {
-        print("\n[ContactManager] 📝 Getting note count for contact ID: \(contactId)")
-        let count = getNotesForContact(contactId: contactId).count
-        print("[ContactManager] 📊 Note count: \(count)")
-        return count
+        return getNotesForContact(contactId: contactId).count
     }
     
     func validateContactRelationships(_ contact: Contact) throws {

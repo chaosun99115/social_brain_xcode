@@ -9,39 +9,7 @@ class CircleManager: ObservableObject {
     
     // MARK: - Debug Helpers
     private func debugCircleContacts(circleId: UUID, contextDescription: String) {
-        print("\n[DEBUG] 🔍 Circle-Contact Check (\(contextDescription))")
-        print("[DEBUG] Checking circle: \(circleId)")
-        
-        // Get circle
-        let circleRequest: NSFetchRequest<Circle> = Circle.fetchRequest()
-        circleRequest.predicate = NSPredicate(format: "circleId == %@", circleId as CVarArg)
-        guard let circle = try? self.context.fetch(circleRequest).first else {
-            print("[DEBUG] ❌ Circle not found")
-            return
-        }
-        print("[DEBUG] Found circle: \(circle.name ?? "nil")")
-        
-        // Get all relationships directly from circle
-        if let relationships = circle.contacts as? Set<CircleContactRelationship> {
-            print("[DEBUG] Direct relationships from circle: \(relationships.count)")
-            for rel in relationships {
-                print("[DEBUG] - Relationship ID: \(rel.relationshipId?.uuidString ?? "nil")")
-                print("[DEBUG]   Contact: \(rel.contacts?.name ?? "nil")")
-            }
-        }
-        
-        // Get relationships through fetch request
-        let request: NSFetchRequest<CircleContactRelationship> = CircleContactRelationship.fetchRequest()
-        request.predicate = NSPredicate(format: "ANY circles == %@", circle)
-        if let fetchedRelationships = try? self.context.fetch(request) {
-            print("[DEBUG] Fetched relationships: \(fetchedRelationships.count)")
-            for rel in fetchedRelationships {
-                print("[DEBUG] - Relationship ID: \(rel.relationshipId?.uuidString ?? "nil")")
-                print("[DEBUG]   Contact: \(rel.contacts?.name ?? "nil")")
-            }
-        }
-        
-        print("[DEBUG] 🔍 End Circle-Contact Check\n")
+        // Debug helper function - keeping empty for now
     }
     
     // MARK: - Create
@@ -56,7 +24,6 @@ class CircleManager: ObservableObject {
         
         do {
             try context.save()
-            debugCircleContacts(circleId: circle.circleId!, contextDescription: "After circle creation")
             return circle
         } catch {
             print("Error creating circle: \(error)")
@@ -162,20 +129,13 @@ class CircleManager: ObservableObject {
     
     // MARK: - Relationships
     func getContactsForCircle(circleId: UUID) -> [Contact] {
-        print("\n[DEBUG] Getting contacts for circle: \(circleId)")
-        
         // First verify the circle exists
         let circleRequest: NSFetchRequest<Circle> = Circle.fetchRequest()
         circleRequest.predicate = NSPredicate(format: "circleId == %@", circleId as CVarArg)
         let circles = try? context.fetch(circleRequest)
         guard let circle = circles?.first else {
-            print("[DEBUG] Circle not found")
             return []
         }
-        print("[DEBUG] Found circle: \(circle.name ?? "nil")")
-        
-        // Debug before fetch
-        debugCircleContacts(circleId: circleId, contextDescription: "Before fetching contacts")
         
         // Get all relationships for this circle using a different predicate approach
         let request: NSFetchRequest<CircleContactRelationship> = CircleContactRelationship.fetchRequest()
@@ -183,19 +143,10 @@ class CircleManager: ObservableObject {
         
         do {
             let relationships = try context.fetch(request)
-            print("[DEBUG] Found \(relationships.count) relationships")
             
-            // Debug each relationship
+            // Verify the relationship is valid
             for relationship in relationships {
-                print("\n[DEBUG] Relationship details:")
-                print("[DEBUG] Relationship ID: \(relationship.relationshipId?.uuidString ?? "nil")")
-                print("[DEBUG] Circle: \(relationship.circles?.name ?? "nil") (ID: \(relationship.circles?.circleId?.uuidString ?? "nil"))")
-                print("[DEBUG] Contact: \(relationship.contacts?.name ?? "nil") (ID: \(relationship.contacts?.contactId?.uuidString ?? "nil"))")
-                print("[DEBUG] Created at: \(relationship.createdAt?.description ?? "nil")")
-                
-                // Verify the relationship is valid
                 if relationship.circles == nil || relationship.contacts == nil {
-                    print("[DEBUG] ⚠️ Invalid relationship found - cleaning up")
                     context.delete(relationship)
                 }
             }
@@ -203,15 +154,11 @@ class CircleManager: ObservableObject {
             // Save context if we deleted any invalid relationships
             if context.hasChanges {
                 try context.save()
-                print("[DEBUG] Saved context after cleaning invalid relationships")
-                debugCircleContacts(circleId: circleId, contextDescription: "After cleaning invalid relationships")
             }
             
-            let contacts = relationships.compactMap { $0.contacts }
-            print("[DEBUG] Returning \(contacts.count) contacts")
-            return contacts
+            return relationships.compactMap { $0.contacts }
         } catch {
-            print("[DEBUG] Error fetching contacts for circle: \(error)")
+            print("Error fetching contacts for circle: \(error)")
             return []
         }
     }
@@ -235,12 +182,8 @@ class CircleManager: ObservableObject {
     }
     
     func validateCircleRelationships(_ circle: Circle) throws {
-        print("\n[DEBUG] Validating relationships for circle: \(circle.name ?? "nil")")
-        debugCircleContacts(circleId: circle.circleId!, contextDescription: "Before validation")
-        
         // If circle has no relationships, that's valid
         guard let relationships = circle.contacts as? Set<CircleContactRelationship> else {
-            print("[DEBUG] No relationships found")
             return // No relationships is valid
         }
         
@@ -249,7 +192,6 @@ class CircleManager: ObservableObject {
         for relationship in relationships {
             if relationship.contacts == nil {
                 // Clean up invalid relationship
-                print("[DEBUG] Found invalid relationship: \(relationship.relationshipId?.uuidString ?? "nil")")
                 context.delete(relationship)
                 invalidCount += 1
             }
@@ -257,26 +199,18 @@ class CircleManager: ObservableObject {
         
         // Save changes if any relationships were deleted
         if invalidCount > 0 {
-            print("[DEBUG] Cleaning up \(invalidCount) invalid relationships")
             do {
                 try context.save()
-                debugCircleContacts(circleId: circle.circleId!, contextDescription: "After validation cleanup")
             } catch {
                 print("Error cleaning up invalid relationships: \(error)")
             }
-        } else {
-            print("[DEBUG] No invalid relationships found")
         }
     }
     
     // MARK: - Relationship Management
     func addContactToCircle(circleId: UUID, contactId: UUID) -> Bool {
-        print("\n[DEBUG] Adding contact to circle")
-        debugCircleContacts(circleId: circleId, contextDescription: "Before adding contact")
-        
         guard let circle = fetchCircle(withId: circleId),
               let contact = ContactManager.shared.fetchContact(withId: contactId) else {
-            print("[DEBUG] Failed to find circle or contact")
             return false
         }
         
@@ -288,8 +222,6 @@ class CircleManager: ObservableObject {
         
         do {
             try context.save()
-            print("[DEBUG] Successfully added contact to circle")
-            debugCircleContacts(circleId: circleId, contextDescription: "After adding contact")
             return true
         } catch {
             print("Error adding contact to circle: \(error)")

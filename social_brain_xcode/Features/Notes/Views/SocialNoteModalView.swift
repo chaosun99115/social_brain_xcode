@@ -8,6 +8,14 @@ struct SocialNoteModalView: View {
     @State private var messageContent: String = "今天遇到了哪些事"
     @State private var initialPrompt: String = "今天遇到了哪些事"
     
+    // Add missing state variables for mention handling
+    @State private var unmatchedMentions: [String] = []
+    @State private var showingMentionConfirmation = false
+    @State private var existingMentionedContacts: [String] = []
+    
+    // Add onSave closure
+    var onSave: (String) -> Void = { _ in }
+    
     // Reference to the dialog view
     @State private var isShowingDialog: Bool = true
     @State private var selectedMessageIndex: Int? = nil
@@ -27,8 +35,9 @@ struct SocialNoteModalView: View {
     private let estimatedInputFieldHeight: CGFloat = 60
     
     // Initial prompt to start the conversation
-    init(initialPrompt: String = "今天遇到了哪些事，认识了哪些人？") {
-        self._initialPrompt = State(initialValue: "今天遇到了哪些事，认识了哪些人？")
+    init(initialPrompt: String = "今天遇到了哪些事，认识了哪些人？", onSave: @escaping (String) -> Void = { _ in }) {
+        self._initialPrompt = State(initialValue: initialPrompt)
+        self.onSave = onSave
     }
     
     var body: some View {
@@ -131,6 +140,27 @@ struct SocialNoteModalView: View {
         .onDisappear {
             removeKeyboardObservers()
             removeResponseObservers()
+        }
+        .overlay {
+            if showingMentionConfirmation {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .overlay {
+                        MentionConfirmationModal(
+                            unmatchedMentions: unmatchedMentions,
+                            onConfirm: {
+                                showingMentionConfirmation = false
+                                print("[SocialNoteModalView] ✅ User confirmed creation of new contacts: \(unmatchedMentions)")
+                                saveNoteWithMentions(mentions: unmatchedMentions, alsoIncludeExisting: true)
+                            },
+                            onCancel: {
+                                showingMentionConfirmation = false
+                                print("[SocialNoteModalView] ❌ User cancelled creation of new contacts. Only relating to existing contacts: \(existingMentionedContacts)")
+                                saveNoteWithMentions(mentions: [], alsoIncludeExisting: true)
+                            }
+                        )
+                    }
+            }
         }
     }
     
@@ -246,20 +276,63 @@ struct SocialNoteModalView: View {
     }
     
     private func saveNote() {
-        // Extract note content from the conversation
-        let userMessages = DialogMessage.extractUserMessages(from: messageContent)
-        let noteContent = userMessages.joined(separator: "\n\n")
+        // Extract mentions from the content
+        let mentions = extractMentions(from: messageContent)
         
-        // Create a new note using the NoteManager
-        if !noteContent.isEmpty {
-            noteManager.createNote(content: noteContent, type: .social)
-        } else {
-            // Fallback if no user messages found
-            noteManager.createNote(content: "New note", type: .general)
+        // Check which mentions already exist as contacts
+        let existingContacts = mentions.compactMap { name -> String? in
+            if let contact = ContactManager.shared.fetchContact(withName: name) {
+                return name
+            } else {
+                return nil
+            }
         }
+        let unmatched = mentions.filter { !existingContacts.contains($0) }
         
-        // Dismiss the modal
-        dismiss()
+        if !unmatched.isEmpty {
+            unmatchedMentions = unmatched
+            showingMentionConfirmation = true
+            return
+        } else {
+            // All mentions exist, create note and relationships immediately
+            Task {
+                if !messageContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    if let _ = await noteManager.createNoteWithMentions(content: messageContent, type: .social, mentions: mentions) {
+                        onSave(messageContent)
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func saveNoteWithMentions(mentions: [String], alsoIncludeExisting: Bool = true) {
+        // mentions: the new contacts to create (if any)
+        // alsoIncludeExisting: if true, also relate to existing contacts
+        let allMentions = alsoIncludeExisting ? (existingMentionedContacts + mentions) : mentions
+        print("[SocialNoteModalView] 💾 Saving note. New contacts: \(mentions), All contacts: \(allMentions)")
+        Task {
+            if !messageContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if let _ = await noteManager.createNoteWithMentions(content: messageContent, type: .social, mentions: allMentions) {
+                    onSave(messageContent)
+                    dismiss()
+                }
+            }
+        }
+    }
+    
+    // Add extractMentions function
+    private func extractMentions(from text: String) -> [String] {
+        // Match @ followed by one or more of: Chinese, English, numbers, underscore, hyphen, full-width parenthesis
+        // Stop at whitespace or common punctuation
+        let pattern = "@([\\u4e00-\\u9fa5A-Za-z0-9_\\-（）()]+)"
+        let regex = try? NSRegularExpression(pattern: pattern)
+        let nsString = text as NSString
+        let results = regex?.matches(in: text, range: NSRange(location: 0, length: nsString.length)) ?? []
+        
+        return results.map { match in
+            return nsString.substring(with: match.range(at: 1))
+        }
     }
 }
 

@@ -286,11 +286,11 @@ struct SimpleNoteModalView: View {
                             unmatchedMentions: unmatchedMentions,
                             onConfirm: {
                                 showingMentionConfirmation = false
-                                saveNoteWithMentions(mentions: unmatchedMentions)
+                                saveNoteWithMentions(mentions: unmatchedMentions, alsoIncludeExisting: true)
                             },
                             onCancel: {
                                 showingMentionConfirmation = false
-                                saveNoteWithMentions(mentions: [])
+                                saveNoteWithMentions(mentions: [], alsoIncludeExisting: true)
                             }
                         )
                     }
@@ -337,10 +337,33 @@ struct SimpleNoteModalView: View {
     
     private func saveNote() {
         guard !textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        isSaving = true
-        onSave(textState.text)
-        isSaving = false
-        dismiss()
+        
+        // Extract mentions from the content
+        let mentions = extractMentions(from: textState.text)
+        
+        // Check which mentions already exist as contacts
+        let existingContacts = mentions.compactMap { name -> String? in
+            if let contact = ContactManager.shared.fetchContact(withName: name) {
+                return name
+            } else {
+                return nil
+            }
+        }
+        let unmatched = mentions.filter { !existingContacts.contains($0) }
+        
+        if !unmatched.isEmpty {
+            unmatchedMentions = unmatched
+            showingMentionConfirmation = true
+            return
+        } else {
+            // All mentions exist, create note and relationships immediately
+            Task {
+                if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: .social, mentions: mentions) {
+                    onSave(textState.text)
+                    dismiss()
+                }
+            }
+        }
     }
     
     private func extractMentions(from text: String) -> [String] {
@@ -356,17 +379,12 @@ struct SimpleNoteModalView: View {
         }
     }
     
-    private func saveNoteWithMentions(mentions: [String]) {
-        isSaving = true
-        
+    private func saveNoteWithMentions(mentions: [String], alsoIncludeExisting: Bool = true) {
+        let allMentions = alsoIncludeExisting ? mentions : []
         Task {
-            // Create note with mentions directly
-            if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: .social, mentions: mentions) {
-                isSaving = false
+            if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: .social, mentions: allMentions) {
+                onSave(textState.text)
                 dismiss()
-            } else {
-                isSaving = false
-                // TODO: Show error alert
             }
         }
     }
