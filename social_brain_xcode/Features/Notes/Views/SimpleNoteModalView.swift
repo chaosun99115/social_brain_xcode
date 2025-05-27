@@ -168,48 +168,66 @@ struct SimpleNoteModalView: View {
                 
                 // Modal content
                 VStack(spacing: 0) {
-                    // Dismiss button
-                    HStack {
-                        Button(action: {
-                            dismiss()
-                        }) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.primary)
-                                .padding(8)
+                    // Header similar to iOS Notes app
+                    ZStack {
+                        // Centered Title
+                        Text("新建想法")
+                            .font(.system(size: 17, weight: .semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 60) // leave space for buttons
+                        // Left Cancel Button
+                        HStack {
+                            Button("取消") {
+                                dismiss()
+                            }
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundColor(.blue)
+                            .padding(.leading, 16)
+                            Spacer()
                         }
-                        Spacer()
+                        // Right Save Button
+                        HStack {
+                            Spacer()
+                            Button("保存") {
+                                saveNote()
+                            }
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
+                            .disabled(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            .padding(.trailing, 16)
+                        }
                     }
-                    .padding(.horizontal, 16)
+                    .frame(height: 44)
+                    .background(Color(.systemBackground))
+                    .padding(.top, geometry.safeAreaInsets.top)
                     
                     // Text editor
                     ZStack(alignment: .topLeading) {
                         Color(.systemBackground)
                             .frame(height: min(textEditorHeight, maxTextEditorHeight))
-                        
                         TextViewWrapper(state: textState, isFirstResponder: true, onDone: {})
                             .frame(height: min(textEditorHeight, maxTextEditorHeight))
+                            .padding(.horizontal, 16)
                             .onChange(of: textState.text) { newValue in
                                 let estimatedHeight = newValue.isEmpty ? 100 : min(newValue.height(width: UIScreen.main.bounds.width * 0.9, font: .systemFont(ofSize: 17)), maxTextEditorHeight)
                                 textEditorHeight = max(100, estimatedHeight)
                             }
-                        
                         if textState.text.isEmpty {
                             Text("现在的想法是...")
                                 .font(.system(size: 17))
                                 .foregroundColor(.gray)
-                                .padding(.top, 8)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 0) // Minimal top padding for best alignment
                                 .allowsHitTesting(false)
                         }
                     }
-                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
                     
                     Spacer()
-                    
                     Divider()
                         .padding(.horizontal, 0)
-                    
-                    // Action buttons
+                    // Action buttons for mentions only (no save/cancel here)
                     HStack(spacing: 0) {
                         Button(action: {
                             showingContactSelection = true
@@ -219,7 +237,6 @@ struct SimpleNoteModalView: View {
                                 .foregroundColor(.blue)
                                 .frame(maxWidth: .infinity)
                         }
-                        
                         Button(action: {
                             showingCircleSelection = true
                         }) {
@@ -228,18 +245,6 @@ struct SimpleNoteModalView: View {
                                 .foregroundColor(.blue)
                                 .frame(maxWidth: .infinity)
                         }
-                        
-                        Button(action: {
-                            saveNote()
-                        }) {
-                            Text("保存")
-                                .font(.system(size: 17))
-                                .foregroundColor(.white)
-                                .frame(width: 80, height: 40)
-                                .background(Color.blue)
-                                .cornerRadius(8)
-                        }
-                        .frame(maxWidth: .infinity)
                     }
                     .padding(.vertical, 12)
                 }
@@ -476,14 +481,11 @@ struct TextViewWrapper: UIViewRepresentable {
         textView.autocorrectionType = .yes
         textView.returnKeyType = .default
         textView.text = state.text
-        
         // Store reference
         state.textView = textView
-        
         if isFirstResponder {
             textView.becomeFirstResponder()
         }
-        
         return textView
     }
     
@@ -496,12 +498,10 @@ struct TextViewWrapper: UIViewRepresentable {
                 uiView.selectedTextRange = selectedRange
             }
         }
-        
         // Update reference if needed
         if state.textView !== uiView {
             state.textView = uiView
         }
-        
         // Maintain focus
         if isFirstResponder && !uiView.isFirstResponder {
             uiView.becomeFirstResponder()

@@ -24,16 +24,19 @@ struct AddCircleView: View {
         NavigationView {
             VStack(alignment: .leading, spacing: 24) {
                 // 圈子名称输入框
-                TextField("圈子名称", text: $circleName)
-                    .padding(14)
-                    .background(Color.white)
-                    .cornerRadius(10)
-                    .font(.body)
-                    .padding(.top, 16)
-                    .padding(.horizontal, 16)
-                    .onChange(of: circleName) { newValue in
-                        isNameValid = !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    }
+                HStack {
+                    TextField("圈子名称", text: $circleName)
+                        .font(.body)
+                        .padding(.vertical, 10) // Adjust as needed for font size
+                        .padding(.horizontal, 12)
+                }
+                .background(Color.white)
+                .cornerRadius(10)
+                .padding(.top, 16)
+                .padding(.horizontal, 16)
+                .onChange(of: circleName) { newValue in
+                    isNameValid = !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                }
                 
                 // 添加熟人按钮
                 Button(action: {
