@@ -13,45 +13,47 @@ struct AddCircleView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     
+    // New: All contacts for picker
+    @State private var allContacts: [Contact] = []
+    
     // Validation states
     @State private var isNameValid = false
     @State private var showingErrorAlert = false
     
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("基本信息")) {
-                    TextField("圈子名称", text: $circleName)
-                        .onChange(of: circleName) { newValue in
-                            isNameValid = !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        }
-                }
+            VStack(alignment: .leading, spacing: 24) {
+                // 圈子名称输入框
+                TextField("圈子名称", text: $circleName)
+                    .padding(14)
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    .font(.body)
+                    .padding(.top, 16)
+                    .padding(.horizontal, 16)
+                    .onChange(of: circleName) { newValue in
+                        isNameValid = !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    }
                 
-                Section(header: Text("圈子成员")) {
-                    Button(action: {
-                        showingContactPicker = true
-                    }) {
-                        HStack {
-                            Text("选择成员")
-                            Spacer()
-                            Text("\(selectedContacts.count) 人")
-                                .foregroundColor(.secondary)
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.secondary)
-                        }
+                // 添加熟人按钮
+                Button(action: {
+                    showingContactPicker = true
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus")
+                            .foregroundColor(Color.blue)
+                        Text("添加熟人")
+                            .foregroundColor(Color.blue)
+                            .font(.system(size: 17, weight: .regular))
                     }
                 }
+                .padding(.leading, 16)
+                .padding(.top, 4)
                 
-                if let errorMessage = errorMessage {
-                    Section {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .font(.caption)
-                    }
-                }
+                Spacer()
             }
-            .navigationTitle("新建圈子")
+            .background(Color(red: 246/255, green: 246/255, blue: 251/255).ignoresSafeArea())
+            .navigationTitle("新建联系人")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -61,7 +63,7 @@ struct AddCircleView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("创建") {
+                    Button("保存") {
                         createCircle()
                     }
                     .disabled(!isNameValid || isLoading)
@@ -72,8 +74,18 @@ struct AddCircleView: View {
             } message: {
                 Text(errorMessage ?? "创建圈子时发生错误")
             }
-            .sheet(isPresented: $showingContactPicker) {
-                CircleContactPickerView(selectedContacts: $selectedContacts)
+            .sheet(isPresented: $showingContactPicker, onDismiss: {
+                // No-op
+            }) {
+                ContactMultiPickerSheet(
+                    allContacts: allContacts,
+                    selectedContactIds: $selectedContacts,
+                    isPresented: $showingContactPicker,
+                    onDone: {}
+                )
+            }
+            .onAppear {
+                allContacts = ContactManager.shared.fetchContacts()
             }
         }
     }
@@ -111,66 +123,6 @@ struct AddCircleView: View {
                     showingErrorAlert = true
                 }
             }
-        }
-    }
-}
-
-// Contact picker view for selecting circle members
-struct CircleContactPickerView: View {
-    @Binding var selectedContacts: Set<UUID>
-    @Environment(\.dismiss) private var dismiss
-    @StateObject private var contactManager = ContactManager.shared
-    @State private var contacts: [Contact] = []
-    @State private var searchText = ""
-    
-    var filteredContacts: [Contact] {
-        if searchText.isEmpty {
-            return contacts
-        }
-        return contacts.filter { contact in
-            guard let name = contact.name else { return false }
-            return name.localizedCaseInsensitiveContains(searchText)
-        }
-    }
-    
-    var body: some View {
-        NavigationView {
-            List {
-                ForEach(filteredContacts, id: \.contactId) { contact in
-                    HStack {
-                        if let name = contact.name {
-                            Text(name)
-                        }
-                        Spacer()
-                        if let contactId = contact.contactId {
-                            CheckboxView(isChecked: selectedContacts.contains(contactId)) {
-                                toggleContact(contactId)
-                            }
-                        }
-                    }
-                }
-            }
-            .navigationTitle("选择成员")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, prompt: "搜索联系人")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完成") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .task {
-            contacts = contactManager.fetchContacts()
-        }
-    }
-    
-    private func toggleContact(_ contactId: UUID) {
-        if selectedContacts.contains(contactId) {
-            selectedContacts.remove(contactId)
-        } else {
-            selectedContacts.insert(contactId)
         }
     }
 }

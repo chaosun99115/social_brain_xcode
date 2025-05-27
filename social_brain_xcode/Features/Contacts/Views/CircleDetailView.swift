@@ -429,68 +429,6 @@ struct CircleInsightRow: View {
     }
 }
 
-struct EditCircleContactsSheet: View {
-    let circle: Circle
-    @Binding var isPresented: Bool
-    var onUpdate: ([Contact]) -> Void
-    @StateObject private var contactManager = ContactManager.shared
-    @StateObject private var circleManager = CircleManager.shared
-    @State private var allContacts: [Contact] = []
-    @State private var selectedContactIds: Set<UUID> = []
-    
-    var body: some View {
-        NavigationView {
-            List {
-                ForEach(allContacts, id: \.contactId) { contact in
-                    HStack {
-                    Text(contact.name ?? "")
-                        Spacer()
-                        CheckboxView(isChecked: selectedContactIds.contains(contact.contactId ?? UUID())) {
-                            toggleContact(contact)
-                        }
-                    }
-                }
-            }
-            .navigationTitle("选择圈子熟人")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完成") {
-                        onUpdate(selectedContactIds.compactMap { id in allContacts.first(where: { $0.contactId == id }) })
-                        isPresented = false
-                    }
-                }
-            }
-            .onAppear {
-                loadContacts()
-            }
-        }
-    }
-    
-    private func loadContacts() {
-        allContacts = contactManager.fetchContacts()
-        if let circleId = circle.circleId {
-            let related = circleManager.getContactsForCircle(circleId: circleId)
-            selectedContactIds = Set(related.compactMap { $0.contactId })
-        }
-    }
-    
-    private func toggleContact(_ contact: Contact) {
-        guard let contactId = contact.contactId, let circleId = circle.circleId else { return }
-        if selectedContactIds.contains(contactId) {
-            // Remove
-            if circleManager.removeContactFromCircle(circleId: circleId, contactId: contactId) {
-                selectedContactIds.remove(contactId)
-            }
-        } else {
-            // Add
-            if circleManager.addContactToCircle(circleId: circleId, contactId: contactId) {
-                selectedContactIds.insert(contactId)
-            }
-        }
-    }
-}
-
 // Preview
 struct CircleDetailView_Previews: PreviewProvider {
     static var previews: some View {
