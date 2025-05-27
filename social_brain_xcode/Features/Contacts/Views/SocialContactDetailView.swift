@@ -8,7 +8,7 @@ struct SocialContactDetailView: View {
     @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var contactManager = ContactManager.shared
     @StateObject private var insightManager = ContactInsightManager.shared
-    @State private var activeTab: TabType = .summary
+    @State private var activeTab: TabType = .notes
     @State private var notes: [Note] = []
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
@@ -21,6 +21,12 @@ struct SocialContactDetailView: View {
     @State private var showingEditCircleSheet = false
     @State private var isUpdatesExpanded = false
     @State private var isReviewsExpanded = false
+    
+    // Add property to determine if this is a contact view
+    private var isContactView: Bool {
+        // Since this view is specifically for contacts, we'll always return true
+        return true
+    }
     
     // Context parameters for SocialBrain
     private var socialBrainContext: (sourceType: String, sourceAction: String, sourceId: String) {
@@ -49,36 +55,42 @@ struct SocialContactDetailView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Tabs
-                HStack(spacing: 0) {
-                    ForEach(TabType.allCases, id: \.self) { tab in
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                activeTab = tab
+                // Only show tabs if not a contact view
+                if !isContactView {
+                    // Tabs
+                    HStack(spacing: 0) {
+                        ForEach(TabType.allCases, id: \.self) { tab in
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    activeTab = tab
+                                }
+                            }) {
+                                VStack(spacing: 8) {
+                                    Text(tab.localizedName)
+                                        .font(.system(size: 17, weight: .medium))
+                                        .foregroundColor(activeTab == tab ? .primaryText : .secondaryText)
+                                    
+                                    // Active indicator
+                                    Rectangle()
+                                        .fill(activeTab == tab ? Color.primaryText : Color.clear)
+                                        .frame(height: 2)
+                                }
                             }
-                        }) {
-                            VStack(spacing: 8) {
-                                Text(tab.localizedName)
-                                    .font(.system(size: 17, weight: .medium))
-                                    .foregroundColor(activeTab == tab ? .primaryText : .secondaryText)
-                                
-                                // Active indicator
-                                Rectangle()
-                                    .fill(activeTab == tab ? Color.primaryText : Color.clear)
-                                    .frame(height: 2)
-                            }
+                            .frame(maxWidth: .infinity)
                         }
-                        .frame(maxWidth: .infinity)
                     }
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
+                    
+                    // Divider under tabs
+                    Divider()
                 }
-                .padding(.top, 8)
                 
-                // Divider under tabs
-                Divider()
-                
-                // Content based on active tab
+                // Content based on active tab or always show notes for contacts
                 ScrollView {
-                    if activeTab == .summary {
+                    if isContactView {
+                        notesSectionView
+                    } else if activeTab == .summary {
                         summarySectionView
                     } else {
                         notesSectionView
@@ -95,10 +107,14 @@ struct SocialContactDetailView: View {
                         Button(action: {
                             showingSocialBrain = true
                         }) {
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 24))
-                                .foregroundColor(.accentColor)
-                                .frame(maxWidth: .infinity)
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 20))
+                                Text("关系备忘录")
+                                    .font(.system(size: 16))
+                            }
+                            .foregroundColor(.accentColor)
+                            .frame(maxWidth: .infinity)
                         }
                     }
                     .frame(height: 44)
@@ -110,30 +126,45 @@ struct SocialContactDetailView: View {
                 )
             }
         }
-        .navigationTitle(contact.name ?? "Contact")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("相关笔记")
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button {
+                Button(action: {
                     presentationMode.wrappedValue.dismiss()
-                } label: {
-                    HStack(spacing: 5) {
+                }) {
+                    HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 17))
-                        Text("back")
+                            .font(.system(size: 17, weight: .semibold))
+                        Text("返回")
                             .font(.system(size: 17))
                     }
-                    .foregroundColor(.primaryAction)
+                    .foregroundColor(.accentColor)
                 }
             }
         }
         .sheet(isPresented: $showingSocialBrain) {
-            SocialBrainView(
-                sourceType: socialBrainContext.sourceType,
-                sourceAction: socialBrainContext.sourceAction,
-                sourceId: socialBrainContext.sourceId
-            )
+            NavigationView {
+                SocialBrainView(
+                    sourceType: socialBrainContext.sourceType,
+                    sourceAction: socialBrainContext.sourceAction,
+                    sourceId: socialBrainContext.sourceId
+                )
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationBarBackButtonHidden(true)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button(action: {
+                            showingSocialBrain = false
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
+            }
             .environmentObject(appModeManager)
             .onAppear {
                 print("[SocialContactDetailView] Opening SocialBrainView with context: type=\(socialBrainContext.sourceType), action=\(socialBrainContext.sourceAction), id=\(socialBrainContext.sourceId)")
@@ -434,20 +465,6 @@ struct SocialContactDetailView: View {
                 actionText: "查看相关笔记"
             ),
             
-            // Topics
-            ContactSummaryEntity(
-                id: UUID(),
-                type: .topic,
-                content: "\(name)之前做过一次针对App的demo演示，下次遇见可以问问app的开发进展如何了",
-                actionText: nil
-            ),
-            ContactSummaryEntity(
-                id: UUID(),
-                type: .topic,
-                content: "\(name)喜欢阅读，可以问问他有新读了哪些书",
-                actionText: nil
-            ),
-            
             // Connections
             ContactSummaryEntity(
                 id: UUID(),
@@ -627,8 +644,7 @@ struct ContactSummaryRow: View {
 struct ContactSummaryEntity: Identifiable {
     enum SummaryType: Int {
         case update = 0
-        case topic = 1
-        case connection = 2
+        case connection = 1
     }
     
     let id: UUID

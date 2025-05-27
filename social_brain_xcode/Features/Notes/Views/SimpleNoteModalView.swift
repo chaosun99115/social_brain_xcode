@@ -165,12 +165,19 @@ struct SimpleNoteModalView: View {
                 
                 // Modal content
                 VStack(spacing: 0) {
-                    // Drag indicator
-                    RoundedRectangle(cornerRadius: 2.5)
-                        .fill(Color.gray.opacity(0.5))
-                        .frame(width: 36, height: 5)
-                        .padding(.top, 8)
-                        .padding(.bottom, 16)
+                    // Dismiss button
+                    HStack {
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.primary)
+                                .padding(8)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
                     
                     // Text editor
                     ZStack(alignment: .topLeading) {

@@ -1,21 +1,33 @@
 import SwiftUI
 import CoreData
+import UIKit
 
 struct CircleDetailView: View {
     let circle: Circle
     @StateObject private var circleManager = CircleManager.shared
     @State private var contacts: [Contact] = []
-    @State private var insights: [CircleInsight] = []
     @State private var isLoading = true
     @State private var showingAddContact = false
-    @State private var showingAddInsight = false
-    @State private var isInsightsExpanded = false
-    @State private var isContactsExpanded = false
     @State private var showingEditCircleSheet = false
     @State private var showingSocialBrain = false
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject private var appModeManager: AppModeManager
+    
+    // Add a UIKit appearance modifier
+    init(circle: Circle) {
+        self.circle = circle
+        
+        // Configure navigation bar appearance
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(Color.primaryBackground)
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.label]
+        
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+    }
     
     // Context parameters for SocialBrain
     private var socialBrainContext: (sourceType: String, sourceAction: String, sourceId: String) {
@@ -36,137 +48,53 @@ struct CircleDetailView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Circle Insights Section
-                if !insights.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        SummarySectionHeader(title: "圈子话题")
-                        SectionContentWrapper {
-                            VStack(alignment: .leading, spacing: 0) {
-                                let displayInsights = isInsightsExpanded ? insights : Array(insights.prefix(3))
-                                ForEach(Array(displayInsights.enumerated()), id: \.element.insightId) { idx, insight in
-                                    CircleInsightRow(
-                                        insight: insight,
-                                        isLast: idx == displayInsights.count - 1
-                                    )
-                                }
-                                
-                                if insights.count > 3 {
-                                    Divider()
-                                        .padding(.leading, 22)
-                                        .padding(.vertical, 8)
-                                    
-                                    Button(action: {
-                                        withAnimation(.easeInOut(duration: 0.3)) {
-                                            isInsightsExpanded.toggle()
-                                        }
-                                    }) {
-                                        HStack {
-                                            Text(isInsightsExpanded ? "收起" : "展开更多")
-                                                .font(.system(size: 15))
-                                                .foregroundColor(.primaryAction)
-                                            Image(systemName: isInsightsExpanded ? "chevron.up" : "chevron.down")
-                                                .font(.system(size: 13))
-                                                .foregroundColor(.primaryAction)
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .padding(.vertical, 12)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Contacts Section
-                VStack(alignment: .leading, spacing: 12) {
-                            HStack(alignment: .center) {
-                                SummarySectionHeader(title: "圈子熟人")
-                        Spacer()
-                        Button(action: {
-                            showingEditCircleSheet = true
-                        }) {
-                            Image(systemName: "square.and.pencil")
-                                .font(.system(size: 22, weight: .medium))
-                                .foregroundColor(Color.blue)
-                        }
-                                .padding(.trailing, 8)
-                    }
-                            SectionContentWrapper {
-                                VStack(alignment: .leading, spacing: 0) {
-                    if filteredContacts.isEmpty {
-                        Text("No contacts in this circle")
-                            .font(.subheadline)
-                            .foregroundColor(.secondaryText)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding()
-                    } else {
-                                    let displayContacts = isContactsExpanded ? filteredContacts : Array(filteredContacts.prefix(3))
-                                    ForEach(Array(displayContacts.enumerated()), id: \.element.contactId) { idx, contact in
-                                        NavigationLink(destination: SocialContactDetailView(contact: contact)) {
-                                                HStack(spacing: 16) {
-                                                // Dot
-                                                SwiftUI.Circle()
-                                                    .fill(Color.tertiaryText)
-                                                        .frame(width: 6, height: 6)
-                                                        .padding(.top, 8)
-                                                    
-                                                    // Contact Info
-                                                    VStack(alignment: .leading, spacing: 4) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // Contacts Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            if filteredContacts.isEmpty {
+                                Text("No contacts in this circle")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondaryText)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding()
+                            } else {
+                                ForEach(Array(filteredContacts.enumerated()), id: \.element.contactId) { idx, contact in
+                                    NavigationLink(destination: SocialContactDetailView(contact: contact)) {
+                                        HStack(spacing: 16) {
+                                            // Contact Info
+                                            VStack(alignment: .leading, spacing: 4) {
                                                 Text(contact.name ?? "")
-                                                            .font(.system(size: 16))
+                                                    .font(.system(size: 17))
                                                     .foregroundColor(.primaryText)
-                                                    }
-                                                    
-                                                    Spacer()
-                                                    
-                                                Image(systemName: "chevron.right")
-                                                        .font(.system(size: 14, weight: .medium))
-                                                    .foregroundColor(.secondaryText)
                                             }
-                                                .padding(.vertical, 12)
-                                            .padding(.horizontal, 20)
-                                        }
-                                        .buttonStyle(PlainButtonStyle())
                                             
-                                        if idx != displayContacts.count - 1 {
-                                            Divider()
-                                                    .padding(.leading, 22)
-                                                    .padding(.vertical, 8)
-                                            }
+                                            Spacer()
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .font(.system(size: 14, weight: .medium))
+                                                .foregroundColor(.secondaryText)
                                         }
-                                        
-                            if filteredContacts.count > 3 {
-                                            Divider()
-                                                .padding(.leading, 22)
-                                                .padding(.vertical, 8)
-                                        
-                                Button(action: {
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        isContactsExpanded.toggle()
+                                        .contentShape(Rectangle())  // Makes entire row tappable
+                                        .padding(.vertical, 4)
+                                        .padding(.horizontal, 20)
                                     }
-                                }) {
-                                                HStack {
-                                        Text(isContactsExpanded ? "收起" : "展开更多")
-                                                        .font(.system(size: 15))
-                                                        .foregroundColor(.primaryAction)
-                                        Image(systemName: isContactsExpanded ? "chevron.up" : "chevron.down")
-                                                        .font(.system(size: 13))
-                                                        .foregroundColor(.primaryAction)
-                                    }
-                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                .padding(.vertical, 12)
-                                            }
-                                        }
-                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    
+                                    Divider()
+                                        .padding(.leading, 20)
+                                        .padding(.vertical, 1)
                                 }
+                                .background(Color.cardBackground)
+                                .cornerRadius(12)
+                                .padding(.horizontal, 16)
                             }
                         }
-                            }
+                    }
                     .padding(.vertical)
                     Spacer().frame(height: 40)
                 }
+                .background(Color.primaryBackground)
                 
                 // Fixed bottom toolbar that respects safe areas
                 VStack(spacing: 0) {
@@ -178,15 +106,19 @@ struct CircleDetailView: View {
                         Button(action: {
                             showingSocialBrain = true
                         }) {
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 24))
-                                .foregroundColor(.accentColor)
-                                .frame(maxWidth: .infinity)
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 20))
+                                Text("关系备忘录")
+                                    .font(.system(size: 16))
                             }
+                            .foregroundColor(.accentColor)
+                            .frame(maxWidth: .infinity)
                         }
+                    }
                     .frame(height: 44)
                     .padding(.bottom, safeAreaPadding)
-            }
+                }
                 .background(
                     VisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
                         .ignoresSafeArea()
@@ -194,18 +126,22 @@ struct CircleDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle(circle.name ?? "Unnamed Circle")
+        .navigationTitle("圈子熟人")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showingEditCircleSheet = true
+                }) {
+                    Text("编辑")
+                        .font(.system(size: 17))
+                        .foregroundColor(.accentColor)
+                }
+            }
+        }
         .sheet(isPresented: $showingAddContact) {
             AddContactToCircleView(circle: circle) { contact in
                 if let contact = contact {
                     contacts.append(contact)
-                }
-            }
-        }
-        .sheet(isPresented: $showingAddInsight) {
-            AddInsightToCircleView(circle: circle) { insight in
-                if let insight = insight {
-                    insights.append(insight)
                 }
             }
         }
@@ -245,13 +181,11 @@ struct CircleDetailView: View {
         await MainActor.run { isLoading = true }
         defer { Task { @MainActor in isLoading = false } }
         
-        // Load contacts and insights
+        // Load contacts
         let loadedContacts = circleManager.getContactsForCircle(circleId: circleId)
-        let loadedInsights = circleManager.getInsightsForCircle(circleId: circleId)
         
         await MainActor.run {
             self.contacts = loadedContacts
-            self.insights = loadedInsights
         }
     }
     
