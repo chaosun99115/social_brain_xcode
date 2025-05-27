@@ -13,6 +13,10 @@ struct SocialContactView: View {
     @State private var isRefreshing = false
     @State private var errorMessage: String? = nil
     @State private var showingAddContact = false
+    @State private var showingAddCircleSheet = false
+    @State private var newCircleName = ""
+    @State private var showingEditCircleContactsSheet = false
+    @State private var tempNewCircle: Circle? = nil
     
     // Fetch contacts from CoreData (initial load)
     private func loadContacts() async {
@@ -202,7 +206,11 @@ struct SocialContactView: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            showingAddContact = true
+                            if selectedTab == 0 {
+                                showingAddContact = true
+                            } else {
+                                showingAddCircleSheet = true
+                            }
                         }) {
                             Image(systemName: "person.badge.plus")
                                 .font(.system(size: 22, weight: .bold, design: .default))
@@ -251,6 +259,81 @@ struct SocialContactView: View {
             }
             .sheet(isPresented: $showingAddContact) {
                 AddContactSheet(refreshTrigger: $refreshTrigger)
+            }
+            .sheet(isPresented: $showingAddCircleSheet) {
+                // Custom modal for new circle
+                VStack(spacing: 0) {
+                    HStack {
+                        Button("取消") { showingAddCircleSheet = false }
+                            .foregroundColor(.blue)
+                            .padding(.leading)
+                        Spacer()
+                        Text("新建联系人")
+                            .font(.headline)
+                            .padding(.vertical)
+                        Spacer()
+                        Button("保存") {
+                            // Save new circle and show EditCircleContactsSheet
+                            let context = PersistenceController.shared.container.viewContext
+                            let circle = Circle(context: context)
+                            circle.circleId = UUID()
+                            circle.name = newCircleName
+                            circle.createdAt = Date()
+                            circle.type = 1
+                            try? context.save()
+                            tempNewCircle = circle
+                            showingAddCircleSheet = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showingEditCircleContactsSheet = true
+                            }
+                        }
+                        .foregroundColor(newCircleName.isEmpty ? .gray : .blue)
+                        .disabled(newCircleName.isEmpty)
+                        .padding(.trailing)
+                    }
+                    .background(Color(.systemGray6))
+                    .frame(height: 44)
+                    TextField("圈子名称", text: $newCircleName)
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(8)
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                    Button(action: {
+                        // Save new circle and show EditCircleContactsSheet
+                        let context = PersistenceController.shared.container.viewContext
+                        let circle = Circle(context: context)
+                        circle.circleId = UUID()
+                        circle.name = newCircleName
+                        circle.createdAt = Date()
+                        circle.type = 1
+                        try? context.save()
+                        tempNewCircle = circle
+                        showingAddCircleSheet = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showingEditCircleContactsSheet = true
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "plus")
+                            Text("添加熟人")
+                        }
+                        .foregroundColor(.blue)
+                        .padding(.vertical, 12)
+                    }
+                    .disabled(newCircleName.isEmpty)
+                    .padding(.leading)
+                    Spacer()
+                }
+                .background(Color(.systemGroupedBackground))
+            }
+            .sheet(isPresented: $showingEditCircleContactsSheet) {
+                if let circle = tempNewCircle {
+                    EditCircleContactsSheet(circle: circle, isPresented: $showingEditCircleContactsSheet) { _ in
+                        // Optionally refresh circles list
+                        Task { await loadCircles() }
+                    }
+                }
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())

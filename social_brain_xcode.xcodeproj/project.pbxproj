@@ -31,6 +31,7 @@
 		AFAE46DE2DE4BA7700DD10E0 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = AFAE46DD2DE4BA7700DD10E0 /* MarkdownUI */; };
 		AFAE46E52DE4E57F00DD10E0 /* ContactSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46E42DE4E57E00DD10E0 /* ContactSelectionView.swift */; };
 		AFAE46ED2DE6309600DD10E0 /* AddContactSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46EC2DE6309600DD10E0 /* AddContactSheet.swift */; };
+		AFAE46EF2DE646B300DD10E0 /* AddCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46EE2DE646B300DD10E0 /* AddCircleView.swift */; };
 		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
 		AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E42DA70C770066907B /* InfoPlist.strings */; };
 		AFBD50F42DA70DDC0066907B /* SocialContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F22DA70DDC0066907B /* SocialContactView.swift */; };
@@ -87,6 +88,7 @@
 		AFA2761B2DB0362C00C29B81 /* MentionTextView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MentionTextView.swift; sourceTree = "<group>"; };
 		AFAE46E42DE4E57E00DD10E0 /* ContactSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactSelectionView.swift; sourceTree = "<group>"; };
 		AFAE46EC2DE6309600DD10E0 /* AddContactSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddContactSheet.swift; sourceTree = "<group>"; };
+		AFAE46EE2DE646B300DD10E0 /* AddCircleView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddCircleView.swift; sourceTree = "<group>"; };
 		AFBD50E32DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
 		AFBD50E52DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = InfoPlist.strings; sourceTree = "<group>"; };
 		AFBD50F22DA70DDC0066907B /* SocialContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContactView.swift; sourceTree = "<group>"; };
@@ -254,6 +256,7 @@
 		AFA276252DB03D2A00C29B81 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				AFAE46EE2DE646B300DD10E0 /* AddCircleView.swift */,
 				AFAE46EC2DE6309600DD10E0 /* AddContactSheet.swift */,
 				AFBD50F22DA70DDC0066907B /* SocialContactView.swift */,
 				AFBD50FC2DA739660066907B /* SocialContactDetailView.swift */,
@@ -519,6 +522,7 @@
 				AF84F4242DC942D200BD66D5 /* ContactInsightDebugView.swift in Sources */,
 				AF84F41B2DC582C600BD66D5 /* CircleDebugView.swift in Sources */,
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,
+				AFAE46EF2DE646B300DD10E0 /* AddCircleView.swift in Sources */,
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
 				AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */,
 				AFDDDC9E2DD393F100425764 /* CircleDetailView.swift in Sources */,
