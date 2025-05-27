@@ -12,6 +12,7 @@ struct SocialContactView: View {
     @State private var isLoading = true
     @State private var isRefreshing = false
     @State private var errorMessage: String? = nil
+    @State private var showingAddContact = false
     
     // Fetch contacts from CoreData (initial load)
     private func loadContacts() async {
@@ -201,7 +202,7 @@ struct SocialContactView: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            // Add contact action
+                            showingAddContact = true
                         }) {
                             Image(systemName: "person.badge.plus")
                                 .font(.system(size: 22, weight: .bold, design: .default))
@@ -247,6 +248,9 @@ struct SocialContactView: View {
                 Task {
                     await loadContacts()
                 }
+            }
+            .sheet(isPresented: $showingAddContact) {
+                AddContactSheet()
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
