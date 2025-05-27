@@ -8,7 +8,6 @@ struct SocialNotesView: View {
     @State private var selectedNote: SocialNote? = nil
     @State private var showingNoteDetail = false
     @State private var refreshTrigger = false
-    @State private var showingDebugMenu = false
     @State private var showingSampleNoteModal = false
     @State private var showingSampleNoteDialog = false
     @EnvironmentObject var noteManager: NoteManager
@@ -145,16 +144,6 @@ struct SocialNotesView: View {
             }
             .navigationTitle("社交笔记")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索笔记")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingDebugMenu = true
-                    }) {
-                        Image(systemName: "ladybug")
-                            .foregroundColor(.primaryAction)
-                    }
-                }
-            }
             .sheet(isPresented: $showingNoteModal) {
                 SocialNoteModalView(initialPrompt: "今天遇到了哪些事，认识了哪些人？") { noteText in
                     // Only refresh the notes list
@@ -165,9 +154,6 @@ struct SocialNotesView: View {
                 SimpleNoteModalView(initialText: "") { noteText in
                     refreshTrigger.toggle()
                 }
-            }
-            .sheet(isPresented: $showingDebugMenu) {
-                DebugMenuView()
             }
             .confirmationDialog(
                 SampleModeConfig.selectionDialogMessage,
