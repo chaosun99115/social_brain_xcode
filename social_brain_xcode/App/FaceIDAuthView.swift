@@ -1,11 +1,15 @@
 import SwiftUI
 import LocalAuthentication
+import os.log
 
 struct FaceIDAuthView: View {
     @Binding var isAuthenticated: Bool
     @Binding var authError: String?
     @State private var isLoading = false
     @Environment(\.colorScheme) private var colorScheme
+    
+    // Logger for critical errors only
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.socialbrain", category: "FaceIDAuth")
     
     // Haptic feedback
     private let feedbackGenerator = UINotificationFeedbackGenerator()
@@ -95,11 +99,40 @@ struct FaceIDAuthView: View {
         .padding()
         .onAppear {
             feedbackGenerator.prepare()
+            
+            // Check Face ID availability immediately
+            checkFaceIDAvailability()
+            
             if isSimulator {
-                // In simulator, we'll show the simulate button instead of auto-authenticating
                 authError = "Running in Simulator Mode"
             } else {
-                authenticate()
+                // Delay authentication slightly to ensure view is fully loaded
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    authenticate()
+                }
+            }
+        }
+    }
+    
+    private func checkFaceIDAvailability() {
+        let context = LAContext()
+        var error: NSError?
+        
+        if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
+            let biometryType = context.biometryType
+            switch biometryType {
+            case .faceID, .touchID:
+                break
+            case .none:
+                logger.error("No biometric authentication available")
+                authError = "No biometric authentication available on this device"
+            @unknown default:
+                logger.error("Unknown biometric type")
+                authError = "Unknown biometric authentication type"
+            }
+        } else {
+            if let error = error {
+                handleAuthenticationError(error)
             }
         }
     }
@@ -123,25 +156,30 @@ struct FaceIDAuthView: View {
         var error: NSError?
         
         // Check if biometric authentication is available
-        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
             handleAuthenticationError(error)
             return
         }
         
+        // Get the type of biometric authentication available
+        let biometryType = context.biometryType
+        let authType = biometryType == .faceID ? "Face ID" : "Touch ID"
+        
         // Perform authentication
         let reason = "Authenticate to access your secure Social Brain data"
-        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, error in
+        
+        context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, error in
             DispatchQueue.main.async {
-                isLoading = false
+                self.isLoading = false
                 
                 if success {
-                    feedbackGenerator.notificationOccurred(.success)
+                    self.feedbackGenerator.notificationOccurred(.success)
                     withAnimation {
                         self.isAuthenticated = true
                     }
                 } else {
-                    feedbackGenerator.notificationOccurred(.error)
-                    handleAuthenticationError(error as NSError?)
+                    self.feedbackGenerator.notificationOccurred(.error)
+                    self.handleAuthenticationError(error as NSError?)
                 }
             }
         }
@@ -155,19 +193,45 @@ struct FaceIDAuthView: View {
             return
         }
         
-        switch error?.code {
+        guard let error = error else {
+            logger.error("Unknown authentication error")
+            authError = "An unexpected error occurred. Please try again."
+            return
+        }
+        
+        logger.error("Authentication error code: \(error.code)")
+        
+        switch error.code {
         case LAError.biometryNotAvailable.rawValue:
+            logger.error("Biometry not available")
             authError = "Face ID is not available on this device."
         case LAError.biometryNotEnrolled.rawValue:
+            logger.error("Biometry not enrolled")
             authError = "Face ID is not set up on this device. Please set it up in Settings."
         case LAError.biometryLockout.rawValue:
+            logger.error("Biometry locked out")
             authError = "Face ID is locked. Please try again later or use your passcode."
         case LAError.userCancel.rawValue:
+            logger.error("User cancelled authentication")
             authError = "Authentication was cancelled. Please try again."
         case LAError.authenticationFailed.rawValue:
+            logger.error("Authentication failed")
             authError = "Authentication failed. Please try again."
+        case LAError.systemCancel.rawValue:
+            logger.error("System cancelled authentication")
+            authError = "Authentication was cancelled by the system. Please try again."
+        case LAError.passcodeNotSet.rawValue:
+            logger.error("Passcode not set")
+            authError = "Please set up a passcode in Settings to use Face ID."
+        case LAError.appCancel.rawValue:
+            logger.error("App cancelled authentication")
+            authError = "Authentication was cancelled by the app. Please try again."
+        case LAError.invalidContext.rawValue:
+            logger.error("Invalid context")
+            authError = "Authentication context is invalid. Please restart the app."
         default:
-            authError = error?.localizedDescription ?? "An unexpected error occurred. Please try again."
+            logger.error("Unexpected error: \(error.localizedDescription)")
+            authError = error.localizedDescription
         }
     }
 }

@@ -118,7 +118,7 @@
 		AFF98BBD2DA075730001DD70 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		AFF98BBF2DA075730001DD70 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		AFF98BC22DA075730001DD70 /* social_brain_xcode.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = social_brain_xcode.xcdatamodel; sourceTree = "<group>"; };
-		AFF98BC42DA075730001DD70 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AFF98BC42DA075730001DD70 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = App/Info.plist; sourceTree = "<group>"; };
 		AFF98BCB2DA0772F0001DD70 /* MainTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		AFF98BCD2DA0772F0001DD71 /* SocialNote.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNote.swift; sourceTree = "<group>"; };
 		AFF98BCE2DA0772F0001DD72 /* SocialNotesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNotesView.swift; sourceTree = "<group>"; };
@@ -286,7 +286,6 @@
 				AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */,
 				AFF98BD82DA45DA00001DD70 /* AppTheme.swift */,
 				AFF98BCB2DA0772F0001DD70 /* MainTabView.swift */,
-				AFF98BC42DA075730001DD70 /* Info.plist */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -400,6 +399,7 @@
 		AFF98BB52DA075720001DD70 /* social_brain_xcode */ = {
 			isa = PBXGroup;
 			children = (
+				AFF98BC42DA075730001DD70 /* Info.plist */,
 				AF84F4142DC582C600BD66D5 /* CoreDataDebug */,
 				AFA276272DB03E6400C29B81 /* App */,
 				AFA2762C2DB03F4200C29B81 /* Components */,
@@ -700,7 +700,9 @@
 				DEVELOPMENT_TEAM = G2726ZZ85E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = social_brain_xcode/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "社交大脑";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "社交大脑使用 Face ID 来保护您的个人关系数据，确保只有您能访问您的社交笔记和联系人。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -711,7 +713,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "SocialBrain-ch";
+				PRODUCT_BUNDLE_IDENTIFIER = socialbrainbeta;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -730,7 +732,9 @@
 				DEVELOPMENT_TEAM = G2726ZZ85E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = social_brain_xcode/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "社交大脑";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "社交大脑使用 Face ID 来保护您的个人关系数据，确保只有您能访问您的社交笔记和联系人。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
