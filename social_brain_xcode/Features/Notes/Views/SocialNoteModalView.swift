@@ -4,6 +4,7 @@ struct SocialNoteModalView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var noteManager: NoteManager
+    @EnvironmentObject var appModeManager: AppModeManager
     @State private var dragOffset: CGFloat = 0
     @State private var messageContent: String = "今天遇到了哪些事"
     @State private var initialPrompt: String = "今天遇到了哪些事"
@@ -297,7 +298,9 @@ struct SocialNoteModalView: View {
             // All mentions exist, create note and relationships immediately
             Task {
                 if !messageContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    if let _ = await noteManager.createNoteWithMentions(content: messageContent, type: .social, mentions: mentions) {
+                    // Use sample (type 0) for sample mode, regular (type 1) for non-sample mode
+                    let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
+                    if let _ = await noteManager.createNoteWithMentions(content: messageContent, type: noteType, mentions: mentions) {
                         onSave(messageContent)
                         dismiss()
                     }
@@ -313,7 +316,9 @@ struct SocialNoteModalView: View {
         print("[SocialNoteModalView] 💾 Saving note. New contacts: \(mentions), All contacts: \(allMentions)")
         Task {
             if !messageContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                if let _ = await noteManager.createNoteWithMentions(content: messageContent, type: .social, mentions: allMentions) {
+                // Use sample (type 0) for sample mode, regular (type 1) for non-sample mode
+                let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
+                if let _ = await noteManager.createNoteWithMentions(content: messageContent, type: noteType, mentions: allMentions) {
                     onSave(messageContent)
                     dismiss()
                 }

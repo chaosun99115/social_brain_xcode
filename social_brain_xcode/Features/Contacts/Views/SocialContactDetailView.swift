@@ -246,7 +246,25 @@ struct SocialContactDetailView: View {
         
         // Load notes using ContactManager
         DispatchQueue.main.async {
-            self.notes = contactManager.getNotesForContact(contactId: contactId)
+            var allNotes = self.contactManager.getNotesForContact(contactId: contactId)
+            
+            // Sort notes: memo (type=2) first, then others by date descending
+            allNotes.sort { (note1, note2) -> Bool in
+                // If note1 is memo (type=2), it should come first
+                if note1.type == 2 && note2.type != 2 {
+                    return true
+                }
+                // If note2 is memo (type=2), it should come first
+                if note1.type != 2 && note2.type == 2 {
+                    return false
+                }
+                // For non-memo notes, sort by date descending
+                let date1 = note1.createdAt ?? Date.distantPast
+                let date2 = note2.createdAt ?? Date.distantPast
+                return date1 > date2
+            }
+            
+            self.notes = allNotes
             self.isLoading = false
         }
     }

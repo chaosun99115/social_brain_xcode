@@ -5,6 +5,7 @@ struct AddContactSheet: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @StateObject private var contactManager = ContactManager.shared
+    @Binding var refreshTrigger: Bool
     
     @State private var name: String = ""
     @State private var memo: String = ""
@@ -101,6 +102,7 @@ struct AddContactSheet: View {
             }
             
             try viewContext.save()
+            refreshTrigger.toggle()
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
@@ -111,7 +113,7 @@ struct AddContactSheet: View {
 
 struct AddContactSheet_Previews: PreviewProvider {
     static var previews: some View {
-        AddContactSheet()
+        AddContactSheet(refreshTrigger: .constant(false))
             .environment(\.managedObjectContext, CoreDataManager.shared.viewContext)
     }
 } 

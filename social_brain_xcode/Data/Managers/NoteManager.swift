@@ -3,10 +3,9 @@ import Foundation
 
 // Note type enum
 enum NoteType: Int {
-    case general = 0
-    case meeting = 1
-    case social = 2
-    case followUp = 3
+    case sample = 0    // Sample notes
+    case regular = 1   // Regular notes
+    case memo = 2      // Memo notes
 }
 
 class NoteManager: ObservableObject {
@@ -36,7 +35,7 @@ class NoteManager: ObservableObject {
     }
     
     // New method to create a note with content and type
-    func createNote(content: String, type: NoteType = .general) -> Note? {
+    func createNote(content: String, type: NoteType = .regular) -> Note? {
         let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedContent.isEmpty else { return nil }
         let note = Note(context: context)
@@ -258,7 +257,7 @@ class NoteManager: ObservableObject {
         }
     }
 
-    func createNoteWithMentions(content: String, type: NoteType = .social, mentions: [String]) async -> Note? {
+    func createNoteWithMentions(content: String, type: NoteType = .regular, mentions: [String]) async -> Note? {
         let backgroundContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
         backgroundContext.parent = context
         

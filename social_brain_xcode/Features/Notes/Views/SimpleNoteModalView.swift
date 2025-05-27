@@ -128,9 +128,11 @@ struct CircleSelectionView: View {
 struct SimpleNoteModalView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
+    @EnvironmentObject var appModeManager: AppModeManager
     
     let initialText: String
     let onSave: (String) -> Void
+    let noteId: UUID?
     
     @StateObject private var textState = TextEditorState()
     @State private var textEditorHeight: CGFloat = 100
@@ -147,8 +149,9 @@ struct SimpleNoteModalView: View {
     @State private var showingMentionConfirmation = false
     @State private var isSaving = false
     
-    init(initialText: String, onSave: @escaping (String) -> Void) {
+    init(initialText: String, noteId: UUID? = nil, onSave: @escaping (String) -> Void) {
         self.initialText = initialText
+        self.noteId = noteId
         self.onSave = onSave
         _textState = StateObject(wrappedValue: TextEditorState())
     }
@@ -336,32 +339,32 @@ struct SimpleNoteModalView: View {
     }
     
     private func saveNote() {
-        guard !textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        
-        // Extract mentions from the content
-        let mentions = extractMentions(from: textState.text)
-        
-        // Check which mentions already exist as contacts
-        let existingContacts = mentions.compactMap { name -> String? in
-            if let contact = ContactManager.shared.fetchContact(withName: name) {
-                return name
-            } else {
-                return nil
-            }
-        }
-        let unmatched = mentions.filter { !existingContacts.contains($0) }
-        
-        if !unmatched.isEmpty {
-            unmatchedMentions = unmatched
-            showingMentionConfirmation = true
-            return
-        } else {
-            // All mentions exist, create note and relationships immediately
-            Task {
-                if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: .social, mentions: mentions) {
+        if let noteId = noteId {
+            // Update existing note
+            if !textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if noteManager.updateNote(noteId: noteId, text: textState.text) {
                     onSave(textState.text)
                     dismiss()
                 }
+            }
+        } else {
+            // Create new note with mentions
+            let mentions = extractMentions(from: textState.text)
+            let existingContacts = mentions.compactMap { name -> String? in
+                if let contact = ContactManager.shared.fetchContact(withName: name) {
+                    return name
+                } else {
+                    return nil
+                }
+            }
+            let unmatched = mentions.filter { !existingContacts.contains($0) }
+            
+            if !unmatched.isEmpty {
+                unmatchedMentions = unmatched
+                showingMentionConfirmation = true
+                return
+            } else {
+                saveNoteWithMentions(mentions: mentions)
             }
         }
     }
@@ -382,7 +385,9 @@ struct SimpleNoteModalView: View {
     private func saveNoteWithMentions(mentions: [String], alsoIncludeExisting: Bool = true) {
         let allMentions = alsoIncludeExisting ? mentions : []
         Task {
-            if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: .social, mentions: allMentions) {
+            // Use sample (type 0) for sample mode, regular (type 1) for non-sample mode
+            let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
+            if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: noteType, mentions: allMentions) {
                 onSave(textState.text)
                 dismiss()
             }

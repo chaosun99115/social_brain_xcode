@@ -46,8 +46,8 @@ extension SampleModeProvider {
         if let contact = context.contact {
             notesFetchRequest.predicate = NSPredicate(format: "contacts.contacts == %@", contact)
         } else {
-            // In sample mode, we want to include both sample notes (type 0) and social notes (type 2)
-            notesFetchRequest.predicate = NSPredicate(format: "type == %d OR type == %d", 0, NoteType.social.rawValue)
+            // In sample mode, we want to include both sample notes (type 0) and regular notes (type 1)
+            notesFetchRequest.predicate = NSPredicate(format: "type == %d OR type == %d", NoteType.sample.rawValue, NoteType.regular.rawValue)
         }
         
         // Sort by date, most recent first

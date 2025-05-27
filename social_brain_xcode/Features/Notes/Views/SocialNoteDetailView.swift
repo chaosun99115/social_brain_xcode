@@ -134,7 +134,7 @@ struct SocialNoteDetailView: View {
         }
         .edgesIgnoringSafeArea(.bottom)
         .sheet(isPresented: $showingEditModal) {
-            SimpleNoteModalView(initialText: editingNoteText) { updatedText in
+            SimpleNoteModalView(initialText: editingNoteText, noteId: note.noteId) { updatedText in
                 print("Debug - Received updated text: \(updatedText)")
                 if !updatedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     guard let noteId = note.noteId else { return }

@@ -20,18 +20,20 @@ struct SocialNotesView: View {
             .map { SocialNote(from: $0) }
             .filter { !$0.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         
-        if appModeManager.isSampleMode {
-            if searchText.isEmpty {
-                return allNotes
+        // Filter notes based on app mode
+        let modeFilteredNotes = allNotes.filter { note in
+            if appModeManager.isSampleMode {
+                return note.type.rawValue == 0 // Only show type 0 in sample mode
+            } else {
+                return note.type.rawValue == 1 // Only show type 1 in non-sample mode
             }
-            return allNotes.filter { $0.content.localizedCaseInsensitiveContains(searchText) }
-        } else {
-            let userNotes = allNotes.filter { $0.type.rawValue != 0 }
-            if searchText.isEmpty {
-                return userNotes
-            }
-            return userNotes.filter { $0.content.localizedCaseInsensitiveContains(searchText) }
         }
+        
+        // Apply search filter if search text exists
+        if searchText.isEmpty {
+            return modeFilteredNotes
+        }
+        return modeFilteredNotes.filter { $0.content.localizedCaseInsensitiveContains(searchText) }
     }
     
     var body: some View {

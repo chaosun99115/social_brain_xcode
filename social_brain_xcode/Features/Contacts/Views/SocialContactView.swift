@@ -250,7 +250,7 @@ struct SocialContactView: View {
                 }
             }
             .sheet(isPresented: $showingAddContact) {
-                AddContactSheet()
+                AddContactSheet(refreshTrigger: $refreshTrigger)
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
@@ -568,10 +568,11 @@ struct CircleListView: View {
     var filteredCircles: [Circle] {
         let base: [Circle]
         if appModeManager.isSampleMode {
-            base = circles
+            base = circles.filter { $0.type == 0 }  // Show type=0 circles in sample mode
         } else {
-            base = circles.filter { $0.type != 0 }
+            base = circles.filter { $0.type == 1 }  // Show type=1 circles in non-sample mode
         }
+        
         if searchText.isEmpty {
             return base
         }
