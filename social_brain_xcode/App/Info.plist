@@ -17,6 +17,6 @@
 	<key>LSHasLocalizedDisplayName</key>
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Social Brain uses Face ID to protect your personal relationship data and ensure only you can access your information.</string>
+	<string>This app uses Face ID to protect your data</string>
 </dict>
 </plist>
