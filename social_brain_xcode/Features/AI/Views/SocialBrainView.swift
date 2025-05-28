@@ -225,7 +225,7 @@ struct SocialBrainView: View {
                                     .id(scrollToBottomID)
                             }
                             .padding(.horizontal)
-                            .padding(.top, 0)
+                            .padding(.top, 16)
                         }
                         .simultaneousGesture(
                             DragGesture().onChanged { _ in

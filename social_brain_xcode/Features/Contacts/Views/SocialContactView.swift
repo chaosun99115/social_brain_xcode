@@ -212,6 +212,8 @@ struct SocialContactView: View {
             }
             .navigationTitle("社交关系")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarBackground(Color.primaryBackground, for: .navigationBar)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_contacts")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

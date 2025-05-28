@@ -167,60 +167,61 @@ struct SimpleNoteModalView: View {
                     }
                 VStack(spacing: 0) {
                     NavigationView {
-                        VStack(spacing: 0) {
-                            // Text editor
-                            ZStack(alignment: .topLeading) {
-                                Color(.systemBackground)
-                                    .frame(height: min(textEditorHeight, maxTextEditorHeight))
-                                TextViewWrapper(state: textState, isFirstResponder: true, onDone: {})
-                                    .frame(height: min(textEditorHeight, maxTextEditorHeight))
-                                    .padding(.horizontal, 16)
-                                    .onChange(of: textState.text) { newValue in
-                                        let estimatedHeight = newValue.isEmpty ? 100 : min(newValue.height(width: UIScreen.main.bounds.width * 0.9, font: .systemFont(ofSize: 17)), maxTextEditorHeight)
-                                        textEditorHeight = max(100, estimatedHeight)
-                                    }
-                                if textState.text.isEmpty {
-                                    Text("现在的想法是...")
-                                        .font(.system(size: 17))
-                                        .foregroundColor(.gray)
+                        ZStack {
+                            Color(.systemGray6)
+                                .ignoresSafeArea()
+                            VStack(spacing: 0) {
+                                // Text editor
+                                ZStack(alignment: .topLeading) {
+                                    Color(.systemBackground)
+                                        .frame(height: min(textEditorHeight, maxTextEditorHeight))
+                                    TextViewWrapper(state: textState, isFirstResponder: true, onDone: {})
+                                        .frame(height: min(textEditorHeight, maxTextEditorHeight))
                                         .padding(.horizontal, 16)
-                                        .padding(.top, 0)
-                                        .allowsHitTesting(false)
+                                        .onChange(of: textState.text) { newValue in
+                                            let estimatedHeight = newValue.isEmpty ? 100 : min(newValue.height(width: UIScreen.main.bounds.width * 0.9, font: .systemFont(ofSize: 17)), maxTextEditorHeight)
+                                            textEditorHeight = max(100, estimatedHeight)
+                                        }
+                                    if textState.text.isEmpty {
+                                        Text("现在的想法是...")
+                                            .font(.system(size: 17))
+                                            .foregroundColor(.gray)
+                                            .padding(.horizontal, 16)
+                                            .padding(.top, 0)
+                                            .allowsHitTesting(false)
+                                    }
                                 }
+                                .padding(.top, 20)
+                                .padding(.bottom, 8)
+                                Spacer()
                             }
-                            .padding(.top, 8)
-                            .padding(.bottom, 8)
-                            Spacer()
-                            Divider()
-                                .padding(.horizontal, 0)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: geometry.size.height - (showingKeyboard ? keyboardHeight : 0))
-                        .background(Color(.systemBackground))
-                        .cornerRadius(20, corners: [.topLeft, .topRight])
-                        .edgesIgnoringSafeArea(.bottom)
-                        .gesture(
-                            DragGesture()
-                                .onEnded { value in
-                                    if value.translation.height > 20 {
+                            .frame(maxWidth: .infinity, maxHeight: geometry.size.height - (showingKeyboard ? keyboardHeight : 0))
+                            .background(Color(.systemBackground))
+                            .edgesIgnoringSafeArea(.bottom)
+                            .gesture(
+                                DragGesture()
+                                    .onEnded { value in
+                                        if value.translation.height > 20 {
+                                            dismiss()
+                                        }
+                                    }
+                            )
+                            .navigationTitle("新建想法")
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button("取消") {
                                         dismiss()
                                     }
+                                    .foregroundColor(.blue)
                                 }
-                        )
-                        .navigationTitle("新建想法")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarLeading) {
-                                Button("取消") {
-                                    dismiss()
+                                ToolbarItem(placement: .navigationBarTrailing) {
+                                    Button("保存") {
+                                        saveNote()
+                                    }
+                                    .disabled(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                    .foregroundColor(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
                                 }
-                                .foregroundColor(.blue)
-                            }
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Button("保存") {
-                                    saveNote()
-                                }
-                                .disabled(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                .foregroundColor(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
                             }
                         }
                     }

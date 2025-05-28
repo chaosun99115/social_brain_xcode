@@ -123,6 +123,8 @@ struct SocialNotesView: View {
             }
             .navigationTitle("社交笔记")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarBackground(Color.primaryBackground, for: .navigationBar)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索笔记")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

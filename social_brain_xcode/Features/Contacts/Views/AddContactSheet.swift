@@ -12,6 +12,12 @@ struct AddContactSheet: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     
+    init(refreshTrigger: Binding<Bool>) {
+        self._refreshTrigger = refreshTrigger
+        
+        // Remove global navigation bar appearance configuration here
+    }
+    
     var body: some View {
         NavigationView {
             ZStack {

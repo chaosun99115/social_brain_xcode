@@ -20,6 +20,13 @@ struct AddCircleView: View {
     @State private var isNameValid = false
     @State private var showingErrorAlert = false
     
+    // Custom background color
+    private let backgroundColor = Color(red: 246/255, green: 246/255, blue: 251/255)
+    
+    init() {
+        // Remove global navigation bar appearance configuration here
+    }
+    
     var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 24) {
@@ -55,7 +62,7 @@ struct AddCircleView: View {
                 
                 Spacer()
             }
-            .background(Color(red: 246/255, green: 246/255, blue: 251/255).ignoresSafeArea())
+            .background(backgroundColor.ignoresSafeArea())
             .navigationTitle("新建联系人")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -91,6 +98,7 @@ struct AddCircleView: View {
                 allContacts = ContactManager.shared.fetchContacts()
             }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
     
     private func createCircle() {
