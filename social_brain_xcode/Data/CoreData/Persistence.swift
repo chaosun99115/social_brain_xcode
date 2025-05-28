@@ -61,6 +61,7 @@ class PersistenceController: ObservableObject {
     }()
 
     let container: NSPersistentCloudKitContainer
+    private var isCloudKitEnabled = false
 
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "social_brain_xcode")
@@ -69,19 +70,13 @@ class PersistenceController: ObservableObject {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         }
         
-        // Configure CloudKit container options
+        // Configure base store description
         guard let description = container.persistentStoreDescriptions.first else {
             fatalError("Failed to retrieve a persistent store description.")
         }
         
-        // Use the container identifier from entitlements
-        let cloudKitContainerIdentifier = "iCloud.socialbrainbeta"
-        
-        // Configure CloudKit options
-        let cloudKitOptions = NSPersistentCloudKitContainerOptions(
-            containerIdentifier: cloudKitContainerIdentifier
-        )
-        description.cloudKitContainerOptions = cloudKitOptions
+        // Initially disable CloudKit sync
+        description.cloudKitContainerOptions = nil
         
         // Enable remote notifications and history tracking
         description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
@@ -94,15 +89,7 @@ class PersistenceController: ObservableObject {
         // Load the persistent store
         container.loadPersistentStores { [weak self] (storeDescription, error) in
             if let error = error as NSError? {
-                // Handle CloudKit-specific errors
-                if error.domain == NSCocoaErrorDomain && error.code == 134400 {
-                    // iCloud account not available
-                    self?.syncStatus = .failed(error)
-                    self?.lastSyncError = error
-                    return
-                }
-                
-                // For other errors, try to recreate the store
+                // Handle store loading errors
                 if let url = storeDescription.url {
                     do {
                         try self?.container.persistentStoreCoordinator.destroyPersistentStore(at: url, ofType: storeDescription.type, options: nil)
@@ -209,6 +196,51 @@ class PersistenceController: ObservableObject {
                 }
                 continuation.resume(returning: status)
             }
+        }
+    }
+    
+    // Add method to enable/disable CloudKit sync
+    func setCloudKitEnabled(_ enabled: Bool) async throws {
+        guard let description = container.persistentStoreDescriptions.first else {
+            throw NSError(domain: "com.socialbrain", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve store description"])
+        }
+        
+        if enabled && !isCloudKitEnabled {
+            // Enable CloudKit sync
+            let cloudKitContainerIdentifier = "iCloud.socialbrainbeta"
+            let cloudKitOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: cloudKitContainerIdentifier)
+            description.cloudKitContainerOptions = cloudKitOptions
+            
+            // Reload the persistent store with CloudKit enabled
+            if let url = description.url {
+                try await container.persistentStoreCoordinator.replacePersistentStore(
+                    at: url,
+                    destinationOptions: description.options,
+                    withPersistentStoreFrom: url,
+                    sourceOptions: nil,
+                    ofType: description.type
+                )
+            }
+            
+            isCloudKitEnabled = true
+            syncStatus = .inProgress
+        } else if !enabled && isCloudKitEnabled {
+            // Disable CloudKit sync
+            description.cloudKitContainerOptions = nil
+            
+            // Reload the persistent store without CloudKit
+            if let url = description.url {
+                try await container.persistentStoreCoordinator.replacePersistentStore(
+                    at: url,
+                    destinationOptions: description.options,
+                    withPersistentStoreFrom: url,
+                    sourceOptions: nil,
+                    ofType: description.type
+                )
+            }
+            
+            isCloudKitEnabled = false
+            syncStatus = .notStarted
         }
     }
 }

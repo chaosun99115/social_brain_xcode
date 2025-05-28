@@ -21,6 +21,14 @@ struct ConfigurationSheetView: View {
     @State private var isCheckingICloud = false
     @State private var iCloudAccountStatus: CKAccountStatus = .couldNotDetermine
     
+    // Add state to track pending actions
+    @State private var pendingICloudSyncAction: Bool?
+    @State private var pendingFaceIDAction: Bool?
+    
+    private var isProUser: Bool {
+        storeManager.subscriptionStatus == .active
+    }
+    
     var body: some View {
         NavigationView {
             List {
@@ -49,7 +57,7 @@ struct ConfigurationSheetView: View {
                             Label("解锁Pro", systemImage: "star.fill")
                                 .foregroundColor(.yellow)
                             Spacer()
-                            if storeManager.subscriptionStatus == .active {
+                            if isProUser {
                                 Text("已订阅")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
@@ -62,26 +70,46 @@ struct ConfigurationSheetView: View {
                     .foregroundColor(.primary)
                 }
                 
-                // Data Section
+                // Data Section (Pro-only)
                 Section(header: Text("数据")) {
                     VStack(spacing: 12) {
-                        Toggle("iCloud同步", isOn: $isICloudSyncEnabled)
-                            .onChange(of: isICloudSyncEnabled) { newValue in
+                        Toggle("iCloud同步", isOn: Binding(
+                            get: { isICloudSyncEnabled },
+                            set: { newValue in
+                                if !isProUser {
+                                    pendingICloudSyncAction = newValue
+                                    showingProUpgrade = true
+                                    isICloudSyncEnabled = false
+                                    return
+                                }
                                 handleICloudSyncToggle(newValue)
                             }
+                        ))
                         
-                        if isICloudSyncEnabled {
+                        if !isProUser {
+                            Text("升级到Pro以启用iCloud同步")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        if isICloudSyncEnabled && isProUser {
                             SyncStatusView()
                                 .padding(.vertical, 8)
                         }
                     }
                 }
                 
-                // Security Section
+                // Security Section (Pro-only)
                 Section(header: Text("安全")) {
                     Toggle("Face ID锁定", isOn: Binding(
                         get: { appSettingsManager.isFaceIDEnabled },
                         set: { newValue in
+                            if !isProUser {
+                                pendingFaceIDAction = newValue
+                                showingProUpgrade = true
+                                appSettingsManager.setFaceIDEnabled(false)
+                                return
+                            }
                             if newValue {
                                 authenticateWithFaceID()
                             } else {
@@ -90,6 +118,12 @@ struct ConfigurationSheetView: View {
                         }
                     ))
                     .disabled(isAuthenticating)
+                    
+                    if !isProUser {
+                        Text("升级到Pro以启用Face ID锁定")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 
                 // About Section
@@ -142,6 +176,26 @@ struct ConfigurationSheetView: View {
             }
             .sheet(isPresented: $showingProUpgrade) {
                 SubscriptionView()
+                    .onDisappear {
+                        // Handle pending actions after subscription view is dismissed
+                        if let pendingSync = pendingICloudSyncAction {
+                            if isProUser {
+                                handleICloudSyncToggle(pendingSync)
+                            }
+                            pendingICloudSyncAction = nil
+                        }
+                        
+                        if let pendingFaceID = pendingFaceIDAction {
+                            if isProUser {
+                                if pendingFaceID {
+                                    authenticateWithFaceID()
+                                } else {
+                                    appSettingsManager.setFaceIDEnabled(false)
+                                }
+                            }
+                            pendingFaceIDAction = nil
+                        }
+                    }
             }
             .alert("Face ID错误", isPresented: $showingFaceIDError) {
                 Button("确定", role: .cancel) {
@@ -220,9 +274,21 @@ struct ConfigurationSheetView: View {
                     
                     switch status {
                     case .available:
-                        // Enable sync by refreshing the view context
-                        persistenceController.container.viewContext.refreshAllObjects()
-                        isICloudSyncEnabled = true
+                        // Enable CloudKit sync
+                        Task {
+                            do {
+                                try await persistenceController.setCloudKitEnabled(true)
+                                await MainActor.run {
+                                    isICloudSyncEnabled = true
+                                }
+                            } catch {
+                                await MainActor.run {
+                                    isICloudSyncEnabled = false
+                                    syncError = error
+                                    showingSyncError = true
+                                }
+                            }
+                        }
                         
                     case .noAccount:
                         isICloudSyncEnabled = false
@@ -299,11 +365,20 @@ struct ConfigurationSheetView: View {
                 }
             }
         } else {
-            // Disable sync by removing CloudKit container options
-            if let description = persistenceController.container.persistentStoreDescriptions.first {
-                description.cloudKitContainerOptions = nil
+            // Disable CloudKit sync
+            Task {
+                do {
+                    try await persistenceController.setCloudKitEnabled(false)
+                    await MainActor.run {
+                        isICloudSyncEnabled = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        syncError = error
+                        showingSyncError = true
+                    }
+                }
             }
-            isICloudSyncEnabled = false
         }
     }
 }
@@ -437,8 +512,9 @@ struct ProUpgradeView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         FeatureRow(icon: "infinity", title: "无限笔记", description: "记录所有重要的社交互动")
                         FeatureRow(icon: "icloud", title: "iCloud同步", description: "在所有设备上同步您的数据")
+                        FeatureRow(icon: "faceid", title: "Face ID锁定", description: "使用Face ID保护您的隐私数据")
                         FeatureRow(icon: "chart.bar.fill", title: "高级分析", description: "深入了解您的社交关系")
-                        FeatureRow(icon: "lock.shield.fill", title: "隐私保护", description: "使用Face ID保护您的数据")
+                        FeatureRow(icon: "lock.shield.fill", title: "隐私保护", description: "全方位保护您的数据安全")
                     }
                     .padding(.horizontal)
                     
