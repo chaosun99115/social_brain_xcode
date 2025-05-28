@@ -746,7 +746,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = social_brain_xcode/social_brain_xcode.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"social_brain_xcode/Preview Content\"";
 				DEVELOPMENT_TEAM = G2726ZZ85E;
 				ENABLE_PREVIEWS = YES;
@@ -779,7 +779,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = social_brain_xcode/social_brain_xcode.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"social_brain_xcode/Preview Content\"";
 				DEVELOPMENT_TEAM = G2726ZZ85E;
 				ENABLE_PREVIEWS = YES;

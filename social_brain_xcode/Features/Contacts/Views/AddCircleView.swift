@@ -26,7 +26,6 @@ struct AddCircleView: View {
     private let backgroundColor = Color(red: 246/255, green: 246/255, blue: 251/255)
     
     init() {
-        print("DEBUG: AddCircleView initialized")
         // Configure navigation bar appearance
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()
@@ -103,34 +102,15 @@ struct AddCircleView: View {
             }
             .sheet(isPresented: $showingContactPicker) {
                 let contactsToShow = allContacts
-                let _ = print("DEBUG: Sheet presentation triggered")
-                let _ = print("DEBUG: Current app mode - isSampleMode: \(appModeManager.isSampleMode)")
-                let _ = print("DEBUG: Current contacts count: \(allContacts.count)")
-                let _ = print("DEBUG: Created local copy of contacts with count: \(contactsToShow.count)")
-                
                 ContactMultiPickerSheet(
                     allContacts: contactsToShow,
                     selectedContactIds: $selectedContacts,
                     isPresented: $showingContactPicker,
-                    onDone: {
-                        print("DEBUG: ContactMultiPickerSheet onDone called")
-                        print("DEBUG: Selected contacts count: \(selectedContacts.count)")
-                        print("DEBUG: Selected contact IDs: \(selectedContacts)")
-                    }
+                    onDone: { }
                 )
-                .onAppear {
-                    print("DEBUG: ContactMultiPickerSheet appeared")
-                    print("DEBUG: Sheet contacts count: \(contactsToShow.count)")
-                    print("DEBUG: First contact in sheet - Name: \(contactsToShow.first?.name ?? "none"), Type: \(contactsToShow.first?.type ?? -1)")
-                    print("DEBUG: All contacts in sheet:")
-                    for contact in contactsToShow {
-                        print("  - Name: \(contact.name ?? "unnamed"), Type: \(contact.type), ID: \(contact.contactId?.uuidString ?? "nil")")
-                    }
-                }
             }
             .onChange(of: showingContactPicker) { isShowing in
                 if isShowing {
-                    print("DEBUG: Sheet will show - current contacts count: \(allContacts.count)")
                     // Ensure contacts are loaded before showing sheet
                     Task {
                         await loadContacts()
@@ -138,17 +118,16 @@ struct AddCircleView: View {
                 }
             }
             .onAppear {
-                print("DEBUG: AddCircleView appeared")
-                print("DEBUG: Initial app mode - isSampleMode: \(appModeManager.isSampleMode)")
+                Task {
+                    await loadContacts()
+                }
             }
             .onChange(of: appModeManager.isSampleMode) { newValue in
-                print("DEBUG: App mode changed - isSampleMode: \(newValue)")
                 Task {
                     await loadContacts()
                 }
             }
             .task {
-                print("DEBUG: AddCircleView task started")
                 await loadContacts()
             }
         }
@@ -163,50 +142,23 @@ struct AddCircleView: View {
     }
     
     private func loadContacts() async {
-        print("\nDEBUG: ===== Starting contact load process =====")
-        print("DEBUG: Current app mode - isSampleMode: \(appModeManager.isSampleMode)")
-        
         let fetchedContacts = contactManager.fetchContacts()
-        print("DEBUG: Raw fetched contacts count: \(fetchedContacts.count)")
-        print("DEBUG: Raw contacts details:")
-        for contact in fetchedContacts {
-            print("  - Name: \(contact.name ?? "unnamed"), Type: \(contact.type), ID: \(contact.contactId?.uuidString ?? "nil")")
-        }
         
         // Filter contacts based on app mode
         let filteredContacts: [Contact]
         if appModeManager.isSampleMode {
-            print("DEBUG: Filtering for sample mode (type = 0)")
-            filteredContacts = fetchedContacts.filter { contact in
-                let isTypeZero = contact.type == 0
-                print("  - Contact \(contact.name ?? "unnamed") - Type: \(contact.type), Is Type Zero: \(isTypeZero)")
-                return isTypeZero
-            }
+            filteredContacts = fetchedContacts.filter { $0.type == 0 }
         } else {
-            print("DEBUG: Normal mode - using all contacts")
             filteredContacts = fetchedContacts
-        }
-        
-        print("DEBUG: Filtered contacts count: \(filteredContacts.count)")
-        print("DEBUG: Filtered contacts details:")
-        for contact in filteredContacts {
-            print("  - Name: \(contact.name ?? "unnamed"), Type: \(contact.type), ID: \(contact.contactId?.uuidString ?? "nil")")
         }
         
         // Update contacts on main thread
         await MainActor.run {
             self.allContacts = filteredContacts
-            print("DEBUG: Updated allContacts state")
-            print("DEBUG: Final allContacts count: \(self.allContacts.count)")
-            print("DEBUG: ===== Contact load process completed =====\n")
         }
     }
     
     private func createCircle() {
-        print("\nDEBUG: ===== Starting circle creation =====")
-        print("DEBUG: Circle name: \(circleName)")
-        print("DEBUG: Selected contacts count: \(selectedContacts.count)")
-        print("DEBUG: Selected contact IDs: \(selectedContacts)")
         guard isNameValid else { return }
         
         isLoading = true

@@ -232,17 +232,9 @@ struct ContactMultiPickerSheet: View {
                 }
             }
             .onAppear {
-                print("DEBUG: ContactMultiPickerSheet appeared")
-                print("DEBUG: Initial allContacts count: \(allContacts.count)")
-                print("DEBUG: Initial displayedContacts count: \(displayedContacts.count)")
                 // Update displayed contacts if they don't match
                 if displayedContacts.count != allContacts.count {
                     displayedContacts = allContacts
-                    print("DEBUG: Updated displayedContacts to match allContacts")
-                }
-                // Log all contacts for debugging
-                for contact in displayedContacts {
-                    print("DEBUG: Displayed contact - Name: \(contact.name ?? "unnamed"), Type: \(contact.type), ID: \(contact.contactId?.uuidString ?? "nil")")
                 }
             }
         }

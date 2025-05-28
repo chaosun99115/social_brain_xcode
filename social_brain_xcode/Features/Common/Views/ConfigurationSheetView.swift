@@ -6,6 +6,7 @@ struct ConfigurationSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var appModeManager: AppModeManager
     @EnvironmentObject var appSettingsManager: AppSettingsManager
+    @EnvironmentObject var featureFlagManager: FeatureFlagManager
     @StateObject private var storeManager = StoreKitManager.shared
     @StateObject private var persistenceController = PersistenceController.shared
     
@@ -26,7 +27,7 @@ struct ConfigurationSheetView: View {
     @State private var pendingFaceIDAction: Bool?
     
     private var isProUser: Bool {
-        storeManager.subscriptionStatus == .active
+        featureFlagManager.canUseProFeatures
     }
     
     var body: some View {
@@ -70,9 +71,10 @@ struct ConfigurationSheetView: View {
                     .foregroundColor(.primary)
                 }
                 
-                // Data Section (Pro-only)
-                Section(header: Text("数据")) {
+                // Pro Features Section (Premium Features)
+                Section(header: Text("Pro功能")) {
                     VStack(spacing: 12) {
+                        // iCloud Sync Toggle
                         Toggle("iCloud同步", isOn: Binding(
                             get: { isICloudSyncEnabled },
                             set: { newValue in
@@ -86,43 +88,36 @@ struct ConfigurationSheetView: View {
                             }
                         ))
                         
+                        // Face ID Toggle
+                        Toggle("Face ID锁定", isOn: Binding(
+                            get: { appSettingsManager.isFaceIDEnabled },
+                            set: { newValue in
+                                if !isProUser {
+                                    pendingFaceIDAction = newValue
+                                    showingProUpgrade = true
+                                    appSettingsManager.setFaceIDEnabled(false)
+                                    return
+                                }
+                                if newValue {
+                                    authenticateWithFaceID()
+                                } else {
+                                    appSettingsManager.setFaceIDEnabled(false)
+                                }
+                            }
+                        ))
+                        .disabled(isAuthenticating)
+                        
                         if !isProUser {
-                            Text("升级到Pro以启用iCloud同步")
+                            Text("升级到Pro以解锁所有高级功能")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
+                                .padding(.top, 4)
                         }
                         
                         if isICloudSyncEnabled && isProUser {
                             SyncStatusView()
                                 .padding(.vertical, 8)
                         }
-                    }
-                }
-                
-                // Security Section (Pro-only)
-                Section(header: Text("安全")) {
-                    Toggle("Face ID锁定", isOn: Binding(
-                        get: { appSettingsManager.isFaceIDEnabled },
-                        set: { newValue in
-                            if !isProUser {
-                                pendingFaceIDAction = newValue
-                                showingProUpgrade = true
-                                appSettingsManager.setFaceIDEnabled(false)
-                                return
-                            }
-                            if newValue {
-                                authenticateWithFaceID()
-                            } else {
-                                appSettingsManager.setFaceIDEnabled(false)
-                            }
-                        }
-                    ))
-                    .disabled(isAuthenticating)
-                    
-                    if !isProUser {
-                        Text("升级到Pro以启用Face ID锁定")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
                     }
                 }
                 
@@ -150,6 +145,21 @@ struct ConfigurationSheetView: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                
+                // Add Feature Flag Section (Development Only)
+                #if DEBUG
+                Section(header: Text("开发设置")) {
+                    Toggle("需要订阅才能使用高级功能", isOn: Binding(
+                        get: { featureFlagManager.requireSubscriptionForProFeatures },
+                        set: { featureFlagManager.setRequireSubscriptionForProFeatures($0) }
+                    ))
+                    .tint(.accentColor)
+                    
+                    Text("关闭此选项将允许所有用户使用 Face ID 和 iCloud 同步功能")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                #endif
             }
             .navigationTitle("设置")
             .navigationBarTitleDisplayMode(.inline)

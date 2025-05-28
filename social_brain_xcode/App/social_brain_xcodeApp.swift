@@ -30,12 +30,37 @@ class AppSettingsManager: ObservableObject {
     }
 }
 
+// Add a new class to manage feature flags
+@MainActor
+class FeatureFlagManager: ObservableObject {
+    static let shared = FeatureFlagManager()
+    @Published var requireSubscriptionForProFeatures: Bool = true
+    
+    private init() {
+        // Load saved feature flag setting
+        requireSubscriptionForProFeatures = UserDefaults.standard.bool(forKey: "requireSubscriptionForProFeatures")
+    }
+    
+    func setRequireSubscriptionForProFeatures(_ required: Bool) {
+        requireSubscriptionForProFeatures = required
+        UserDefaults.standard.set(required, forKey: "requireSubscriptionForProFeatures")
+    }
+    
+    var canUseProFeatures: Bool {
+        if !requireSubscriptionForProFeatures {
+            return true
+        }
+        return StoreKitManager.shared.subscriptionStatus == .active
+    }
+}
+
 @main
 struct social_brain_xcodeApp: App {
     let persistenceController = PersistenceController.shared
     @StateObject private var noteManager = NoteManager.shared
     @StateObject private var appModeManager = AppModeManager()
     @StateObject private var appSettingsManager = AppSettingsManager.shared
+    @StateObject private var featureFlagManager = FeatureFlagManager.shared
     @State private var isAuthenticated = false
     @State private var authError: String?
     
@@ -59,6 +84,7 @@ struct social_brain_xcodeApp: App {
                     .environmentObject(noteManager)
                     .environmentObject(appModeManager)
                     .environmentObject(appSettingsManager)
+                    .environmentObject(featureFlagManager)
             } else {
                 FaceIDAuthView(isAuthenticated: $isAuthenticated, authError: $authError)
             }
