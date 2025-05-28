@@ -41,6 +41,7 @@
 		AFAE47222DE799ED00DD10E0 /* SubscriptionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE471F2DE799ED00DD10E0 /* SubscriptionStatusView.swift */; };
 		AFAE47242DE79A7900DD10E0 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE47232DE79A7900DD10E0 /* SharedComponents.swift */; };
 		AFAE47262DE79D3E00DD10E0 /* Configuration.storekit in Resources */ = {isa = PBXBuildFile; fileRef = AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */; };
+		AFAE472A2DE7B2D400DD10E0 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFAE47292DE7B2D400DD10E0 /* StoreKit.framework */; };
 		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
 		AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E42DA70C770066907B /* InfoPlist.strings */; };
 		AFBD50F42DA70DDC0066907B /* SocialContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F22DA70DDC0066907B /* SocialContactView.swift */; };
@@ -108,6 +109,7 @@
 		AFAE47232DE79A7900DD10E0 /* SharedComponents.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
 		AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
 		AFAE47272DE7A2BA00DD10E0 /* social_brain_xcode.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = social_brain_xcode.entitlements; sourceTree = "<group>"; };
+		AFAE47292DE7B2D400DD10E0 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		AFBD50E32DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
 		AFBD50E52DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = InfoPlist.strings; sourceTree = "<group>"; };
 		AFBD50F22DA70DDC0066907B /* SocialContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContactView.swift; sourceTree = "<group>"; };
@@ -148,6 +150,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFAE46DE2DE4BA7700DD10E0 /* MarkdownUI in Frameworks */,
+				AFAE472A2DE7B2D400DD10E0 /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -397,6 +400,14 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		AFAE47282DE7B2D400DD10E0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AFAE47292DE7B2D400DD10E0 /* StoreKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		AFBD50E12DA70C770066907B /* zh-Hans.lproj */ = {
 			isa = PBXGroup;
 			children = (
@@ -446,6 +457,7 @@
 			children = (
 				AFF98BB52DA075720001DD70 /* social_brain_xcode */,
 				AFF98BB42DA075720001DD70 /* Products */,
+				AFAE47282DE7B2D400DD10E0 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
