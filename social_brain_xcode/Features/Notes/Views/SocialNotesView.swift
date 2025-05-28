@@ -10,6 +10,7 @@ struct SocialNotesView: View {
     @State private var refreshTrigger = false
     @State private var showingSampleNoteModal = false
     @State private var showingSampleNoteDialog = false
+    @State private var showingConfigurationSheet = false
     @EnvironmentObject var noteManager: NoteManager
     @EnvironmentObject var appModeManager: AppModeManager
     @Environment(\.managedObjectContext) private var viewContext
@@ -146,7 +147,7 @@ struct SocialNotesView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        // TODO: Handle settings action
+                        showingConfigurationSheet = true
                     }) {
                         Image(systemName: "ellipsis")
                             .foregroundColor(.primary)
@@ -192,6 +193,9 @@ struct SocialNotesView: View {
                     label: { EmptyView() }
                 )
             )
+            .sheet(isPresented: $showingConfigurationSheet) {
+                ConfigurationSheetView()
+            }
         }
         .onChange(of: showingSimpleNoteModal) { newValue in
             if !newValue {

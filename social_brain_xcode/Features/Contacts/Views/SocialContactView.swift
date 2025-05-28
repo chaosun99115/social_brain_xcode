@@ -15,6 +15,7 @@ struct SocialContactView: View {
     @State private var showingAddContact = false
     @State private var showingAddCircleSheet = false
     @State private var showingEditCircleContactsSheet = false
+    @State private var showingConfigurationSheet = false
     
     // Fetch contacts from CoreData (initial load)
     private func loadContacts() async {
@@ -221,7 +222,9 @@ struct SocialContactView: View {
                         Button(action: {
                             appModeManager.isSampleMode = false
                             appModeManager.sampleModeType = nil
-                            Task { await loadContacts() }
+                            Task {
+                                await refreshContacts()
+                            }
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
@@ -235,7 +238,7 @@ struct SocialContactView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        // TODO: Handle settings action
+                        showingConfigurationSheet = true
                     }) {
                         Image(systemName: "ellipsis")
                             .foregroundColor(.primary)
@@ -271,6 +274,9 @@ struct SocialContactView: View {
             }) {
                 AddCircleView()
                     .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
+            }
+            .sheet(isPresented: $showingConfigurationSheet) {
+                ConfigurationSheetView()
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())

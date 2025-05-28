@@ -12,6 +12,7 @@ struct SocialBrainView: View {
     @State private var contextContact: Contact?
     @State private var contextNotes: [Note] = []
     @State private var systemPrompt: String = ""
+    @State private var showingConfigurationSheet = false
     
     @State private var inputText = ""
     @State private var messages = [SocialBrainMessage]()
@@ -352,7 +353,7 @@ struct SocialBrainView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        // TODO: Handle settings action
+                        showingConfigurationSheet = true
                     }) {
                         Image(systemName: "ellipsis")
                             .foregroundColor(.primary)
@@ -400,6 +401,9 @@ struct SocialBrainView: View {
                 // Hide the modal when loading ends
                 showLoadingModal = false
             }
+        }
+        .sheet(isPresented: $showingConfigurationSheet) {
+            ConfigurationSheetView()
         }
     }
     
