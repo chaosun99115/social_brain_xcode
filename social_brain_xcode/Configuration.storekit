@@ -1,0 +1,66 @@
+{
+  "identifier" : "9B7BFDC6",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "com.socialbrain.app",
+    "_developerTeamID" : "YOUR_TEAM_ID",
+    "_lastSynchronizedDate" : 712345678.123456,
+    "_storeKitEnvironment" : "Xcode",
+    "_storeKitServerEnvironment" : "Local"
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "socialbrainbeta",
+      "localizations" : [
+        {
+          "description" : "社交大脑 Pro 订阅",
+          "displayName" : "社交大脑 Pro",
+          "locale" : "zh_CN"
+        }
+      ],
+      "name" : "社交大脑 Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "¥18.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "socialbrainbeta",
+          "introductoryOffer" : {
+            "internalID" : "socialbrainbeta_intro",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "Free",
+            "recurringSubscriptionPeriod" : "P1M",
+            "subscriptionPeriod" : "P1M"
+          },
+          "localizations" : [
+            {
+              "description" : "解锁所有高级功能",
+              "displayName" : "社交大脑 Pro 订阅",
+              "locale" : "zh_CN"
+            }
+          ],
+          "productID" : "socialbrainbeta",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "socialbrainbeta_sub",
+          "subscriptionGroupID" : "socialbrainbeta",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+} 

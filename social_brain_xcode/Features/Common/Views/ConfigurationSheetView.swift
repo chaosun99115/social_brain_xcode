@@ -5,6 +5,7 @@ struct ConfigurationSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var appModeManager: AppModeManager
     @EnvironmentObject var appSettingsManager: AppSettingsManager
+    @StateObject private var storeManager = StoreKitManager.shared
     
     // Configuration options
     @State private var isICloudSyncEnabled = false
@@ -42,6 +43,11 @@ struct ConfigurationSheetView: View {
                             Label("解锁Pro", systemImage: "star.fill")
                                 .foregroundColor(.yellow)
                             Spacer()
+                            if storeManager.subscriptionStatus == .active {
+                                Text("已订阅")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
                             Image(systemName: "chevron.right")
                                 .foregroundColor(.secondary)
                                 .font(.system(size: 14, weight: .semibold))
@@ -122,7 +128,7 @@ struct ConfigurationSheetView: View {
                 Button("取消", role: .cancel) {}
             }
             .sheet(isPresented: $showingProUpgrade) {
-                ProUpgradeView()
+                SubscriptionView()
             }
             .alert("Face ID错误", isPresented: $showingFaceIDError) {
                 Button("确定", role: .cancel) {
@@ -241,29 +247,6 @@ struct ProUpgradeView: View {
                         dismiss()
                     }
                 }
-            }
-        }
-    }
-}
-
-struct FeatureRow: View {
-    let icon: String
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(.primaryAction)
-                .frame(width: 32)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
             }
         }
     }

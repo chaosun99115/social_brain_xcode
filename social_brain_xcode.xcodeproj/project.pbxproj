@@ -36,6 +36,11 @@
 		AFAE46F32DE65B4700DD10E0 /* FaceIDAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46F22DE65B4700DD10E0 /* FaceIDAuthView.swift */; };
 		AFAE46F82DE75D7900DD10E0 /* ConfigurationSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46F72DE75D7900DD10E0 /* ConfigurationSheetView.swift */; };
 		AFAE46FC2DE77A3800DD10E0 /* SocialBrainSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46FB2DE77A3800DD10E0 /* SocialBrainSheetView.swift */; };
+		AFAE47202DE799ED00DD10E0 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE471C2DE799ED00DD10E0 /* StoreKitManager.swift */; };
+		AFAE47212DE799ED00DD10E0 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE471E2DE799ED00DD10E0 /* SubscriptionView.swift */; };
+		AFAE47222DE799ED00DD10E0 /* SubscriptionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE471F2DE799ED00DD10E0 /* SubscriptionStatusView.swift */; };
+		AFAE47242DE79A7900DD10E0 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE47232DE79A7900DD10E0 /* SharedComponents.swift */; };
+		AFAE47262DE79D3E00DD10E0 /* Configuration.storekit in Resources */ = {isa = PBXBuildFile; fileRef = AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */; };
 		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
 		AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E42DA70C770066907B /* InfoPlist.strings */; };
 		AFBD50F42DA70DDC0066907B /* SocialContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F22DA70DDC0066907B /* SocialContactView.swift */; };
@@ -97,6 +102,11 @@
 		AFAE46F22DE65B4700DD10E0 /* FaceIDAuthView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaceIDAuthView.swift; sourceTree = "<group>"; };
 		AFAE46F72DE75D7900DD10E0 /* ConfigurationSheetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConfigurationSheetView.swift; sourceTree = "<group>"; };
 		AFAE46FB2DE77A3800DD10E0 /* SocialBrainSheetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialBrainSheetView.swift; sourceTree = "<group>"; };
+		AFAE471C2DE799ED00DD10E0 /* StoreKitManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
+		AFAE471E2DE799ED00DD10E0 /* SubscriptionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubscriptionView.swift; sourceTree = "<group>"; };
+		AFAE471F2DE799ED00DD10E0 /* SubscriptionStatusView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubscriptionStatusView.swift; sourceTree = "<group>"; };
+		AFAE47232DE79A7900DD10E0 /* SharedComponents.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
+		AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
 		AFBD50E32DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
 		AFBD50E52DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = InfoPlist.strings; sourceTree = "<group>"; };
 		AFBD50F22DA70DDC0066907B /* SocialContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContactView.swift; sourceTree = "<group>"; };
@@ -182,6 +192,7 @@
 		AFA2761D2DB03BAF00C29B81 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				AFAE471A2DE799ED00DD10E0 /* StoreKit */,
 				AFAE46F52DE75D7900DD10E0 /* Common */,
 				AFA2761E2DB03BC900C29B81 /* Notes */,
 				AFA276242DB03D2600C29B81 /* Contacts */,
@@ -353,7 +364,34 @@
 		AFAE46F62DE75D7900DD10E0 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				AFAE47232DE79A7900DD10E0 /* SharedComponents.swift */,
 				AFAE46F72DE75D7900DD10E0 /* ConfigurationSheetView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AFAE471A2DE799ED00DD10E0 /* StoreKit */ = {
+			isa = PBXGroup;
+			children = (
+				AFAE471B2DE799ED00DD10E0 /* Managers */,
+				AFAE471D2DE799ED00DD10E0 /* Views */,
+			);
+			path = StoreKit;
+			sourceTree = "<group>";
+		};
+		AFAE471B2DE799ED00DD10E0 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				AFAE471C2DE799ED00DD10E0 /* StoreKitManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		AFAE471D2DE799ED00DD10E0 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AFAE471E2DE799ED00DD10E0 /* SubscriptionView.swift */,
+				AFAE471F2DE799ED00DD10E0 /* SubscriptionStatusView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -422,6 +460,7 @@
 			isa = PBXGroup;
 			children = (
 				AFF98BC42DA075730001DD70 /* Info.plist */,
+				AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */,
 				AF84F4142DC582C600BD66D5 /* CoreDataDebug */,
 				AFA276272DB03E6400C29B81 /* App */,
 				AFA2762C2DB03F4200C29B81 /* Components */,
@@ -507,6 +546,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */,
+				AFAE47262DE79D3E00DD10E0 /* Configuration.storekit in Resources */,
 				AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */,
 				AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */,
 				AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */,
@@ -521,6 +561,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFAE47242DE79A7900DD10E0 /* SharedComponents.swift in Sources */,
 				AFDDDCA42DDCDDBC00425764 /* SampleModeConfig.swift in Sources */,
 				AFDDDC9B2DD393DF00425764 /* CircleManager.swift in Sources */,
 				AFDDDCA02DD52DC200425764 /* SampleModeProvider.swift in Sources */,
@@ -549,11 +590,14 @@
 				AFF98BD52DA4496C0001DD70 /* SocialBrainMessage.swift in Sources */,
 				AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */,
 				AFAE46F32DE65B4700DD10E0 /* FaceIDAuthView.swift in Sources */,
+				AFAE47202DE799ED00DD10E0 /* StoreKitManager.swift in Sources */,
 				AF84F4242DC942D200BD66D5 /* ContactInsightDebugView.swift in Sources */,
 				AF84F41B2DC582C600BD66D5 /* CircleDebugView.swift in Sources */,
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,
+				AFAE47212DE799ED00DD10E0 /* SubscriptionView.swift in Sources */,
 				AFAE46EF2DE646B300DD10E0 /* AddCircleView.swift in Sources */,
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
+				AFAE47222DE799ED00DD10E0 /* SubscriptionStatusView.swift in Sources */,
 				AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */,
 				AFDDDC9E2DD393F100425764 /* CircleDetailView.swift in Sources */,
 				AFAE46FC2DE77A3800DD10E0 /* SocialBrainSheetView.swift in Sources */,
