@@ -6,9 +6,22 @@
 
 
 import CoreData
+import CloudKit
+import Combine
 
-class PersistenceController {
+class PersistenceController: ObservableObject {
     static let shared = PersistenceController()
+
+    // Add sync status tracking
+    @Published var syncStatus: SyncStatus = .notStarted
+    @Published private(set) var lastSyncError: Error?
+    
+    enum SyncStatus {
+        case notStarted
+        case inProgress
+        case completed
+        case failed(Error)
+    }
 
     static var preview: PersistenceController = {
         let result = PersistenceController(inMemory: true)
@@ -50,62 +63,152 @@ class PersistenceController {
     let container: NSPersistentCloudKitContainer
 
     init(inMemory: Bool = false) {
-        // Create a single instance of the container
         container = NSPersistentCloudKitContainer(name: "social_brain_xcode")
         
         if inMemory {
-            container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
-        } else {
-            // Get the store URL
-            guard let storeURL = container.persistentStoreDescriptions.first?.url else {
-                fatalError("Failed to get store URL")
-            }
-            
-            // Delete existing store if it exists
-            if FileManager.default.fileExists(atPath: storeURL.path) {
-                do {
-                    try container.persistentStoreCoordinator.destroyPersistentStore(at: storeURL, ofType: NSSQLiteStoreType, options: nil)
-                    // print("Successfully deleted existing store")
-                } catch {
-                    // print("Error deleting store: \(error)")
-                }
-            }
+            container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         }
         
-        // Configure the container with migration options
-        let description = container.persistentStoreDescriptions.first
-        description?.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
-        description?.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
-        description?.setOption(true as NSNumber, forKey: NSMigratePersistentStoresAutomaticallyOption)
-        description?.setOption(true as NSNumber, forKey: NSInferMappingModelAutomaticallyOption)
-        
-        // Load the persistent stores
-        container.loadPersistentStores { [weak self] (storeDescription, error) in
-            guard let self = self else { return }
-            
-            if let error = error as NSError? {
-                // Handle the error appropriately
-                print("Core Data store failed to load with error: \(error.localizedDescription)")
-                print("Detailed error: \(error.userInfo)")
-                
-                // For development, try to delete and recreate the store
-                if let storeURL = storeDescription.url {
-                    do {
-                        try self.container.persistentStoreCoordinator.destroyPersistentStore(at: storeURL, ofType: NSSQLiteStoreType, options: nil)
-                        try self.container.persistentStoreCoordinator.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: storeURL, options: [
-                            NSMigratePersistentStoresAutomaticallyOption: true,
-                            NSInferMappingModelAutomaticallyOption: true
-                        ])
-                        print("Successfully recreated store after error")
-                    } catch {
-                        print("Failed to recreate store: \(error)")
-                    }
-                }
-            }
+        // Configure CloudKit container options
+        guard let description = container.persistentStoreDescriptions.first else {
+            fatalError("Failed to retrieve a persistent store description.")
         }
         
-        // Configure the view context
+        // Use the container identifier from entitlements
+        let cloudKitContainerIdentifier = "iCloud.socialbrainbeta"
+        
+        // Configure CloudKit options
+        let cloudKitOptions = NSPersistentCloudKitContainerOptions(
+            containerIdentifier: cloudKitContainerIdentifier
+        )
+        description.cloudKitContainerOptions = cloudKitOptions
+        
+        // Enable remote notifications and history tracking
+        description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+        description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+        
+        // Set up automatic merging
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        
+        // Load the persistent store
+        container.loadPersistentStores { [weak self] (storeDescription, error) in
+            if let error = error as NSError? {
+                // Handle CloudKit-specific errors
+                if error.domain == NSCocoaErrorDomain && error.code == 134400 {
+                    // iCloud account not available
+                    self?.syncStatus = .failed(error)
+                    self?.lastSyncError = error
+                    return
+                }
+                
+                // For other errors, try to recreate the store
+                if let url = storeDescription.url {
+                    do {
+                        try self?.container.persistentStoreCoordinator.destroyPersistentStore(at: url, ofType: storeDescription.type, options: nil)
+                        try self?.container.persistentStoreCoordinator.addPersistentStore(ofType: storeDescription.type, configurationName: storeDescription.configuration, at: url, options: storeDescription.options)
+                    } catch {
+                        fatalError("Failed to recreate persistent store: \(error)")
+                    }
+                } else {
+                    fatalError("Failed to load persistent store: \(error)")
+                }
+            }
+            
+            // Set up observers for remote changes
+            self?.setupRemoteChangeHandling()
+        }
+    }
+    
+    private func setupRemoteChangeHandling() {
+        // Observe remote changes
+        NotificationCenter.default.addObserver(
+            forName: .NSPersistentStoreRemoteChange,
+            object: container.persistentStoreCoordinator,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleRemoteChanges()
+        }
+        
+        // Observe sync status changes
+        NotificationCenter.default.addObserver(
+            forName: NSPersistentCloudKitContainer.eventChangedNotification,
+            object: container,
+            queue: .main
+        ) { [weak self] notification in
+            self?.handleCloudKitEvent(notification)
+        }
+    }
+    
+    private func handleRemoteChanges() {
+        // Refresh the view context when remote changes occur
+        container.viewContext.perform {
+            self.container.viewContext.refreshAllObjects()
+        }
+    }
+    
+    private func handleCloudKitEvent(_ notification: Notification) {
+        guard let cloudEvent = notification.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey]
+                as? NSPersistentCloudKitContainer.Event else { return }
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            switch cloudEvent.type {
+            case .setup:
+                self.syncStatus = .inProgress
+            case .import:
+                self.syncStatus = .completed
+            case .export:
+                self.syncStatus = .completed
+            @unknown default:
+                break
+            }
+            
+            if let error = cloudEvent.error {
+                self.syncStatus = .failed(error)
+                self.lastSyncError = error
+            }
+        }
+    }
+    
+    // MARK: - Sync Status Helpers
+    
+    func isSyncing() -> Bool {
+        if case .inProgress = syncStatus {
+            return true
+        }
+        return false
+    }
+    
+    func hasSyncError() -> Bool {
+        if case .failed = syncStatus {
+            return true
+        }
+        return false
+    }
+    
+    func getSyncError() -> Error? {
+        if case .failed(let error) = syncStatus {
+            return error
+        }
+        return nil
+    }
+    
+    // Add a method to check iCloud availability
+    func checkICloudAvailability() -> Bool {
+        return FileManager.default.ubiquityIdentityToken != nil
+    }
+    
+    // Add a method to get iCloud account status
+    func getICloudAccountStatus() async -> CKAccountStatus {
+        return await withCheckedContinuation { continuation in
+            CKContainer.default().accountStatus { status, error in
+                if let error = error {
+                    print("Error checking iCloud account status: \(error)")
+                }
+                continuation.resume(returning: status)
+            }
+        }
     }
 }
