@@ -165,69 +165,68 @@ struct SimpleNoteModalView: View {
                     .onTapGesture {
                         dismiss()
                     }
-                
-                // Modal content
                 VStack(spacing: 0) {
-                    // Header similar to iOS Notes app
-                    ZStack {
-                        // Centered Title
-                        Text("新建想法")
-                            .font(.system(size: 17, weight: .semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.horizontal, 60) // leave space for buttons
-                        // Left Cancel Button
-                        HStack {
-                            Button("取消") {
-                                dismiss()
+                    NavigationView {
+                        VStack(spacing: 0) {
+                            // Text editor
+                            ZStack(alignment: .topLeading) {
+                                Color(.systemBackground)
+                                    .frame(height: min(textEditorHeight, maxTextEditorHeight))
+                                TextViewWrapper(state: textState, isFirstResponder: true, onDone: {})
+                                    .frame(height: min(textEditorHeight, maxTextEditorHeight))
+                                    .padding(.horizontal, 16)
+                                    .onChange(of: textState.text) { newValue in
+                                        let estimatedHeight = newValue.isEmpty ? 100 : min(newValue.height(width: UIScreen.main.bounds.width * 0.9, font: .systemFont(ofSize: 17)), maxTextEditorHeight)
+                                        textEditorHeight = max(100, estimatedHeight)
+                                    }
+                                if textState.text.isEmpty {
+                                    Text("现在的想法是...")
+                                        .font(.system(size: 17))
+                                        .foregroundColor(.gray)
+                                        .padding(.horizontal, 16)
+                                        .padding(.top, 0)
+                                        .allowsHitTesting(false)
+                                }
                             }
-                            .font(.system(size: 17, weight: .regular))
-                            .foregroundColor(.blue)
-                            .padding(.leading, 16)
+                            .padding(.top, 8)
+                            .padding(.bottom, 8)
                             Spacer()
+                            Divider()
+                                .padding(.horizontal, 0)
                         }
-                        // Right Save Button
-                        HStack {
-                            Spacer()
-                            Button("保存") {
-                                saveNote()
+                        .frame(maxWidth: .infinity, maxHeight: geometry.size.height - (showingKeyboard ? keyboardHeight : 0))
+                        .background(Color(.systemBackground))
+                        .cornerRadius(20, corners: [.topLeft, .topRight])
+                        .edgesIgnoringSafeArea(.bottom)
+                        .gesture(
+                            DragGesture()
+                                .onEnded { value in
+                                    if value.translation.height > 20 {
+                                        dismiss()
+                                    }
+                                }
+                        )
+                        .navigationTitle("新建想法")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                Button("取消") {
+                                    dismiss()
+                                }
+                                .foregroundColor(.blue)
                             }
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
-                            .disabled(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            .padding(.trailing, 16)
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button("保存") {
+                                    saveNote()
+                                }
+                                .disabled(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                .foregroundColor(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
+                            }
                         }
                     }
-                    .frame(height: 44)
-                    .background(Color(.systemBackground))
+                    .navigationViewStyle(.stack)
                     .padding(.top, geometry.safeAreaInsets.top)
-                    
-                    // Text editor
-                    ZStack(alignment: .topLeading) {
-                        Color(.systemBackground)
-                            .frame(height: min(textEditorHeight, maxTextEditorHeight))
-                        TextViewWrapper(state: textState, isFirstResponder: true, onDone: {})
-                            .frame(height: min(textEditorHeight, maxTextEditorHeight))
-                            .padding(.horizontal, 16)
-                            .onChange(of: textState.text) { newValue in
-                                let estimatedHeight = newValue.isEmpty ? 100 : min(newValue.height(width: UIScreen.main.bounds.width * 0.9, font: .systemFont(ofSize: 17)), maxTextEditorHeight)
-                                textEditorHeight = max(100, estimatedHeight)
-                            }
-                        if textState.text.isEmpty {
-                            Text("现在的想法是...")
-                                .font(.system(size: 17))
-                                .foregroundColor(.gray)
-                                .padding(.horizontal, 16)
-                                .padding(.top, 0) // Minimal top padding for best alignment
-                                .allowsHitTesting(false)
-                        }
-                    }
-                    .padding(.top, 8)
-                    .padding(.bottom, 8)
-                    
-                    Spacer()
-                    Divider()
-                        .padding(.horizontal, 0)
-                    // Action buttons for mentions only (no save/cancel here)
+                    // Restore the mention/circle bar below the NavigationView
                     HStack(spacing: 0) {
                         Button(action: {
                             showingContactSelection = true
@@ -247,21 +246,9 @@ struct SimpleNoteModalView: View {
                         }
                     }
                     .padding(.vertical, 12)
-                    .padding(.bottom, geometry.safeAreaInsets.bottom)
+                    .padding(.bottom, geometry.safeAreaInsets.bottom + keyboardHeight)
+                    .background(Color(.systemBackground))
                 }
-                .frame(maxWidth: .infinity, maxHeight: geometry.size.height - (showingKeyboard ? keyboardHeight : 0))
-                .background(Color(.systemBackground))
-                .cornerRadius(20, corners: [.topLeft, .topRight])
-                .edgesIgnoringSafeArea(.bottom)
-                .gesture(
-                    DragGesture()
-                        .onEnded { value in
-                            if value.translation.height > 20 {
-                                dismiss()
-                            }
-                        }
-                )
-                .position(x: geometry.size.width / 2, y: (geometry.size.height - (showingKeyboard ? keyboardHeight : 0)) / 2)
             }
         }
         .edgesIgnoringSafeArea(.all)
