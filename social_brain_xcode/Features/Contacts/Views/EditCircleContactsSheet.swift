@@ -27,40 +27,109 @@ struct EditCircleContactsSheet: View {
     /// Set of selected contact IDs
     @State private var selectedContactIds: Set<UUID> = []
     
+    /// Circle name
+    @State private var circleName: String
+    
+    /// Custom background color
+    private let backgroundColor = Color(red: 246/255, green: 246/255, blue: 251/255)
+    
+    init(circle: Circle, isPresented: Binding<Bool>, onUpdate: @escaping ([Contact]) -> Void) {
+        self.circle = circle
+        self._isPresented = isPresented
+        self.onUpdate = onUpdate
+        self._circleName = State(initialValue: circle.name ?? "")
+        
+        // Configure navigation bar appearance
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(backgroundColor)
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.black]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.black]
+        
+        // Remove shadow/divider line
+        appearance.shadowColor = .clear
+        
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+    }
+    
     // MARK: - Body
     
     var body: some View {
         NavigationView {
-            List {
-                ForEach(allContacts, id: \ .contactId) { contact in
+            VStack(alignment: .leading, spacing: 24) {
+                // Circle name field
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("圈子名称")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 16)
+                    
                     HStack {
-                        Text(contact.name ?? "")
-                            .foregroundColor(.primary)
-                        Spacer()
-                        CheckboxView(isChecked: selectedContactIds.contains(contact.contactId ?? UUID())) {
-                            toggleContact(contact)
+                        TextField("圈子名称", text: $circleName)
+                            .font(.body)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 12)
+                    }
+                    .background(Color.white)
+                    .cornerRadius(0)
+                }
+                .padding(.top, 16)
+                
+                // Contacts list
+                Text("熟人列表")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 16)
+                
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(allContacts, id: \.contactId) { contact in
+                            HStack {
+                                Text(contact.name ?? "")
+                                    .foregroundColor(.primary)
+                                    .padding(.vertical, 12)
+                                    .padding(.horizontal, 16)
+                                Spacer()
+                                CheckboxView(isChecked: selectedContactIds.contains(contact.contactId ?? UUID())) {
+                                    toggleContact(contact)
+                                }
+                                .padding(.trailing, 16)
+                            }
+                            .background(Color.white)
+                            Divider()
+                                .padding(.leading, 16)
                         }
                     }
-                    .contentShape(Rectangle())
                 }
+                .background(Color.white)
+                .cornerRadius(0)
+                .frame(height: min(CGFloat(allContacts.count) * 44, UIScreen.main.bounds.height * 0.6)) // Each item is 44pt high, max 60% of screen height
+                
+                Spacer()
             }
-            .navigationTitle("选择圈子熟人")
+            .background(backgroundColor.ignoresSafeArea())
+            .navigationTitle("编辑圈子")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完成") {
-                        onUpdate(selectedContactIds.compactMap { id in 
-                            allContacts.first(where: { $0.contactId == id }) 
-                        })
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
                         isPresented = false
                     }
-                    .foregroundColor(.accentColor)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("保存") {
+                        updateCircle()
+                    }
                 }
             }
             .onAppear {
                 loadContacts()
             }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
     
     // MARK: - Private Methods
@@ -92,6 +161,19 @@ struct EditCircleContactsSheet: View {
             }
         }
     }
+    
+    private func updateCircle() {
+        // Update circle name if changed
+        if circleName != circle.name {
+            circle.name = circleName
+        }
+        
+        // Update contacts
+        onUpdate(selectedContactIds.compactMap { id in 
+            allContacts.first(where: { $0.contactId == id }) 
+        })
+        isPresented = false
+    }
 }
 
 /// A generic sheet view for picking multiple contacts
@@ -101,20 +183,44 @@ struct ContactMultiPickerSheet: View {
     @Binding var isPresented: Bool
     var onDone: () -> Void
     
+    // Initialize displayedContacts with allContacts
+    @State private var displayedContacts: [Contact]
+    
+    init(allContacts: [Contact], selectedContactIds: Binding<Set<UUID>>, isPresented: Binding<Bool>, onDone: @escaping () -> Void) {
+        self.allContacts = allContacts
+        self._selectedContactIds = selectedContactIds
+        self._isPresented = isPresented
+        self.onDone = onDone
+        // Initialize displayedContacts with allContacts
+        self._displayedContacts = State(initialValue: allContacts)
+    }
+    
     var body: some View {
         NavigationView {
             List {
-                ForEach(allContacts, id: \ .contactId) { contact in
-                    HStack {
-                        Text(contact.name ?? "")
-                        Spacer()
-                        CheckboxView(isChecked: selectedContactIds.contains(contact.contactId ?? UUID())) {
-                            toggleContact(contact)
+                if displayedContacts.isEmpty {
+                    Text("No contacts available")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .listRowBackground(Color.white)
+                } else {
+                    ForEach(displayedContacts, id: \.contactId) { contact in
+                        HStack {
+                            Text(contact.name ?? "")
+                                .foregroundColor(.primary)
+                                .padding(.vertical, 8)
+                            Spacer()
+                            CheckboxView(isChecked: selectedContactIds.contains(contact.contactId ?? UUID())) {
+                                toggleContact(contact)
+                            }
                         }
+                        .contentShape(Rectangle())
+                        .background(Color.white)
+                        .listRowBackground(Color.white)
                     }
-                    .contentShape(Rectangle())
                 }
             }
+            .listStyle(PlainListStyle())
             .navigationTitle("选择熟人")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -123,6 +229,20 @@ struct ContactMultiPickerSheet: View {
                         isPresented = false
                         onDone()
                     }
+                }
+            }
+            .onAppear {
+                print("DEBUG: ContactMultiPickerSheet appeared")
+                print("DEBUG: Initial allContacts count: \(allContacts.count)")
+                print("DEBUG: Initial displayedContacts count: \(displayedContacts.count)")
+                // Update displayed contacts if they don't match
+                if displayedContacts.count != allContacts.count {
+                    displayedContacts = allContacts
+                    print("DEBUG: Updated displayedContacts to match allContacts")
+                }
+                // Log all contacts for debugging
+                for contact in displayedContacts {
+                    print("DEBUG: Displayed contact - Name: \(contact.name ?? "unnamed"), Type: \(contact.type), ID: \(contact.contactId?.uuidString ?? "nil")")
                 }
             }
         }
