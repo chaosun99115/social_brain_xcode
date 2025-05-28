@@ -19,12 +19,6 @@
 		AF6D11272DB00A330071D444 /* SocialNoteModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11262DB00A320071D444 /* SocialNoteModalView.swift */; };
 		AF8398952DB98E9600382EA6 /* SimpleNoteModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8398942DB98E9600382EA6 /* SimpleNoteModalView.swift */; };
 		AF8398972DBAC6AD00382EA6 /* SocialNoteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8398962DBAC6AA00382EA6 /* SocialNoteDetailView.swift */; };
-		AF84F41A2DC582C600BD66D5 /* DebugMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4152DC582C600BD66D5 /* DebugMenuView.swift */; };
-		AF84F41B2DC582C600BD66D5 /* CircleDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4162DC582C600BD66D5 /* CircleDebugView.swift */; };
-		AF84F41C2DC582C600BD66D5 /* ContactDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4172DC582C600BD66D5 /* ContactDebugView.swift */; };
-		AF84F41D2DC582C600BD66D5 /* NoteDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4182DC582C600BD66D5 /* NoteDebugView.swift */; };
-		AF84F41E2DC582C600BD66D5 /* CoreDataDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4192DC582C600BD66D5 /* CoreDataDebugView.swift */; };
-		AF84F4242DC942D200BD66D5 /* ContactInsightDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4232DC942D200BD66D5 /* ContactInsightDebugView.swift */; };
 		AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF84F4252DC942E500BD66D5 /* ContactInsightManager.swift */; };
 		AFA2761A2DB0349C00C29B81 /* SocialNotesList.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA276192DB0349C00C29B81 /* SocialNotesList.swift */; };
 		AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA2761B2DB0362C00C29B81 /* MentionTextView.swift */; };
@@ -87,12 +81,6 @@
 		AF6D11262DB00A320071D444 /* SocialNoteModalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNoteModalView.swift; sourceTree = "<group>"; };
 		AF8398942DB98E9600382EA6 /* SimpleNoteModalView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SimpleNoteModalView.swift; sourceTree = "<group>"; };
 		AF8398962DBAC6AA00382EA6 /* SocialNoteDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNoteDetailView.swift; sourceTree = "<group>"; };
-		AF84F4152DC582C600BD66D5 /* DebugMenuView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugMenuView.swift; sourceTree = "<group>"; };
-		AF84F4162DC582C600BD66D5 /* CircleDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleDebugView.swift; sourceTree = "<group>"; };
-		AF84F4172DC582C600BD66D5 /* ContactDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactDebugView.swift; sourceTree = "<group>"; };
-		AF84F4182DC582C600BD66D5 /* NoteDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteDebugView.swift; sourceTree = "<group>"; };
-		AF84F4192DC582C600BD66D5 /* CoreDataDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataDebugView.swift; sourceTree = "<group>"; };
-		AF84F4232DC942D200BD66D5 /* ContactInsightDebugView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactInsightDebugView.swift; sourceTree = "<group>"; };
 		AF84F4252DC942E500BD66D5 /* ContactInsightManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactInsightManager.swift; sourceTree = "<group>"; };
 		AFA276192DB0349C00C29B81 /* SocialNotesList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialNotesList.swift; sourceTree = "<group>"; };
 		AFA2761B2DB0362C00C29B81 /* MentionTextView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MentionTextView.swift; sourceTree = "<group>"; };
@@ -178,19 +166,6 @@
 				AF6D111D2DADA98E0071D444 /* NoteManager.swift */,
 			);
 			path = Managers;
-			sourceTree = "<group>";
-		};
-		AF84F4142DC582C600BD66D5 /* CoreDataDebug */ = {
-			isa = PBXGroup;
-			children = (
-				AF84F4152DC582C600BD66D5 /* DebugMenuView.swift */,
-				AF84F4162DC582C600BD66D5 /* CircleDebugView.swift */,
-				AF84F4172DC582C600BD66D5 /* ContactDebugView.swift */,
-				AF84F4232DC942D200BD66D5 /* ContactInsightDebugView.swift */,
-				AF84F4182DC582C600BD66D5 /* NoteDebugView.swift */,
-				AF84F4192DC582C600BD66D5 /* CoreDataDebugView.swift */,
-			);
-			path = CoreDataDebug;
 			sourceTree = "<group>";
 		};
 		AFA2761D2DB03BAF00C29B81 /* Features */ = {
@@ -475,7 +450,6 @@
 				AFAE47272DE7A2BA00DD10E0 /* social_brain_xcode.entitlements */,
 				AFF98BC42DA075730001DD70 /* Info.plist */,
 				AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */,
-				AF84F4142DC582C600BD66D5 /* CoreDataDebug */,
 				AFA276272DB03E6400C29B81 /* App */,
 				AFA2762C2DB03F4200C29B81 /* Components */,
 				AFA2762A2DB03ED900C29B81 /* Data */,
@@ -581,14 +555,12 @@
 				AFDDDCA02DD52DC200425764 /* SampleModeProvider.swift in Sources */,
 				AFF98BC02DA075730001DD70 /* Persistence.swift in Sources */,
 				AFBF98952DCAA44300AF626E /* AIServiceManager.swift in Sources */,
-				AF84F41D2DC582C600BD66D5 /* NoteDebugView.swift in Sources */,
 				AFF98BD92DA45DA00001DD70 /* AppTheme.swift in Sources */,
 				AFBD50F92DA715550066907B /* SocialBrainDialogView.swift in Sources */,
 				AF56DC272DCBE13D00F56D6E /* SeedDataManager.swift in Sources */,
 				AFAE46E52DE4E57F00DD10E0 /* ContactSelectionView.swift in Sources */,
 				AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */,
 				AFDDDCA22DD531F900425764 /* SampleModePrompts.swift in Sources */,
-				AF84F41E2DC582C600BD66D5 /* CoreDataDebugView.swift in Sources */,
 				AFF98BC32DA075730001DD70 /* social_brain_xcode.xcdatamodeld in Sources */,
 				AF6D11272DB00A330071D444 /* SocialNoteModalView.swift in Sources */,
 				AF8398972DBAC6AD00382EA6 /* SocialNoteDetailView.swift in Sources */,
@@ -605,8 +577,6 @@
 				AFF98BD02DA0772F0001DD71 /* SocialNote.swift in Sources */,
 				AFAE46F32DE65B4700DD10E0 /* FaceIDAuthView.swift in Sources */,
 				AFAE47202DE799ED00DD10E0 /* StoreKitManager.swift in Sources */,
-				AF84F4242DC942D200BD66D5 /* ContactInsightDebugView.swift in Sources */,
-				AF84F41B2DC582C600BD66D5 /* CircleDebugView.swift in Sources */,
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,
 				AFAE47212DE799ED00DD10E0 /* SubscriptionView.swift in Sources */,
 				AFAE46EF2DE646B300DD10E0 /* AddCircleView.swift in Sources */,
@@ -622,7 +592,6 @@
 				AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */,
 				AFAE46F12DE648D500DD10E0 /* EditCircleContactsSheet.swift in Sources */,
 				AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */,
-				AF84F41A2DC582C600BD66D5 /* DebugMenuView.swift in Sources */,
 				AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */,
 				AFA2761A2DB0349C00C29B81 /* SocialNotesList.swift in Sources */,
 				AF8398952DB98E9600382EA6 /* SimpleNoteModalView.swift in Sources */,
@@ -631,7 +600,6 @@
 				AFBD50F42DA70DDC0066907B /* SocialContactView.swift in Sources */,
 				AFBD50F52DA70DDC0066907B /* SocialContact.swift in Sources */,
 				AFAE46ED2DE6309600DD10E0 /* AddContactSheet.swift in Sources */,
-				AF84F41C2DC582C600BD66D5 /* ContactDebugView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -778,7 +746,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = social_brain_xcode/social_brain_xcode.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"social_brain_xcode/Preview Content\"";
 				DEVELOPMENT_TEAM = G2726ZZ85E;
 				ENABLE_PREVIEWS = YES;
@@ -811,7 +779,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = social_brain_xcode/social_brain_xcode.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"social_brain_xcode/Preview Content\"";
 				DEVELOPMENT_TEAM = G2726ZZ85E;
 				ENABLE_PREVIEWS = YES;
