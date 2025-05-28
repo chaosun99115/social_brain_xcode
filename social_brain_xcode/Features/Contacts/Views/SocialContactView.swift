@@ -143,8 +143,8 @@ struct SocialContactView: View {
                             }
                         )
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 8)
+                    .padding(.horizontal, 8)
+                    .padding(.top, 2)
                     
                     // Modify TabView to use CircleListView for circles tab
                     TabView(selection: $selectedTab) {

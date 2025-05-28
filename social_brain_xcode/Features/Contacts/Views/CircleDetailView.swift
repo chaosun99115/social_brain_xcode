@@ -146,15 +146,12 @@ struct CircleDetailView: View {
             }
         }
         .sheet(isPresented: $showingSocialBrain) {
-            SocialBrainView(
+            SocialBrainSheetView(
                 sourceType: socialBrainContext.sourceType,
                 sourceAction: socialBrainContext.sourceAction,
                 sourceId: socialBrainContext.sourceId
             )
             .environmentObject(appModeManager)
-            .onAppear {
-                print("[CircleDetailView] Opening SocialBrainView with context: type=\(socialBrainContext.sourceType), action=\(socialBrainContext.sourceAction), id=\(socialBrainContext.sourceId)")
-            }
         }
         .sheet(isPresented: $showingEditCircleSheet) {
             EditCircleContactsSheet(circle: circle, isPresented: $showingEditCircleSheet) { updatedContacts in

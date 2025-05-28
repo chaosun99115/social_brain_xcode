@@ -143,30 +143,12 @@ struct SocialContactDetailView: View {
             }
         }
         .sheet(isPresented: $showingSocialBrain) {
-            NavigationView {
-                SocialBrainView(
-                    sourceType: socialBrainContext.sourceType,
-                    sourceAction: socialBrainContext.sourceAction,
-                    sourceId: socialBrainContext.sourceId
-                )
-                .navigationBarTitleDisplayMode(.inline)
-                .navigationBarBackButtonHidden(true)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button(action: {
-                            showingSocialBrain = false
-                        }) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.primary)
-                        }
-                    }
-                }
-            }
+            SocialBrainSheetView(
+                sourceType: socialBrainContext.sourceType,
+                sourceAction: socialBrainContext.sourceAction,
+                sourceId: socialBrainContext.sourceId
+            )
             .environmentObject(appModeManager)
-            .onAppear {
-                print("[SocialContactDetailView] Opening SocialBrainView with context: type=\(socialBrainContext.sourceType), action=\(socialBrainContext.sourceAction), id=\(socialBrainContext.sourceId)")
-            }
         }
         .sheet(isPresented: $showingEditCircleSheet) {
             EditContactCirclesSheet(
