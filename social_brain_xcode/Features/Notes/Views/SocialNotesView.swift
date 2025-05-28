@@ -41,29 +41,8 @@ struct SocialNotesView: View {
                 Color.primaryBackground
                     .ignoresSafeArea()
                 
+                // Main content area (no custom header for navigation bar)
                 VStack(spacing: 0) {
-                    if appModeManager.isSampleMode {
-                        Button(action: {
-                            appModeManager.isSampleMode = false
-                            appModeManager.sampleModeType = nil
-                            refreshTrigger.toggle()
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
-                                Text(SampleModeConfig.UIConstants.exitButtonTitle)
-                            }
-                            .font(.footnote)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 6)
-                            .background(Color(hex: SampleModeConfig.UIConstants.exitButtonColor))
-                            .cornerRadius(6)
-                            .padding(.horizontal, 100)
-                        }
-                        .padding(.top, 16)
-                        .padding(.bottom, 8)
-                    }
-
                     if filteredNotes.isEmpty {
                         VStack(spacing: 32) {
                             Spacer()
@@ -143,7 +122,35 @@ struct SocialNotesView: View {
                 }
             }
             .navigationTitle("社交笔记")
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索笔记")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if appModeManager.isSampleMode {
+                        Button(action: {
+                            appModeManager.isSampleMode = false
+                            appModeManager.sampleModeType = nil
+                            refreshTrigger.toggle()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
+                                Text(SampleModeConfig.UIConstants.exitButtonTitle)
+                                    .fontWeight(.bold)
+                            }
+                            .font(.footnote)
+                            .foregroundColor(.blue)
+                        }
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        // TODO: Handle settings action
+                    }) {
+                        Image(systemName: "ellipsis")
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
             .sheet(isPresented: $showingNoteModal) {
                 SocialNoteModalView(initialPrompt: "今天遇到了哪些事，认识了哪些人？") { noteText in
                     // Only refresh the notes list

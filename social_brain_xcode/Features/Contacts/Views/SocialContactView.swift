@@ -120,28 +120,6 @@ struct SocialContactView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    if appModeManager.isSampleMode {
-                        Button(action: {
-                            appModeManager.isSampleMode = false
-                            appModeManager.sampleModeType = nil
-                            Task { await loadContacts() }
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
-                                Text(SampleModeConfig.UIConstants.exitButtonTitle)
-                            }
-                            .font(.footnote)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 6)
-                            .background(Color(hex: SampleModeConfig.UIConstants.exitButtonColor))
-                            .cornerRadius(6)
-                            .padding(.horizontal, 100)
-                        }
-                        .padding(.top, 16)
-                        .padding(.bottom, 8)
-                    }
-                    
                     // Tab selector
                     HStack(spacing: 0) {
                         TabButton(
@@ -233,7 +211,35 @@ struct SocialContactView: View {
                 }
             }
             .navigationTitle("社交关系")
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "search_contacts")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if appModeManager.isSampleMode {
+                        Button(action: {
+                            appModeManager.isSampleMode = false
+                            appModeManager.sampleModeType = nil
+                            Task { await loadContacts() }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
+                                Text(SampleModeConfig.UIConstants.exitButtonTitle)
+                                    .fontWeight(.bold)
+                            }
+                            .font(.footnote)
+                            .foregroundColor(.blue)
+                        }
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        // TODO: Handle settings action
+                    }) {
+                        Image(systemName: "ellipsis")
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
             .confirmationDialog(
                 SampleModeConfig.selectionDialogMessage,
                 isPresented: $showingSampleDialog,

@@ -176,182 +176,191 @@ struct SocialBrainView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Color.primaryBackground
-                .ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                if appModeManager.isSampleMode {
-                    Button(action: {
-                        appModeManager.isSampleMode = false
-                        appModeManager.sampleModeType = nil
-                        // Reset conversation state
-                        isConversationActive = false
-                        messages.removeAll()
-                        inputText = ""
-                        initializeSuggestedQuestions()
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
-                            Text(SampleModeConfig.UIConstants.exitButtonTitle)
-                        }
-                        .font(.footnote)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(Color(hex: SampleModeConfig.UIConstants.exitButtonColor))
-                        .cornerRadius(6)
-                        .padding(.horizontal, 100)
-                    }
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
-                }
-
-                // Chat area
-                ScrollViewReader { scrollProxy in
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            // Top anchor for scrolling to top
-                            Color.clear.frame(height: 1)
-                                .id(scrollToTopID)
-                            
-                            if isConversationActive {
-                                // Show conversation
-                                ForEach(messages) { message in
-                                    if message.isFromUser {
-                                        // User message
-                                        MessageBubble(
-                                            text: message.content,
-                                            isFromUser: true
-                                        )
-                                    } else {
-                                        // AI response
-                                        AiBubble(
-                                            text: message.content,
-                                            actionText: message.suggestedAction,
-                                            onActionTapped: {
-                                                handleActionButtonTapped(actionText: message.suggestedAction ?? "")
+        NavigationView {
+            ZStack(alignment: .bottom) {
+                Color.primaryBackground
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Chat area
+                    ScrollViewReader { scrollProxy in
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                // Top anchor for scrolling to top
+                                // Removed top spacer to reduce gap
+                                
+                                if isConversationActive {
+                                    // Show conversation
+                                    ForEach(messages) { message in
+                                        if message.isFromUser {
+                                            // User message
+                                            MessageBubble(
+                                                text: message.content,
+                                                isFromUser: true
+                                            )
+                                        } else {
+                                            // AI response
+                                            AiBubble(
+                                                text: message.content,
+                                                actionText: message.suggestedAction,
+                                                onActionTapped: {
+                                                    handleActionButtonTapped(actionText: message.suggestedAction ?? "")
+                                                }
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    // Show suggested questions
+                                    ForEach(suggestedQuestions) { question in
+                                        SuggestedQuestionBubble(text: question.content)
+                                            .contentShape(Rectangle())
+                                            .onTapGesture {
+                                                handleSuggestedQuestion(question.content)
                                             }
-                                        )
                                     }
                                 }
-                            } else {
-                                // Show suggested questions
-                                ForEach(suggestedQuestions) { question in
-                                    SuggestedQuestionBubble(text: question.content)
-                                        .contentShape(Rectangle())
-                                        .onTapGesture {
-                                            handleSuggestedQuestion(question.content)
-                                        }
+                                
+                                // Spacer at the bottom for input field
+                                Spacer().frame(height: 1)
+                                    .id(scrollToBottomID)
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 0)
+                        }
+                        .simultaneousGesture(
+                            DragGesture().onChanged { _ in
+                                // Dismiss keyboard when scrolling
+                                isInputFocused = false
+                            }
+                        )
+                        .onChange(of: messages.count) { _ in
+                            withAnimation {
+                                scrollProxy.scrollTo(scrollToBottomID, anchor: .bottom)
+                            }
+                        }
+                        .onChange(of: isLoading) { _ in
+                            withAnimation {
+                                scrollProxy.scrollTo(scrollToBottomID, anchor: .bottom)
+                            }
+                        }
+                        .onChange(of: isConversationActive) { active in
+                            if (!active) {
+                                // When returning to default view, scroll to top
+                                withAnimation {
+                                    scrollProxy.scrollTo(scrollToTopID, anchor: .top)
                                 }
                             }
-                            
-                            // Spacer at the bottom for input field
-                            Spacer().frame(height: 1)
-                                .id(scrollToBottomID)
+                            // Always reset input field height for consistency
+                            textEditorHeight = 56
                         }
-                        .padding(.horizontal)
-                        .padding(.top)
                     }
-                    .simultaneousGesture(
-                        DragGesture().onChanged { _ in
-                            // Dismiss keyboard when scrolling
+                }
+                // Tap-capturing layer above chat area but below input bar
+                if isKeyboardVisible {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture {
                             isInputFocused = false
                         }
-                    )
-                    .onChange(of: messages.count) { _ in
-                        withAnimation {
-                            scrollProxy.scrollTo(scrollToBottomID, anchor: .bottom)
+                        .ignoresSafeArea(edges: .all)
+                }
+                // Input area (always at the bottom)
+                VStack(spacing: 0) {
+                    if isConversationActive {
+                        // New chat button
+                        Button(action: startNewConversation) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.circle")
+                                    .font(.system(size: 18))
+                                
+                                Text("新对话")
+                                    .font(.system(size: 14, weight: .medium))
+                            }
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .foregroundColor(.primary)
+                            .background(Color.clear)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
                         }
+                        .padding(.top, 8)
+                        .padding(.horizontal)
+                        .padding(.bottom, 8)
                     }
-                    .onChange(of: isLoading) { _ in
-                        withAnimation {
-                            scrollProxy.scrollTo(scrollToBottomID, anchor: .bottom)
-                        }
-                    }
-                    .onChange(of: isConversationActive) { active in
-                        if (!active) {
-                            // When returning to default view, scroll to top
-                            withAnimation {
-                                scrollProxy.scrollTo(scrollToTopID, anchor: .top)
+                    
+                    // Input bar
+                    HStack {
+                        ZStack(alignment: .topLeading) {
+                            GrowingTextView(text: $inputText, height: $textEditorHeight, maxHeight: maxTextEditorHeight)
+                                .frame(height: textEditorHeight)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(12)
+                                .focused($isInputFocused)
+                            if inputText.isEmpty {
+                                Text("输入您的问题...")
+                                    .foregroundColor(.gray)
+                                    .padding(.top, 12)
+                                    .padding(.leading, 16)
                             }
                         }
-                        // Always reset input field height for consistency
-                        textEditorHeight = 56
-                    }
-                }
-            }
-            // Tap-capturing layer above chat area but below input bar
-            if isKeyboardVisible {
-                Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        isInputFocused = false
-                    }
-                    .ignoresSafeArea(edges: .all)
-            }
-            // Input area (always at the bottom)
-            VStack(spacing: 0) {
-                if isConversationActive {
-                    // New chat button
-                    Button(action: startNewConversation) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "plus.circle")
-                                .font(.system(size: 18))
-                            
-                            Text("新对话")
-                                .font(.system(size: 14, weight: .medium))
+                        Button(action: sendMessage) {
+                            Image(systemName: "arrow.up")
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.primaryAction)
+                                .clipShape(SwiftUI.Circle())
+                                .shadow(color: Color.primaryText.opacity(0.1), radius: 2, x: 0, y: 1)
                         }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .foregroundColor(.primary)
-                        .background(Color.clear)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                        )
+                        .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    .padding(.top, 8)
                     .padding(.horizontal)
-                    .padding(.bottom, 8)
+                    .padding(.vertical, 6)
+                    .padding(.bottom, 12)
+                    .animation(.easeInOut(duration: 0.25), value: isKeyboardVisible)
                 }
-                
-                // Input bar
-                HStack {
-                    ZStack(alignment: .topLeading) {
-                        GrowingTextView(text: $inputText, height: $textEditorHeight, maxHeight: maxTextEditorHeight)
-                            .frame(height: textEditorHeight)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
-                            .focused($isInputFocused)
-                        if inputText.isEmpty {
-                            Text("输入您的问题...")
-                                .foregroundColor(.gray)
-                                .padding(.top, 12)
-                                .padding(.leading, 16)
+                .background(Color.primaryBackground)
+                // Loading modal overlay
+                if showLoadingModal {
+                    LoadingModal()
+                }
+            }
+            .navigationTitle("社交大脑")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if appModeManager.isSampleMode {
+                        Button(action: {
+                            appModeManager.isSampleMode = false
+                            appModeManager.sampleModeType = nil
+                            // Reset conversation state
+                            isConversationActive = false
+                            messages.removeAll()
+                            inputText = ""
+                            initializeSuggestedQuestions()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
+                                Text(SampleModeConfig.UIConstants.exitButtonTitle)
+                                    .fontWeight(.bold)
+                            }
+                            .font(.footnote)
+                            .foregroundColor(.blue)
                         }
                     }
-                    Button(action: sendMessage) {
-                        Image(systemName: "arrow.up")
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.primaryAction)
-                            .clipShape(SwiftUI.Circle())
-                            .shadow(color: Color.primaryText.opacity(0.1), radius: 2, x: 0, y: 1)
-                    }
-                    .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 6)
-                .padding(.bottom, 12)
-                .animation(.easeInOut(duration: 0.25), value: isKeyboardVisible)
-            }
-            .background(Color.primaryBackground)
-            // Loading modal overlay
-            if showLoadingModal {
-                LoadingModal()
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        // TODO: Handle settings action
+                    }) {
+                        Image(systemName: "ellipsis")
+                            .foregroundColor(.primary)
+                    }
+                }
             }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
         .alert("Error", isPresented: $showError) {
             Button("OK", role: .cancel) {}
         } message: {
