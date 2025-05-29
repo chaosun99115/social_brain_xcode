@@ -165,47 +165,39 @@ struct SimpleNoteModalView: View {
                     .onTapGesture {
                         dismiss()
                     }
+                
                 VStack(spacing: 0) {
-                    NavigationView {
-                        ZStack {
-                            Color(.systemGray6)
-                                .ignoresSafeArea()
+                    // Main content area
+                    VStack(spacing: 0) {
+                        // Navigation bar
+                        NavigationView {
                             VStack(spacing: 0) {
-                                // Text editor
+                                // Text editor container
                                 ZStack(alignment: .topLeading) {
                                     Color(.systemBackground)
-                                        .frame(height: min(textEditorHeight, maxTextEditorHeight))
+                                    
+                                    // Text editor
                                     TextViewWrapper(state: textState, isFirstResponder: true, onDone: {})
-                                        .frame(height: min(textEditorHeight, maxTextEditorHeight))
+                                        .frame(maxHeight: .infinity)
                                         .padding(.horizontal, 16)
+                                        .padding(.vertical, 12)
                                         .onChange(of: textState.text) { newValue in
-                                            let estimatedHeight = newValue.isEmpty ? 100 : min(newValue.height(width: UIScreen.main.bounds.width * 0.9, font: .systemFont(ofSize: 17)), maxTextEditorHeight)
+                                            let estimatedHeight = newValue.isEmpty ? 100 : min(newValue.height(width: UIScreen.main.bounds.width - 32, font: .systemFont(ofSize: 17)), maxTextEditorHeight)
                                             textEditorHeight = max(100, estimatedHeight)
                                         }
+                                    
+                                    // Placeholder text with matching font size
                                     if textState.text.isEmpty {
                                         Text("现在的想法是...")
-                                            .font(.system(size: 17))
-                                            .foregroundColor(.gray)
+                                            .font(.system(size: 17, weight: .regular))
+                                            .foregroundColor(.secondary)
                                             .padding(.horizontal, 16)
-                                            .padding(.top, 0)
+                                            .padding(.vertical, 12)
                                             .allowsHitTesting(false)
                                     }
                                 }
-                                .padding(.top, 20)
-                                .padding(.bottom, 8)
-                                Spacer()
+                                .frame(maxHeight: .infinity)
                             }
-                            .frame(maxWidth: .infinity, maxHeight: geometry.size.height - (showingKeyboard ? keyboardHeight : 0))
-                            .background(Color(.systemBackground))
-                            .edgesIgnoringSafeArea(.bottom)
-                            .gesture(
-                                DragGesture()
-                                    .onEnded { value in
-                                        if value.translation.height > 20 {
-                                            dismiss()
-                                        }
-                                    }
-                            )
                             .navigationTitle("新建想法")
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
@@ -220,43 +212,64 @@ struct SimpleNoteModalView: View {
                                         saveNote()
                                     }
                                     .disabled(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                    .foregroundColor(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
+                                    .foregroundColor(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .blue)
                                 }
                             }
                         }
-                    }
-                    .navigationViewStyle(.stack)
-                    .padding(.top, geometry.safeAreaInsets.top)
-                    // Restore the mention/circle bar below the NavigationView
-                    HStack(spacing: 0) {
-                        Button(action: {
-                            showingContactSelection = true
-                        }) {
-                            Text("@熟人")
-                                .font(.system(size: 17))
-                                .foregroundColor(.blue)
-                                .frame(maxWidth: .infinity)
+                        .navigationViewStyle(.stack)
+                        
+                        // Bottom action bar
+                        VStack(spacing: 0) {
+                            Divider()
+                            
+                            HStack(spacing: 0) {
+                                Button(action: {
+                                    showingContactSelection = true
+                                }) {
+                                    Text("@熟人")
+                                        .font(.system(size: 17))
+                                        .foregroundColor(.blue)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 44) // Standard iOS button height
+                                }
+                                
+                                Divider()
+                                    .frame(height: 24)
+                                    .padding(.vertical, 10)
+                                
+                                Button(action: {
+                                    showingCircleSelection = true
+                                }) {
+                                    Text("# 圈子")
+                                        .font(.system(size: 17))
+                                        .foregroundColor(.blue)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 44) // Standard iOS button height
+                                }
+                            }
+                            .background(Color(.systemBackground))
                         }
-                        Button(action: {
-                            showingCircleSelection = true
-                        }) {
-                            Text("# 圈子")
-                                .font(.system(size: 17))
-                                .foregroundColor(.blue)
-                                .frame(maxWidth: .infinity)
-                        }
+                        .background(Color(.systemBackground))
                     }
-                    .padding(.vertical, 12)
-                    .padding(.bottom, geometry.safeAreaInsets.bottom + keyboardHeight)
                     .background(Color(.systemBackground))
+                    .cornerRadius(16, corners: [.topLeft, .topRight])
                 }
+                .frame(maxWidth: .infinity, maxHeight: geometry.size.height - (showingKeyboard ? keyboardHeight : 0))
+                .position(x: geometry.size.width / 2, y: (geometry.size.height - (showingKeyboard ? keyboardHeight : 0)) / 2)
             }
         }
         .edgesIgnoringSafeArea(.all)
         .onAppear {
             textState.text = initialText
             setupKeyboardObservers()
-            forceShowKeyboard()
+            // Force keyboard to appear with multiple attempts
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                forceShowKeyboard()
+                // Additional attempt after a short delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    forceShowKeyboard()
+                }
+            }
         }
         .onDisappear {
             removeKeyboardObservers()
@@ -296,13 +309,8 @@ struct SimpleNoteModalView: View {
     }
     
     private func forceShowKeyboard() {
-        // Multiple approaches to ensure keyboard appears
         isTextFieldFocused = true
-        
-        // Force UIKit keyboard to appear
-        DispatchQueue.main.async {
-            self.textState.textView?.becomeFirstResponder()
-        }
+        textState.textView?.becomeFirstResponder()
     }
     
     private func setupKeyboardObservers() {
@@ -461,7 +469,8 @@ struct TextViewWrapper: UIViewRepresentable {
     
     func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
-        textView.font = UIFont.systemFont(ofSize: 17)
+        // Match text size with SocialNoteDetailView
+        textView.font = UIFont.systemFont(ofSize: 17, weight: .regular)
         textView.backgroundColor = .clear
         textView.delegate = context.coordinator
         textView.textContainerInset = .zero
@@ -472,9 +481,12 @@ struct TextViewWrapper: UIViewRepresentable {
         textView.text = state.text
         // Store reference
         state.textView = textView
-        if isFirstResponder {
+        
+        // Ensure keyboard appears immediately
+        DispatchQueue.main.async {
             textView.becomeFirstResponder()
         }
+        
         return textView
     }
     

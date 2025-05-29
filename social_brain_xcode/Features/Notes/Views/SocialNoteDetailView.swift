@@ -79,9 +79,12 @@ struct SocialNoteDetailView: View {
                         }
                         // Edit Note button
                         Button(action: {
+                            // Set the text before showing the modal
                             editingNoteText = note.content ?? ""
-                            print("Debug - Setting editingNoteText to: \(editingNoteText)")
-                            showingEditModal = true
+                            // Use async to ensure state is updated before showing modal
+                            DispatchQueue.main.async {
+                                showingEditModal = true
+                            }
                         }) {
                             VStack(spacing: 2) {
                                 Image(systemName: "square.and.pencil")
@@ -134,7 +137,10 @@ struct SocialNoteDetailView: View {
         }
         .edgesIgnoringSafeArea(.bottom)
         .sheet(isPresented: $showingEditModal) {
-            SimpleNoteModalView(initialText: editingNoteText, noteId: note.noteId) { updatedText in
+            SimpleNoteModalView(
+                initialText: note.content ?? "",  // Use note.content directly instead of editingNoteText
+                noteId: note.noteId
+            ) { updatedText in
                 print("Debug - Received updated text: \(updatedText)")
                 if !updatedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     guard let noteId = note.noteId else { return }
@@ -144,7 +150,6 @@ struct SocialNoteDetailView: View {
                     }
                 }
             }
-            .id(editingNoteText)
         }
         .alert(isPresented: $showingArchiveConfirmation) {
             Alert(

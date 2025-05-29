@@ -39,8 +39,8 @@ struct ContactSelectionView: View {
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "搜索联系人")
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("返回") {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("取消") {
                         dismiss()
                     }
                 }
