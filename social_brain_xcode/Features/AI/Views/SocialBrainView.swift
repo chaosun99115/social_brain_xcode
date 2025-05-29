@@ -25,6 +25,7 @@ struct SocialBrainView: View {
     @State private var showLoadingModal = false
     @State private var errorMessage: String?
     @State private var showError = false
+    @State private var showingNoteModal = false
     
     // Add keyboard handling state
     @State private var keyboardHeight: CGFloat = 0
@@ -273,23 +274,43 @@ struct SocialBrainView: View {
                 // Input area (always at the bottom)
                 VStack(spacing: 0) {
                     if isConversationActive {
-                        // New chat button
-                        Button(action: startNewConversation) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle")
-                                    .font(.system(size: 18))
-                                
-                                Text("新对话")
-                                    .font(.system(size: 14, weight: .medium))
+                        // New chat button and New note button in HStack
+                        HStack(spacing: 12) {
+                            Button(action: startNewConversation) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "plus.circle")
+                                        .font(.system(size: 18))
+                                    
+                                    Text("新对话")
+                                        .font(.system(size: 14, weight: .medium))
+                                }
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .foregroundColor(.primary)
+                                .background(Color.clear)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
                             }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .foregroundColor(.primary)
-                            .background(Color.clear)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
+                            
+                            Button(action: { showingNoteModal = true }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "square.and.pencil")
+                                        .font(.system(size: 18))
+                                    
+                                    Text("新建笔记")
+                                        .font(.system(size: 14, weight: .medium))
+                                }
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .foregroundColor(.primary)
+                                .background(Color.clear)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                            }
                         }
                         .padding(.top, 8)
                         .padding(.horizontal)
@@ -410,6 +431,14 @@ struct SocialBrainView: View {
         }
         .sheet(isPresented: $showingConfigurationSheet) {
             ConfigurationSheetView()
+        }
+        .sheet(isPresented: $showingNoteModal) {
+            SimpleNoteModalView(initialText: "") { newNoteText in
+                // Handle the new note creation
+                print("[SocialBrainView] New note created: \(newNoteText)")
+            }
+            .environmentObject(NoteManager.shared)
+            .environmentObject(appModeManager)
         }
     }
     

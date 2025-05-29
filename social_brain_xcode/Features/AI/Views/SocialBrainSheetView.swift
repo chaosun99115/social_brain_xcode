@@ -26,6 +26,7 @@ struct SocialBrainSheetView: View {
     @State private var showLoadingModal = false
     @State private var errorMessage: String?
     @State private var showError = false
+    @State private var showingNoteModal = false
     
     // Add keyboard handling state
     @State private var keyboardHeight: CGFloat = 0
@@ -271,23 +272,43 @@ struct SocialBrainSheetView: View {
                 // Input area (always at the bottom)
                 VStack(spacing: 0) {
                     if isConversationActive {
-                        // New chat button
-                        Button(action: startNewConversation) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle")
-                                    .font(.system(size: 18))
-                                
-                                Text("新对话")
-                                    .font(.system(size: 14, weight: .medium))
+                        // New chat button and New note button in HStack
+                        HStack(spacing: 12) {
+                            Button(action: startNewConversation) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "plus.circle")
+                                        .font(.system(size: 18))
+                                    
+                                    Text("新对话")
+                                        .font(.system(size: 14, weight: .medium))
+                                }
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .foregroundColor(.primary)
+                                .background(Color.clear)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
                             }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .foregroundColor(.primary)
-                            .background(Color.clear)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
+                            
+                            Button(action: { showingNoteModal = true }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "square.and.pencil")
+                                        .font(.system(size: 18))
+                                    
+                                    Text("新建笔记")
+                                        .font(.system(size: 14, weight: .medium))
+                                }
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .foregroundColor(.primary)
+                                .background(Color.clear)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                            }
                         }
                         .padding(.top, 8)
                         .padding(.horizontal)
@@ -301,6 +322,7 @@ struct SocialBrainSheetView: View {
                                 .frame(height: textEditorHeight)
                                 .background(Color(.systemGray6))
                                 .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                                 .focused($isInputFocused)
                             if inputText.isEmpty {
                                 Text("输入您的问题...")
@@ -386,6 +408,14 @@ struct SocialBrainSheetView: View {
         }
         .sheet(isPresented: $showingConfigurationSheet) {
             ConfigurationSheetView()
+        }
+        .sheet(isPresented: $showingNoteModal) {
+            SimpleNoteModalView(initialText: "") { newNoteText in
+                // Handle the new note creation
+                print("[SocialBrainSheetView] New note created: \(newNoteText)")
+            }
+            .environmentObject(NoteManager.shared)
+            .environmentObject(appModeManager)
         }
     }
     
