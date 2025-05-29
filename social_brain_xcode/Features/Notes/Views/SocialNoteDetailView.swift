@@ -18,6 +18,10 @@ struct SocialNoteDetailView: View {
     // Add namespace for scroll position control
     private let topID = "top"
     
+    // Keep state for tracking scroll position but remove debug logging
+    @State private var scrollOffset: CGFloat = 0
+    @State private var isScrolling = false
+    
     var body: some View {
         ZStack {
             // Background color for the entire screen
@@ -29,6 +33,12 @@ struct SocialNoteDetailView: View {
                 // Scrollable content
                 ScrollViewReader { proxy in
                     ScrollView {
+                        GeometryReader { geometry in
+                            Color.clear.preference(key: ScrollOffsetPreferenceKey.self,
+                                value: geometry.frame(in: .named("scrollView")).minY)
+                        }
+                        .frame(height: 0)
+                        
                         VStack(alignment: .leading, spacing: 0) {
                             // Note details section (content only)
                             VStack(alignment: .leading, spacing: 16) {
@@ -41,11 +51,19 @@ struct SocialNoteDetailView: View {
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
-                            .padding(.bottom, 16)
+                            .padding(.vertical, 16)
                             // Extra bottom padding to ensure content isn't covered by the bottom toolbar
                             Spacer(minLength: 80)
                         }
-                        .padding(.top, 16)
+                    }
+                    .coordinateSpace(name: "scrollView")
+                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                        scrollOffset = value
+                        isScrolling = true
+                        // Reset scrolling state after a short delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isScrolling = false
+                        }
                     }
                     .id(scrollResetID)
                     .onChange(of: shouldScrollToTop) { newValue in
@@ -57,6 +75,7 @@ struct SocialNoteDetailView: View {
                         }
                     }
                 }
+                .scrollIndicators(.hidden)
                 
                 // Fixed bottom toolbar that respects safe areas
                 VStack(spacing: 0) {
@@ -66,16 +85,10 @@ struct SocialNoteDetailView: View {
                         Button(action: {
                             showingArchiveConfirmation = true
                         }) {
-                            VStack(spacing: 2) {
-                                Image(systemName: "archivebox")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.accentColor)
-                                Text("删除")
-                                    .font(.caption)
-                                    .foregroundColor(.accentColor)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
+                            Image(systemName: "archivebox")
+                                .font(.system(size: 22))
+                                .foregroundColor(.primaryText)
+                                .frame(maxWidth: .infinity)
                         }
                         // Edit Note button
                         Button(action: {
@@ -86,49 +99,45 @@ struct SocialNoteDetailView: View {
                                 showingEditModal = true
                             }
                         }) {
-                            VStack(spacing: 2) {
-                                Image(systemName: "square.and.pencil")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.accentColor)
-                                Text("编辑")
-                                    .font(.caption)
-                                    .foregroundColor(.accentColor)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
+                            Image(systemName: "square.and.pencil")
+                                .font(.system(size: 22))
+                                .foregroundColor(.primaryText)
+                                .frame(maxWidth: .infinity)
                         }
                         // AI button
                         Button(action: {
                             showingSocialBrain = true
                         }) {
-                            VStack(spacing: 2) {
-                                Image(systemName: "sparkles")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.accentColor)
-                                Text("探索")
-                                    .font(.caption)
-                                    .foregroundColor(.accentColor)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 22))
+                                .foregroundColor(.primaryText)
+                                .frame(maxWidth: .infinity)
                         }
                     }
-                    .frame(height: 56)
-                    .padding(.top, 4)
+                    .frame(height: 44)
+                    .padding(.vertical, 8)
                     .padding(.bottom, safeAreaPadding)
                 }
-                .background(
-                    VisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
-                        .ignoresSafeArea()
-                )
+                .background(Color.primaryBackground)
             }
         }
-        .navigationBarTitle(formattedTimestamp(date: note.createdAt ?? Date()), displayMode: .inline)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(formattedTimestamp(date: note.createdAt ?? Date()))
+                    .font(.headline)
+                    .foregroundColor(.primary)
+            }
+            ToolbarItem(placement: .navigationBarLeading) {
+                backButton
+            }
+        }
         .navigationBarBackButtonHidden(true)
-        .navigationBarItems(leading: backButton)
+        // Add these modifiers to ensure proper navigation bar behavior
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(Color.primaryBackground, for: .navigationBar)
         .onAppear {
             loadContactInsights()
-            // Hide the tab bar
             hideTabBar(true)
         }
         .onDisappear {
@@ -515,5 +524,13 @@ struct ContactInsightRow: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 8)
+    }
+}
+
+// Keep the preference key for scroll position tracking
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 } 
