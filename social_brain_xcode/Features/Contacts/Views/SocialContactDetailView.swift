@@ -21,6 +21,7 @@ struct SocialContactDetailView: View {
     @State private var showingEditCircleSheet = false
     @State private var isUpdatesExpanded = false
     @State private var isReviewsExpanded = false
+    @State private var showingEditContactSheet = false
     
     // Add property to determine if this is a contact view
     private var isContactView: Bool {
@@ -141,6 +142,16 @@ struct SocialContactDetailView: View {
                     .foregroundColor(.accentColor)
                 }
             }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showingEditContactSheet = true
+                }) {
+                    Text("编辑")
+                        .font(.system(size: 17))
+                        .foregroundColor(.accentColor)
+                }
+            }
         }
         .sheet(isPresented: $showingSocialBrain) {
             SocialBrainSheetView(
@@ -155,6 +166,9 @@ struct SocialContactDetailView: View {
                 contact: contact,
                 isPresented: $showingEditCircleSheet
             )
+        }
+        .sheet(isPresented: $showingEditContactSheet) {
+            AddContactSheet(refreshTrigger: .constant(false), contact: contact)
         }
         .onAppear {
             loadContactNotes()

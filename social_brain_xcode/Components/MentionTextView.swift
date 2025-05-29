@@ -36,26 +36,7 @@ struct MentionTextView: View {
     
     private func processText(_ text: String) -> String {
         let lines = text.components(separatedBy: .newlines)
-        var processedLines: [String] = []
-        var emptyLineCount = 0
-        
-        for line in lines {
-            if line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                emptyLineCount += 1
-                if emptyLineCount == 5 {
-                    processedLines.append("...")
-                } else if emptyLineCount < 5 {
-                    processedLines.append("")
-                }
-            } else {
-                if emptyLineCount >= 5 {
-                    processedLines.append("...")
-                }
-                emptyLineCount = 0
-                processedLines.append(line)
-            }
-        }
-        
+        let processedLines = lines.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         return processedLines.joined(separator: "\n")
     }
     
