@@ -34,8 +34,34 @@ struct MentionTextView: View {
         Text(attributedString)
     }
     
+    private func processText(_ text: String) -> String {
+        let lines = text.components(separatedBy: .newlines)
+        var processedLines: [String] = []
+        var emptyLineCount = 0
+        
+        for line in lines {
+            if line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                emptyLineCount += 1
+                if emptyLineCount == 5 {
+                    processedLines.append("...")
+                } else if emptyLineCount < 5 {
+                    processedLines.append("")
+                }
+            } else {
+                if emptyLineCount >= 5 {
+                    processedLines.append("...")
+                }
+                emptyLineCount = 0
+                processedLines.append(line)
+            }
+        }
+        
+        return processedLines.joined(separator: "\n")
+    }
+    
     var attributedString: AttributedString {
-        let words = text.split(separator: " ")
+        let processedText = processText(text)
+        let words = processedText.split(separator: " ")
         var result = AttributedString("")
         
         for (index, word) in words.enumerated() {
@@ -77,6 +103,7 @@ struct MentionTextView_Previews: PreviewProvider {
             MentionTextView(text: "Hello @张三 and #技术圈")
             MentionTextView(text: "Meeting with @李四 in #产品组")
             MentionTextView(text: "Regular text with @王五 and #设计圈 mentions")
+            MentionTextView(text: "Line 1\n\n\n\n\n\n\nLine 2") // Test empty lines
         }
         .padding()
         .previewLayout(.sizeThatFits)

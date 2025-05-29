@@ -22,6 +22,10 @@ struct SocialNoteDetailView: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var isScrolling = false
     
+    @State private var dragOffset: CGFloat = 0
+    @State private var isDragging = false
+    private let dragThreshold: CGFloat = 100
+    
     var body: some View {
         ZStack {
             // Background color for the entire screen
@@ -74,8 +78,33 @@ struct SocialNoteDetailView: View {
                             }
                         }
                     }
+                    // Add gesture for slide back
+                    .gesture(
+                        DragGesture()
+                            .onChanged { gesture in
+                                // Only allow horizontal drag from the left edge
+                                if gesture.startLocation.x < 50 && gesture.translation.width > 0 {
+                                    isDragging = true
+                                    dragOffset = gesture.translation.width
+                                }
+                            }
+                            .onEnded { gesture in
+                                isDragging = false
+                                if gesture.translation.width > dragThreshold {
+                                    withAnimation(.interactiveSpring()) {
+                                        presentationMode.wrappedValue.dismiss()
+                                    }
+                                } else {
+                                    withAnimation(.interactiveSpring()) {
+                                        dragOffset = 0
+                                    }
+                                }
+                            }
+                    )
                 }
                 .scrollIndicators(.hidden)
+                .offset(x: dragOffset)
+                .animation(.interactiveSpring(), value: dragOffset)
                 
                 // Fixed bottom toolbar that respects safe areas
                 VStack(spacing: 0) {
@@ -136,6 +165,16 @@ struct SocialNoteDetailView: View {
         // Add these modifiers to ensure proper navigation bar behavior
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(Color.primaryBackground, for: .navigationBar)
+        // Add visual feedback during drag
+        .overlay(
+            Group {
+                if isDragging {
+                    Color.black.opacity(0.1 * min(dragOffset / dragThreshold, 1))
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                }
+            }
+        )
         .onAppear {
             loadContactInsights()
             hideTabBar(true)
