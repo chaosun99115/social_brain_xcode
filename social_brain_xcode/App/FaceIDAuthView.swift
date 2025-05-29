@@ -24,91 +24,98 @@ struct FaceIDAuthView: View {
     }
     
     var body: some View {
-        VStack(spacing: 32) {
-            Spacer()
-            
-            // Face ID Icon
-            Image(systemName: "faceid")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 80, height: 80)
-                .foregroundColor(.accentColor)
-                .accessibilityLabel("Face ID Icon")
-            
-            // Title
-            Text(isSimulator ? "Authentication Required" : "Face ID Required")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .accessibilityAddTraits(.isHeader)
-            
-            // Description
-            Text(isSimulator ? 
-                 "Please authenticate to access your secure data (Simulator Mode)" :
-                 "Please authenticate to access your secure data")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            
-            // Loading and Error States
-            Group {
-                if isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle())
-                        .scaleEffect(1.2)
-                } else if let error = authError {
-                    VStack(spacing: 16) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.red)
-                            .font(.title)
-                        
-                        Text(error)
-                            .foregroundColor(.red)
-                            .multilineTextAlignment(.center)
-                            .font(.callout)
-                        
-                        Button(action: {
-                            feedbackGenerator?.prepare()
-                            authenticate()
-                        }) {
-                            Label("Try Again", systemImage: "arrow.clockwise")
-                                .font(.headline)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+        ZStack {
+            // Background
+            Color(.systemGray6)
+                .ignoresSafeArea()
+
+            VStack {
+                Spacer()
+                // Divider with lock icon in the center
+                ZStack {
+                    // Horizontal line
+                    Rectangle()
+                        .fill(Color(.systemGray4))
+                        .frame(height: 1)
+                        .padding(.horizontal)
+                    // Lock icon in a circle
+                    SwiftUI.Circle()
+                        .fill(Color(.systemGray6))
+                        .frame(width: 64, height: 64)
+                        .overlay(
+                            Image(systemName: "lock.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 28, height: 28)
+                                .foregroundColor(Color(.label))
+                        )
+                        .shadow(color: Color(.black).opacity(0.04), radius: 4, x: 0, y: 2)
+                }
+                .frame(height: 64)
+                Spacer()
+                // Face ID button at the bottom
+                Button(action: {
+                    feedbackGenerator?.prepare()
+                    authenticate()
+                }) {
+                    Image(systemName: "faceid")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 56, height: 56)
+                        .foregroundColor(Color(.systemGray3))
+                        .padding(24)
+                        .background(
+                            SwiftUI.Circle()
+                                .fill(Color(.systemGray5).opacity(0.5))
+                        )
+                }
+                .accessibilityLabel("Authenticate with Face ID")
+                .padding(.bottom, 60)
+                .opacity(isLoading ? 0.5 : 1)
+                .disabled(isLoading)
+            }
+            // Error overlay
+            if let error = authError {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.red)
+                        .font(.title)
+                    Text(error)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .font(.callout)
+                    Button(action: {
+                        feedbackGenerator?.prepare()
+                        authenticate()
+                    }) {
+                        Label("Try Again", systemImage: "arrow.clockwise")
+                            .font(.headline)
                     }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6).opacity(0.5))
-                    )
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
                 }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemGray6).opacity(0.5))
+                )
+                .padding()
             }
-            
-            // Simulator-specific button
-            if isSimulator {
-                Button("Simulate Authentication") {
-                    simulateAuthentication()
-                }
-                .buttonStyle(.bordered)
-                .padding(.top)
+            // Loading overlay
+            if isLoading {
+                Color.black.opacity(0.05).ignoresSafeArea()
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.2)
             }
-            
-            Spacer()
         }
-        .padding()
         .onAppear {
-            // Initialize feedback generator
             feedbackGenerator = UINotificationFeedbackGenerator()
             feedbackGenerator?.prepare()
-            
-            // Check Face ID availability immediately
             checkFaceIDAvailability()
-            
             if isSimulator {
                 authError = "Running in Simulator Mode"
             } else {
-                // Delay authentication slightly to ensure view is fully loaded
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     authenticate()
                 }
