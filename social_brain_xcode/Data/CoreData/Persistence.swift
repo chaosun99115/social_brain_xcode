@@ -61,7 +61,7 @@ class PersistenceController: ObservableObject {
     }()
 
     let container: NSPersistentCloudKitContainer
-    private var isCloudKitEnabled = false
+    @Published private(set) var isCloudKitEnabled = false
 
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "social_brain_xcode")
@@ -242,5 +242,10 @@ class PersistenceController: ObservableObject {
             isCloudKitEnabled = false
             syncStatus = .notStarted
         }
+    }
+
+    // Add a public method to check CloudKit status
+    func getCloudKitStatus() -> Bool {
+        return isCloudKitEnabled
     }
 }

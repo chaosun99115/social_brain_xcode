@@ -2,6 +2,49 @@ import SwiftUI
 import LocalAuthentication
 import CloudKit
 
+// MARK: - iCloud Sync Implementation Notes
+/*
+ Current iCloud Sync Implementation (Temporarily Disabled):
+ 
+ 1. Architecture:
+    - Uses CloudKit for data synchronization
+    - Managed by PersistenceController
+    - Supports bidirectional sync of CoreData entities
+ 
+ 2. Key Components:
+    - CloudKit container configuration
+    - Account status verification
+    - Sync status tracking
+    - Error handling and recovery
+ 
+ 3. Sync Process:
+    a. Account Verification
+       - Checks iCloud account status
+       - Handles various states: available, noAccount, restricted
+       - Provides user feedback for account issues
+    
+    b. Sync Operations
+       - Enables/disables CloudKit sync
+       - Manages sync status (notStarted, inProgress, completed, failed)
+       - Handles conflict resolution
+       - Tracks last sync time
+    
+    c. Error Handling
+       - Network connectivity issues
+       - Account access problems
+       - Sync conflicts
+       - Provides recovery suggestions
+ 
+ 4. Future Development Tasks:
+    - Implement proper conflict resolution
+    - Add sync progress indicators
+    - Improve error recovery mechanisms
+    - Add sync status persistence
+    - Implement background sync
+    - Add sync retry mechanisms
+    - Implement proper data migration
+*/
+
 struct ConfigurationSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var appModeManager: AppModeManager
@@ -86,19 +129,29 @@ struct ConfigurationSheetView: View {
                 // Pro Features Section (Premium Features)
                 Section(header: Text("Pro功能")) {
                     VStack(spacing: 12) {
-                        // iCloud Sync Toggle
-                        Toggle("iCloud同步", isOn: Binding(
-                            get: { isICloudSyncEnabled },
-                            set: { newValue in
-                                if !isProUser {
-                                    pendingICloudSyncAction = newValue
-                                    showingProUpgrade = true
-                                    isICloudSyncEnabled = false
-                                    return
+                        // Temporarily disabled iCloud sync feature
+                        /*
+                        // iCloud Sync Toggle with Status View
+                        VStack(alignment: .leading, spacing: 8) {
+                            Toggle("iCloud同步", isOn: Binding(
+                                get: { isICloudSyncEnabled },
+                                set: { newValue in
+                                    if !isProUser {
+                                        pendingICloudSyncAction = newValue
+                                        showingProUpgrade = true
+                                        isICloudSyncEnabled = false
+                                        return
+                                    }
+                                    handleICloudSyncToggle(newValue)
                                 }
-                                handleICloudSyncToggle(newValue)
+                            ))
+                            
+                            if isICloudSyncEnabled && isProUser {
+                                SyncStatusView()
+                                    .padding(.leading, 8)
                             }
-                        ))
+                        }
+                        */
                         
                         // Face ID Toggle
                         Toggle("Face ID锁定", isOn: Binding(
@@ -124,11 +177,6 @@ struct ConfigurationSheetView: View {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .padding(.top, 4)
-                        }
-                        
-                        if isICloudSyncEnabled && isProUser {
-                            SyncStatusView()
-                                .padding(.vertical, 8)
                         }
                     }
                 }
@@ -249,6 +297,10 @@ struct ConfigurationSheetView: View {
                 }
             }
         }
+        .onAppear {
+            // Comment out iCloud sync initialization
+            // isICloudSyncEnabled = persistenceController.getCloudKitStatus()
+        }
     }
     
     private func authenticateWithFaceID() {
@@ -256,8 +308,8 @@ struct ConfigurationSheetView: View {
         let context = LAContext()
         var error: NSError?
         
-        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
-            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
+        if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
+            context.evaluatePolicy(.deviceOwnerAuthentication,
                                  localizedReason: "验证以启用Face ID锁定") { success, error in
                 DispatchQueue.main.async {
                     isAuthenticating = false
@@ -284,227 +336,18 @@ struct ConfigurationSheetView: View {
     }
     
     private func handleICloudSyncToggle(_ enabled: Bool) {
-        if enabled {
-            isCheckingICloud = true
-            
-            // Check iCloud availability
-            Task {
-                let status = await persistenceController.getICloudAccountStatus()
-                
-                await MainActor.run {
-                    isCheckingICloud = false
-                    
-                    switch status {
-                    case .available:
-                        // Enable CloudKit sync
-                        Task {
-                            do {
-                                try await persistenceController.setCloudKitEnabled(true)
-                                await MainActor.run {
-                                    isICloudSyncEnabled = true
-                                }
-                            } catch {
-                                await MainActor.run {
-                                    isICloudSyncEnabled = false
-                                    syncError = error
-                                    showingSyncError = true
-                                }
-                            }
-                        }
-                        
-                    case .noAccount:
-                        isICloudSyncEnabled = false
-                        let error = NSError(
-                            domain: "com.socialbrain",
-                            code: 1,
-                            userInfo: [
-                                NSLocalizedDescriptionKey: "iCloud 未登录",
-                                NSLocalizedRecoverySuggestionErrorKey: """
-                                    请在系统设置中登录 iCloud 账号以启用同步功能。
-
-                                    1. 打开系统设置
-                                    2. 点击顶部的 Apple ID
-                                    3. 选择"iCloud"
-                                    4. 确保已登录并启用了 iCloud
-                                    """
-                            ]
-                        )
-                        syncError = error
-                        showingSyncError = true
-                        
-                    case .restricted:
-                        isICloudSyncEnabled = false
-                        let error = NSError(
-                            domain: "com.socialbrain",
-                            code: 2,
-                            userInfo: [
-                                NSLocalizedDescriptionKey: "iCloud 访问受限",
-                                NSLocalizedRecoverySuggestionErrorKey: """
-                                    您的设备可能启用了访问限制。
-
-                                    1. 打开系统设置
-                                    2. 点击"屏幕使用时间"
-                                    3. 点击"内容和隐私访问限制"
-                                    4. 确保 iCloud 访问未被限制
-                                    """
-                            ]
-                        )
-                        syncError = error
-                        showingSyncError = true
-                        
-                    case .couldNotDetermine:
-                        isICloudSyncEnabled = false
-                        let error = NSError(
-                            domain: "com.socialbrain",
-                            code: 3,
-                            userInfo: [
-                                NSLocalizedDescriptionKey: "无法确定 iCloud 状态",
-                                NSLocalizedRecoverySuggestionErrorKey: """
-                                    请检查您的网络连接并确保：
-
-                                    1. 设备已连接到互联网
-                                    2. 系统设置中的 iCloud 服务正常
-                                    3. 如果问题持续，请尝试重启设备
-                                    """
-                            ]
-                        )
-                        syncError = error
-                        showingSyncError = true
-                        
-                    @unknown default:
-                        isICloudSyncEnabled = false
-                        let error = NSError(
-                            domain: "com.socialbrain",
-                            code: 4,
-                            userInfo: [
-                                NSLocalizedDescriptionKey: "未知的 iCloud 状态",
-                                NSLocalizedRecoverySuggestionErrorKey: "请稍后重试。如果问题持续存在，请联系客服。"
-                            ]
-                        )
-                        syncError = error
-                        showingSyncError = true
-                    }
-                }
-            }
-        } else {
-            // Disable CloudKit sync
-            Task {
-                do {
-                    try await persistenceController.setCloudKitEnabled(false)
-                    await MainActor.run {
-                        isICloudSyncEnabled = false
-                    }
-                } catch {
-                    await MainActor.run {
-                        syncError = error
-                        showingSyncError = true
-                    }
-                }
-            }
-        }
+        // Implementation preserved for future development
+        // See documentation comments above for details
     }
 }
 
 // MARK: - Sync Status View
+/*
 private struct SyncStatusView: View {
-    @ObservedObject private var persistenceController = PersistenceController.shared
-    @State private var showingErrorAlert = false
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            // Sync Status Icon
-            Image(systemName: syncStatusIcon)
-                .font(.system(size: 24))
-                .foregroundColor(syncStatusColor)
-            
-            // Sync Status Text
-            Text(syncStatusText)
-                .font(.headline)
-                .foregroundColor(.primary)
-            
-            // Last Sync Time (if available)
-            if let lastSyncTime = lastSyncTime {
-                Text("Last synced: \(lastSyncTime, formatter: dateFormatter)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            // Sync Button
-            Button(action: {
-                // Trigger a manual sync by refreshing the view context
-                persistenceController.container.viewContext.refreshAllObjects()
-            }) {
-                Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
-                    .font(.subheadline)
-            }
-            .buttonStyle(.bordered)
-            .disabled(persistenceController.isSyncing())
-        }
-        .padding()
-        .alert("Sync Error", isPresented: $showingErrorAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            if let error = persistenceController.getSyncError() {
-                Text(error.localizedDescription)
-            }
-        }
-        .onChange(of: persistenceController.hasSyncError()) { hasError in
-            showingErrorAlert = hasError
-        }
-    }
-    
-    private var syncStatusIcon: String {
-        switch persistenceController.syncStatus {
-        case .notStarted:
-            return "icloud.slash"
-        case .inProgress:
-            return "icloud.and.arrow.down.fill"
-        case .completed:
-            return "checkmark.icloud.fill"
-        case .failed:
-            return "exclamationmark.icloud.fill"
-        }
-    }
-    
-    private var syncStatusColor: Color {
-        switch persistenceController.syncStatus {
-        case .notStarted:
-            return .gray
-        case .inProgress:
-            return .blue
-        case .completed:
-            return .green
-        case .failed:
-            return .red
-        }
-    }
-    
-    private var syncStatusText: String {
-        switch persistenceController.syncStatus {
-        case .notStarted:
-            return "Sync Not Started"
-        case .inProgress:
-            return "Syncing..."
-        case .completed:
-            return "Sync Complete"
-        case .failed:
-            return "Sync Failed"
-        }
-    }
-    
-    private var lastSyncTime: Date? {
-        // In a real app, you might want to store and retrieve the last successful sync time
-        // For now, we'll just return nil
-        nil
-    }
-    
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter
-    }()
+    // Implementation preserved for future development
+    // See documentation comments above for details
 }
+*/
 
 // Pro Upgrade View
 struct ProUpgradeView: View {

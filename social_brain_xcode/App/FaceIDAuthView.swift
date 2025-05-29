@@ -12,7 +12,7 @@ struct FaceIDAuthView: View {
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.socialbrain", category: "FaceIDAuth")
     
     // Haptic feedback
-    private let feedbackGenerator = UINotificationFeedbackGenerator()
+    @State private var feedbackGenerator: UINotificationFeedbackGenerator?
     
     // Check if running in simulator
     private var isSimulator: Bool {
@@ -68,7 +68,7 @@ struct FaceIDAuthView: View {
                             .font(.callout)
                         
                         Button(action: {
-                            feedbackGenerator.prepare()
+                            feedbackGenerator?.prepare()
                             authenticate()
                         }) {
                             Label("Try Again", systemImage: "arrow.clockwise")
@@ -98,7 +98,9 @@ struct FaceIDAuthView: View {
         }
         .padding()
         .onAppear {
-            feedbackGenerator.prepare()
+            // Initialize feedback generator
+            feedbackGenerator = UINotificationFeedbackGenerator()
+            feedbackGenerator?.prepare()
             
             // Check Face ID availability immediately
             checkFaceIDAvailability()
@@ -141,7 +143,7 @@ struct FaceIDAuthView: View {
         isLoading = true
         // Simulate network delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            feedbackGenerator.notificationOccurred(.success)
+            feedbackGenerator?.notificationOccurred(.success)
             withAnimation {
                 self.isAuthenticated = true
             }
@@ -173,12 +175,12 @@ struct FaceIDAuthView: View {
                 self.isLoading = false
                 
                 if success {
-                    self.feedbackGenerator.notificationOccurred(.success)
+                    self.feedbackGenerator?.notificationOccurred(.success)
                     withAnimation {
                         self.isAuthenticated = true
                     }
                 } else {
-                    self.feedbackGenerator.notificationOccurred(.error)
+                    self.feedbackGenerator?.notificationOccurred(.error)
                     self.handleAuthenticationError(error as NSError?)
                 }
             }
