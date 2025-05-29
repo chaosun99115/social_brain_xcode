@@ -44,6 +44,9 @@ struct SocialBrainView: View {
         UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
     }
     
+    // Add new state for input accessory view
+    @State private var inputAccessoryHeight: CGFloat = 0
+    
     // Add helper method to get provider
     private func getSampleProvider() -> SampleModeProvider? {
         guard appModeManager.isSampleMode,
@@ -296,9 +299,17 @@ struct SocialBrainView: View {
                         ZStack(alignment: .topLeading) {
                             GrowingTextView(text: $inputText, height: $textEditorHeight, maxHeight: maxTextEditorHeight)
                                 .frame(height: textEditorHeight)
-                                .background(Color(.systemGray6))
+                                .background(Color.white)
                                 .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                                 .focused($isInputFocused)
+                                // Add input accessory view handling
+                                .onAppear {
+                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                       let window = windowScene.windows.first {
+                                        window.inputAccessoryView?.backgroundColor = .clear
+                                    }
+                                }
                             if inputText.isEmpty {
                                 Text("输入您的问题...")
                                     .foregroundColor(.gray)
@@ -318,7 +329,7 @@ struct SocialBrainView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 6)
-                    .padding(.bottom, 12)
+                    .padding(.bottom, isKeyboardVisible ? inputAccessoryHeight + 12 : 12)
                     .animation(.easeInOut(duration: 0.25), value: isKeyboardVisible)
                 }
                 .background(Color.primaryBackground)
@@ -603,7 +614,12 @@ struct SocialBrainView: View {
             queue: .main
         ) { notification in
             if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                keyboardHeight = keyboardFrame.height
+                // Calculate input accessory height if present
+                if let inputAccessoryView = UIApplication.shared.windows.first?.rootViewController?.view.window?.rootViewController?.inputAccessoryView {
+                    inputAccessoryHeight = inputAccessoryView.frame.height
+                }
+                
+                keyboardHeight = keyboardFrame.height - inputAccessoryHeight
                 isKeyboardVisible = true
             }
         }
@@ -936,10 +952,18 @@ struct GrowingTextView: UIViewRepresentable {
         let textView = UITextView()
         textView.isScrollEnabled = false
         textView.font = UIFont.systemFont(ofSize: 17)
-        textView.backgroundColor = .clear
+        textView.backgroundColor = .white
         textView.delegate = context.coordinator
         textView.textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
         textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        
+        // Configure input accessory view
+        textView.inputAccessoryView = {
+            let view = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0))
+            view.backgroundColor = .clear
+            return view
+        }()
+        
         return textView
     }
 

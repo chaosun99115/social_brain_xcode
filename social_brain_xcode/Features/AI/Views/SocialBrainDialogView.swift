@@ -19,6 +19,9 @@ struct SocialBrainDialogView: View {
     @State private var scrollToBottom: Bool = false
     @State private var inputBarBottomPadding: CGFloat = 0
     
+    // Add new state for input accessory view
+    @State private var inputAccessoryHeight: CGFloat = 0
+    
     // Method to dismiss the view
     func dismiss() {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -316,8 +319,16 @@ struct SocialBrainDialogView: View {
                                 .font(.body)
                                 .frame(minHeight: 44, maxHeight: 120)
                                 .padding(8)
-                                .background(Color(.systemGray6))
+                                .background(Color.white)
                                 .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                                // Add input accessory view handling
+                                .onAppear {
+                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                       let window = windowScene.windows.first {
+                                        window.inputAccessoryView?.backgroundColor = .clear
+                                    }
+                                }
                             if inputText.isEmpty {
                                 Text("请输入您的问题…")
                                     .foregroundColor(.gray)
@@ -338,7 +349,7 @@ struct SocialBrainDialogView: View {
                     }
                     .padding()
                 }
-                .padding(.bottom, isKeyboardVisible ? 0 : safeAreaInsets.bottom)
+                .padding(.bottom, isKeyboardVisible ? inputAccessoryHeight : safeAreaInsets.bottom)
                 .background(Color.primaryBackground)
                 .zIndex(1)
             }
@@ -356,9 +367,14 @@ struct SocialBrainDialogView: View {
             if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
                let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
                 
+                // Calculate input accessory height if present
+                if let inputAccessoryView = UIApplication.shared.windows.first?.rootViewController?.view.window?.rootViewController?.inputAccessoryView {
+                    inputAccessoryHeight = inputAccessoryView.frame.height
+                }
+                
                 withAnimation(Animation.easeInOut(duration: duration)) {
-                    // Remove any adjustments to keyboard height to ensure it sits flush with input field
-                    self.keyboardHeight = keyboardFrame.height
+                    // Adjust keyboard height to account for input accessory
+                    self.keyboardHeight = keyboardFrame.height - inputAccessoryHeight
                     self.isKeyboardVisible = true
                 }
             }
