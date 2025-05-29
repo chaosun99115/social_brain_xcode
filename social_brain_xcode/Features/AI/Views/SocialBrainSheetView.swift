@@ -188,6 +188,9 @@ struct SocialBrainSheetView: View {
                     ScrollViewReader { scrollProxy in
                         ScrollView {
                             VStack(spacing: 16) {
+                                // Top anchor for scrolling to top
+                                Color.clear.frame(height: 1).id(scrollToTopID)
+                                
                                 if isConversationActive {
                                     // Show conversation
                                     ForEach(messages) { message in
@@ -219,12 +222,14 @@ struct SocialBrainSheetView: View {
                                     }
                                 }
                                 
-                                // Spacer at the bottom for input field
-                                Spacer().frame(height: 1)
+                                // Add extra padding at the bottom to ensure last message is visible
+                                Spacer()
+                                    .frame(height: 120) // Fixed height spacer to ensure content is visible above input
                                     .id(scrollToBottomID)
                             }
                             .padding(.horizontal)
                             .padding(.top, 16)
+                            .padding(.bottom, 16) // Add bottom padding to the content
                         }
                         .simultaneousGesture(
                             DragGesture().onChanged { _ in
@@ -316,7 +321,7 @@ struct SocialBrainSheetView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 6)
-                    .padding(.bottom, 12)
+                    .padding(.bottom, isKeyboardVisible ? keyboardHeight + 12 : 12)
                     .animation(.easeInOut(duration: 0.25), value: isKeyboardVisible)
                 }
                 .background(Color.primaryBackground)

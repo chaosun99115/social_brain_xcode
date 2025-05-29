@@ -191,7 +191,7 @@ struct SocialBrainView: View {
                         ScrollView {
                             VStack(spacing: 16) {
                                 // Top anchor for scrolling to top
-                                // Removed top spacer to reduce gap
+                                Color.clear.frame(height: 1).id(scrollToTopID)
                                 
                                 if isConversationActive {
                                     // Show conversation
@@ -224,12 +224,14 @@ struct SocialBrainView: View {
                                     }
                                 }
                                 
-                                // Spacer at the bottom for input field
-                                Spacer().frame(height: 1)
+                                // Add extra padding at the bottom to ensure last message is visible
+                                Spacer()
+                                    .frame(height: 120) // Fixed height spacer to ensure content is visible above input
                                     .id(scrollToBottomID)
                             }
                             .padding(.horizontal)
                             .padding(.top, 16)
+                            .padding(.bottom, 16) // Add bottom padding to the content
                         }
                         .simultaneousGesture(
                             DragGesture().onChanged { _ in
@@ -303,13 +305,6 @@ struct SocialBrainView: View {
                                 .cornerRadius(12)
                                 .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                                 .focused($isInputFocused)
-                                // Add input accessory view handling
-                                .onAppear {
-                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                                       let window = windowScene.windows.first {
-                                        window.inputAccessoryView?.backgroundColor = .clear
-                                    }
-                                }
                             if inputText.isEmpty {
                                 Text("输入您的问题...")
                                     .foregroundColor(.gray)
