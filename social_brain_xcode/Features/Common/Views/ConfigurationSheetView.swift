@@ -30,6 +30,18 @@ struct ConfigurationSheetView: View {
         featureFlagManager.canUseProFeatures
     }
     
+    // Add init to configure navigation bar appearance
+    init() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(Color(.systemGray6))
+        appearance.shadowColor = .clear // Remove the divider line
+        
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+    }
+    
     var body: some View {
         NavigationView {
             List {
