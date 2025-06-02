@@ -29,11 +29,22 @@ struct SocialNotesView: View {
             }
         }
         
+        // Sort notes based on app mode
+        let sortedNotes = modeFilteredNotes.sorted { note1, note2 in
+            if appModeManager.isSampleMode {
+                // Ascending order (oldest first) for sample mode
+                return note1.date < note2.date
+            } else {
+                // Descending order (newest first) for regular mode
+                return note1.date > note2.date
+            }
+        }
+        
         // Apply search filter if search text exists
         if searchText.isEmpty {
-            return modeFilteredNotes
+            return sortedNotes
         }
-        return modeFilteredNotes.filter { $0.content.localizedCaseInsensitiveContains(searchText) }
+        return sortedNotes.filter { $0.content.localizedCaseInsensitiveContains(searchText) }
     }
     
     var body: some View {
@@ -52,7 +63,7 @@ struct SocialNotesView: View {
                                     .font(.body)
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
-                                Text("\"社交大脑\"将协助您管理人际关系")
+                                Text("\"社交大脑\"将协助管理您的社交网络")
                                     .font(.body)
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)

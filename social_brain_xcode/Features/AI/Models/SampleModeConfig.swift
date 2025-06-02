@@ -14,33 +14,21 @@ struct SampleModeConfig {
     static let availableModes: [ModeDefinition] = [
         ModeDefinition(
             id: "changedJob",
-            title: "融入新群体（我刚加入了新团队）",
+            title: "构建我的社交网络（跳槽加入新公司）",
             description: "",
             scenario: .changedJob
         ),
         ModeDefinition(
-            id: "changedSchool",
-            title: "融入新群体（孩子刚进了新学校）",
-            description: "",    
-            scenario: .changedSchool
-        ),
-        ModeDefinition(
-            id: "careerPivot",
-            title: "拓展人脉（我正计划跳槽）",
-            description: "",
-            scenario: .careerPivot
-        ),
-        ModeDefinition(
             id: "indie",
-            title: "拓展人脉（我独立经营自己的项目）",
+            title: "拓展我的社交网络（经营独立项目）",
             description: "",
             scenario: .indie
         )
     ]
     
     // MARK: - Sample Mode Selection Dialog
-    static let selectionDialogTitle = "选择一个用户场景"
-    static let selectionDialogMessage = "每个用户场景下的示例数据能够让你你全面体验社交大脑的功能。示例模式不影响你的私有数据，退出示例模式后将恢复原状。"
+    static let selectionDialogTitle = "选择一个社交场景"
+    static let selectionDialogMessage = "示例数据能够让你全面体验社交大脑的功能。示例模式不影响你的私有数据，退出示例模式后将恢复原状。"
     
     // MARK: - Helper Methods
     static func getModeDefinition(forId id: String) -> ModeDefinition? {

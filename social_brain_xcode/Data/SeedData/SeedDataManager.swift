@@ -8,8 +8,6 @@ enum SeedDataSource {
 
 enum SeedDataScenario: String {
     case changedJob = "changed_job"
-    case changedSchool = "changed_school"
-    case careerPivot = "career_pivot"
     case indie = "indie"
 }
 
@@ -79,11 +77,11 @@ final class SeedDataManager {
         decoder.dateDecodingStrategy = .iso8601
         
         struct ScenarioContainer: Codable {
-            let scenarios: [String: SeedData]
+            let seed_data: [String: SeedData]
         }
         
         let container = try decoder.decode(ScenarioContainer.self, from: data)
-        guard let scenarioData = container.scenarios[scenario.rawValue] else {
+        guard let scenarioData = container.seed_data[scenario.rawValue] else {
             print("[SeedDataManager] ❌ ERROR: Scenario '\(scenario.rawValue)' not found in seed data")
             throw NSError(domain: "SeedDataManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "Scenario not found"])
         }

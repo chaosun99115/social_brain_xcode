@@ -58,7 +58,10 @@ class NoteManager: ObservableObject {
     // MARK: - Read
     func fetchNotes() -> [Note] {
         let request: NSFetchRequest<Note> = Note.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false)]
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false),
+            NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)
+        ]
         
         do {
             let notes = try context.fetch(request)
@@ -71,7 +74,10 @@ class NoteManager: ObservableObject {
     
     func fetchAllNotes() async throws -> [Note] {
         let request: NSFetchRequest<Note> = Note.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false)]
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false),
+            NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)
+        ]
         
         return try context.fetch(request)
     }

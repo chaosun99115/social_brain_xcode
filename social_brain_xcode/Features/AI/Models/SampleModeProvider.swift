@@ -15,8 +15,6 @@ struct PromptContext {
 // MARK: - Sample Mode Enum
 enum SampleMode: String {
     case changedJob
-    case changedSchool
-    case careerPivot
     case indieDev
     case none
 }
@@ -156,78 +154,12 @@ struct IndieDevProvider: SampleModeProvider {
 
 }
 
-// MARK: - New School
-struct ChangedSchoolProvider: SampleModeProvider {
-    var baseSystemPrompt: String {
-        SampleModePrompts.ChangedSchool.basePrompt
-    }
-    
-    func generateSystemPrompt(for context: PromptContext) async throws -> String {
-        var prompt = baseSystemPrompt
-        
-        if context.isContactSpecific {
-            prompt += "\n\n" + String(format: SampleModePrompts.ChangedSchool.contactSpecificGuidance, context.contact?.name ?? "the teacher")
-        }
-        
-        if context.question.contains("一对一聊聊") {
-            prompt += "\n\n" + SampleModePrompts.ChangedSchool.oneOnOneMeetingGuidance
-        }
-        
-        // Remove duplicate notes appending
-        return prompt
-    }
-    
-    var suggestedQuestions: [SocialBrainMessage] {
-        [
-            SocialBrainMessage(content: "回顾我最近的社交", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "明天要跟张总一对一聊聊，帮我准备下社交素材？", isFromUser: false, timestamp: Date())
-        ]
-    }
-}
-
-// MARK: - Career Pivot Provider
-struct CareerPivotProvider: SampleModeProvider {
-    var baseSystemPrompt: String {
-        SampleModePrompts.CareerPivot.basePrompt
-    }
-    
-    func generateSystemPrompt(for context: PromptContext) async throws -> String {
-        var prompt = baseSystemPrompt
-        
-        if context.isContactSpecific {
-            prompt += "\n\n" + String(format: SampleModePrompts.CareerPivot.review, context.contact?.name ?? "the mentor")
-        }
-        
-        if context.question.contains("回顾") {
-            prompt += "\n\n" + SampleModePrompts.CareerPivot.review
-        }
-
-        if context.question.contains("社交备忘录") {
-            prompt += "\n\n" + SampleModePrompts.CareerPivot.contact
-        }
-        
-        // Remove the duplicate notes appending since it's handled by generateSystemPromptWithNotes
-        return prompt
-    }
-    
-    var suggestedQuestions: [SocialBrainMessage] {
-        [
-            SocialBrainMessage(content: "回顾我最近的社交？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "明天我要跟 林伟 聊聊，帮我回顾下关于他的社交备忘录", isFromUser: false, timestamp: Date())
-        ]
-    }
-}
-
 // MARK: - Sample Mode Provider Factory
 struct SampleModeProviderFactory {
     static func getProvider(for mode: String) -> SampleModeProvider? {
         switch mode {
         case SampleMode.changedJob.rawValue:
             return ChangedJobProvider()
-        case SampleMode.changedSchool.rawValue:
-            return ChangedSchoolProvider()
-        case SampleMode.careerPivot.rawValue:
-            return CareerPivotProvider()
         case SampleMode.indieDev.rawValue:
             return IndieDevProvider()
         default:
