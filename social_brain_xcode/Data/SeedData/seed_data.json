@@ -4,7 +4,7 @@
             "contacts": [
                 {
                     "uniqueIdentifier": "contact_1",
-                    "name": "张总",
+                    "name": "王志明",
                     "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -12,7 +12,7 @@
                 },
                 {
                     "uniqueIdentifier": "contact_2",
-                    "name": "小周",
+                    "name": "张方",
                     "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -20,15 +20,7 @@
                 },
                 {
                     "uniqueIdentifier": "contact_3",
-                    "name": "李总",
-                    "type": 0,
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "contact_4",
-                    "name": "陈总",
+                    "name": "小周",
                     "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -38,65 +30,56 @@
             "notes": [
                 {
                     "uniqueIdentifier": "note_1",
-                    "content": "入职第一天见面， @张总 提到认识我上家公司的产品总监王明。他说他和王明是商学院校友，经常一起参加行业论坛。\n\n他问话很直接，几乎不用客套语。当我提到上家负责的几个重点项目时，追问了许多细节，特别是数据如何支持这些决策。\n\n他提到公司正在寻找降低AI应用成本的方案，特别提到了deepseek这样的开源模型可能是一个方向。\n\n他还提到要多和小周交流，他是我们团队里思维最结构化的人。\n\n他说希望下周一对一聊聊，了解我对团队的第一印象。我应该找个时间准备一下这个一对一的对聊，重点准备关于数据驱动和AI成本优化的想法。\n\n我注意到张总办公桌上放着一本新书黄仁勋的自传《英伟达之芯》，看起来看了一大半了。",
+                    "content": "前同事 @王志明 今天正好出差住来上海，晚上约了他吃饭。\n\n吃饭的时候，聊了最近的近况。他现在已经是公司的技术总监了，最近还完成了商学院的课程。\n\n生活上，他现在还是保持每周跑步的习惯，也建议我要保持定期运动的习惯。\n\n我提起了公司最近有裁员计划，想跳槽的想法，他说回去会帮我内推，HR会联系我。",
                     "type": 0,
                     "updateCompleted": 1,
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "createdAt": "2025-04-10T10:00:00Z",
+                    "updatedAt": "2025-04-10T10:00:00Z",
                     "recordStatus": 1
                 },
                 {
                     "uniqueIdentifier": "note_2",
-                    "content": "和 @小周 一起吃了午饭，他聊到他之前在一个互联网大铲做了4年产品，去年才加入现公司。他分享说大厂锻炼人的节奏和执行力，但有时缺乏思考深度。\n\n小周提到周末常去爬山，说那是他\"清空大脑、重整思路\"的方式。",
+                    "content": "今天HR给我发了Offer，总算走完了招聘流程。我给 @王志明 发了微信表示了对他的感谢。",
                     "type": 0,
                     "updateCompleted": 1,
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "createdAt": "2025-05-01T10:00:00Z",
+                    "updatedAt": "2025-05-01T10:00:00Z",
                     "recordStatus": 1
                 },
                 {
                     "uniqueIdentifier": "note_3",
-                    "content": "应用在凌晨2点发生了紧急问题， @小周 带头协调资源，定义问题，从早上6点开始组织会议到晚上10点，一直在线跟踪修复进度。\n\n我发现他逻辑思维非常强，能够快速定位问题。在压力下反而更冷静，说话语速变慢，但条理更清晰。他还主动承担了与客户沟通的工作，措辞精准且安抚得当。事后他说：\"这种情况下，信息透明比完美解决方案更重要。\"这个观点让我很受启发。",
+                    "content": "入职第一天见面，产品总监 @张方 在和我的谈话中提到了知道我认识公司的技术总监 @王志明。他说他和 @王志明 是商学院校友，经常一起参加行业论坛。\n\n张方问话很直接，几乎不用客套语。当我提到上家负责的几个重点项目时，追问了许多细节，特别是数据如何支持这些决策。\n\n他说希望下周找个时间一对一聊聊，了解我对团队的第一印象。我注意到张总办公桌上放着一本新书黄仁勋的自传《英伟达之芯》，看起来看了一大半了。",
                     "type": 0,
                     "updateCompleted": 1,
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "createdAt": "2025-05-10T10:00:00Z",
+                    "updatedAt": "2025-05-10T10:00:00Z",
                     "recordStatus": 1
                 },
                 {
                     "uniqueIdentifier": "note_4",
-                    "content": "今天和 @张总 一起讨论了产品问题。聊着聊着话题还涉及了AI时代产品经理的转型。临走前他也给我推荐了黄仁勋的自传《英伟达之芯》，说黄仁勋的管理理念很有值得借鉴的地方。",
+                    "content": "和产品部同事 @小周 一起吃了午饭，他聊到他之前在一个互联网大厂做了4年产品，去年才加入现公司。他分享说大厂锻炼人的节奏和执行力，但有时缺乏思考深度。\n\n小周提到周末常去爬山，说那是他\"清空大脑、重整思路\"的方式。",
                     "type": 0,
                     "updateCompleted": 1,
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "createdAt": "2025-05-21T10:00:00Z",
+                    "updatedAt": "2025-05-21T10:00:00Z",
                     "recordStatus": 1
                 },
                 {
                     "uniqueIdentifier": "note_5",
-                    "content": "今天产品部门聚餐， @张总 聊起了自己孩子的择校问题。他说他7岁的孩子现在在国际学校上学，学费很贵，但同时也觉得似乎对于孩子的学术要求还不够严格。",
+                    "content": "今天和 @张方 一起讨论了产品问题。\n\n聊着聊着谈到了了AI时代产品经理的转型。临走前他也给我推荐了黄仁勋的自传《英伟达之芯》，说黄仁勋的管理理念很有值得借鉴的地方。\n\n最后 @张方 还聊起了自己孩子的择校问题。他说他7岁的孩子现在在国际学校上学，学费很贵，但是孩子的学习表现却不是太好。",
                     "type": 0,
                     "updateCompleted": 1,   
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "createdAt": "2025-05-23T10:00:00Z",
+                    "updatedAt": "2025-05-23T10:00:00Z",
                     "recordStatus": 1
                 },
                 {
                     "uniqueIdentifier": "note_6",
-                    "content": "今天不是太忙，晚上下单了张总推荐的《英伟达之芯》，然后看了之前买的《埃隆马斯克传》。马斯克打造的Xai给我了关于人工智能商业模式的启发，公司可能之后会引入AI技术，值得之后好好思考一下，然后记录下来。",
+                    "content": "今天不是太忙，晚上下单了 @张方 推荐的《英伟达之芯》。争取跟一对一面聊之前，把这本书看完，跟 @张方 分享分享读书心得。",
                     "type": 0,
                     "updateCompleted": 1,
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "note_7",
-                    "content": "今天参加了 @陈总 组织的新员工融入活动。陈总很会活跃气氛，分享了很多公司文化和历史，包括几个创始人的轶事，其中就包括了@张总。她说话直接，手势丰富。她分享了她之前在知名互联网公司担任人力资源总监5年，2年前加入现公司。",
-                    "type": 0,
-                    "updateCompleted": 1,
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "createdAt": "2025-05-29T10:00:00Z",
+                    "updatedAt": "2025-05-29T10:00:00Z",
                     "recordStatus": 1
                 }
             ],
@@ -170,48 +153,33 @@
                 },
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "noteIdentifier": "note_3"
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "noteIdentifier": "note_4"
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "noteIdentifier": "note_5"
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "noteIdentifier": "note_6"
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "noteIdentifier": "note_7"
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
                     "contactIdentifier": "contact_2",
                     "noteIdentifier": "note_2"
                 },
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "contact_1",
+                    "noteIdentifier": "note_3"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
                     "contactIdentifier": "contact_2",
                     "noteIdentifier": "note_3"
                 },
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_3",
+                    "contactIdentifier": "contact_2",
+                    "noteIdentifier": "note_5"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "contact_2",
                     "noteIdentifier": "note_6"
                 },
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_4",
-                    "noteIdentifier": "note_7"
+                    "contactIdentifier": "contact_3",
+                    "noteIdentifier": "note_4"
                 }
             ],
             "insightContactRelationships": [
@@ -249,7 +217,7 @@
             "circles": [
                 {
                     "uniqueIdentifier": "circle_1",
-                    "name": "产品团队",
+                    "name": "新公司同事",
                     "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -257,7 +225,7 @@
                 },
                 {
                     "uniqueIdentifier": "circle_2",
-                    "name": "跨部门合作",
+                    "name": "前同事",
                     "type": 0,
                     "createdAt": "2024-03-20T10:00:00Z",
                     "updatedAt": "2024-03-20T10:00:00Z",
@@ -294,7 +262,7 @@
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
                     "contactIdentifier": "contact_1",
-                    "circleIdentifier": "circle_1"
+                    "circleIdentifier": "circle_2"
                 },
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
@@ -304,12 +272,7 @@
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
                     "contactIdentifier": "contact_3",
-                    "circleIdentifier": "circle_2"
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_4",
-                    "circleIdentifier": "circle_2"
+                    "circleIdentifier": "circle_1"
                 }
             ],
             "insightCircleRelationships": [
@@ -324,6 +287,159 @@
                     "insightIdentifier": "circleInsight_2"
                 }
             ]
+        },
+        "indie": {
+            "contacts": [
+                {
+                    "uniqueIdentifier": "indie_contact_1",
+                    "name": "Ben",
+                    "type": 0,
+                    "createdAt": "2024-05-01T10:00:00Z",
+                    "updatedAt": "2024-05-01T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_contact_2",
+                    "name": "小李",
+                    "type": 0,
+                    "createdAt": "2024-05-02T10:00:00Z",
+                    "updatedAt": "2024-05-02T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_contact_3",
+                    "name": "小周",
+                    "type": 0,
+                    "createdAt": "2024-05-03T10:00:00Z",
+                    "updatedAt": "2024-05-03T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_contact_4",
+                    "name": "小蔡",
+                    "type": 0,
+                    "createdAt": "2024-05-04T10:00:00Z",
+                    "updatedAt": "2024-05-04T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "notes": [
+                {
+                    "uniqueIdentifier": "indie_note_1",
+                    "content": "今天参加了iOS独立开发者大会，我分享了 社交大脑 的应用场景。会后认识了 @Ben ，他目前在运营自己的自媒体，自媒体的内容和社交大脑的应用场景有重合的地方。他对社交大脑很感兴趣，我们加了微信，之后要给他发邀请码请他试用。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-01T10:00:00Z",
+                    "updatedAt": "2025-05-01T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_note_2",
+                    "content": "今天跟前同事 @小李 吃了个饭。他问了挺多我做独立开发的体会。他分享说公司最近已经有过一次大裁员，他也开始担心被裁员后的出路，不知道独立开发是不是一条可以走得通的路。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-06T10:00:00Z",
+                    "updatedAt": "2025-05-06T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_note_3",
+                    "content": "今天参加了朋友 @小周 的生日聚会，认识了她的大学同学 @小蔡 。小蔡性格开朗，是个设计师。小蔡谈到她工作之余最大的爱好是陶艺，已经坚持了三年多。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-10T10:00:00Z",
+                    "updatedAt": "2025-05-10T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_note_4",
+                    "content": "今天 @小蔡 分享了一个陶艺展览的朋友圈。我发了个评论，她在回复里提到下周六还有一个陶艺展览，问我是否有兴趣一起去。\n\n虽然我对陶艺了解不多，但考虑到艺术家们一般也需要维护圈子内的各种关系，这可能是个接社交大脑种子用户的好机会，我答应的她的邀请",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-15T10:00:00Z",
+                    "updatedAt": "2025-05-15T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_note_5",
+                    "content": "为了准备在陶艺展览，今天阅读了几篇关于艺术家职业发展的文章和采访，汇总的发现如下：\n\n艺术家平均每月参加3-5场行业活动，他们的事业发展非常依赖人脉网络（画廊运营、收藏家、评论家、同行），能够高效管理关系，进而专注于创作的工具是很多艺术家的潜在需求。",
+                    "type": 0,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-17T10:00:00Z",
+                    "updatedAt": "2025-05-17T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "contactInsights": [],
+            "noteContactRelationships": [
+                {
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "contactIdentifier": "indie_contact_1",
+                    "noteIdentifier": "indie_note_1"
+                },
+                {
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "contactIdentifier": "indie_contact_2",
+                    "noteIdentifier": "indie_note_1"
+                },
+                {
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "contactIdentifier": "indie_contact_2",
+                    "noteIdentifier": "indie_note_3"
+                }
+                
+            ],
+            "insightContactRelationships": [],
+            "circles": [
+                {
+                    "uniqueIdentifier": "circle_1",
+                    "name": "行业朋友",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "circle_2",
+                    "name": "工作同事",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "circle_3",
+                    "name": "生活朋友",
+                    "type": 0,
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "updatedAt": "2024-03-20T10:00:00Z",
+                    "recordStatus": 1
+                }
+            ],
+            "circleInsights": [],
+            "circleContactRelationships": [
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "indie_contact_1",
+                    "circleIdentifier": "circle_1"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "indie_contact_2",
+                    "circleIdentifier": "circle_2"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "indie_contact_3",
+                    "circleIdentifier": "circle_3"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "indie_contact_4",
+                    "circleIdentifier": "circle_3"
+                }
+            ],
+            "insightCircleRelationships": []
         },
         "changed_school": {
             "notes": [
@@ -817,88 +933,6 @@
                     "insightIdentifier": "career_circle_insight_1"
                 }
             ]
-        },
-        "indie": {
-            "contacts": [
-                {
-                    "uniqueIdentifier": "indie_contact_1",
-                    "name": "小周",
-                    "type": 0,
-                    "createdAt": "2024-04-01T10:00:00Z",
-                    "updatedAt": "2024-04-01T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "indie_contact_2",
-                    "name": "小蔡",
-                    "type": 0,
-                    "createdAt": "2024-04-01T10:00:00Z",
-                    "updatedAt": "2024-04-01T10:00:00Z",
-                    "recordStatus": 1
-                }
-            ],
-            "notes": [
-                {
-                    "uniqueIdentifier": "indie_note_1",
-                    "content": "今天参加了 @小周 的生日聚会，认识了她的大学同学 @小蔡 。小蔡性格开朗，是个设计师。小蔡谈到她工作之余最大的爱好是陶艺，已经坚持了三年多。",
-                    "type": 0,
-                    "updateCompleted": 1,
-                    "createdAt": "2024-04-01T10:00:00Z",
-                    "updatedAt": "2024-04-01T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "indie_note_2",
-                    "content": "今天参加了iOS独立开发者大会。我分享了\"社交大脑\"应用。现场的人对于\"你参加这么多行业活动后，如何记住并跟进所有重要联系人？\"这样的问题很有共鸣。收获了几个很有价值的反馈：\n几位开发者表示他们也有类似的社交记忆负担，特别是在参加像这样的行业大会后\n一位连续创业者提到，他最大的资产就是十年来积累的人脉，但缺乏系统化管理的工具",
-                    "type": 0,
-                    "updateCompleted": 1,
-                    "createdAt": "2024-04-01T10:00:00Z",
-                    "updatedAt": "2024-04-01T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "indie_note_3",
-                    "content": "今天 @小蔡 分享了一个陶艺展览的朋友圈。我发了个评论，她在回复里提到下周六还有一个陶艺展览，问我是否有兴趣一起去。\n\n虽然我对陶艺了解不多，但这可能是个接触潜在用户的好机会。艺术家们需要维护广泛的人脉，可能是社交大脑app的理想用户。",
-                    "type": 0,
-                    "updateCompleted": 1,
-                    "createdAt": "2024-04-01T10:00:00Z",
-                    "updatedAt": "2024-04-01T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "indie_note_4",
-                    "content": "今天阅读了几篇关于艺术家职业发展的文章和采访，发现：\n\n艺术家平均每月参加3-5场行业活动\n\n他们的事业发展严重依赖人脉网络（画廊主、收藏家、评论家、同行）\n\n许多艺术家表示难以跟进所有重要关系\n\n艺术家是关系管理工具的理想用户，社交大脑的个人关系管理方法可能更受欢迎。",
-                    "type": 0,
-                    "updateCompleted": 1,
-                    "createdAt": "2024-04-01T10:00:00Z",
-                    "updatedAt": "2024-04-01T10:00:00Z",
-                    "recordStatus": 1
-                }
-            ],
-            "contactInsights": [],
-            "noteContactRelationships": [
-                {
-                    "createdAt": "2024-04-01T10:00:00Z",
-                    "contactIdentifier": "indie_contact_1",
-                    "noteIdentifier": "indie_note_1"
-                },
-                {
-                    "createdAt": "2024-04-01T10:00:00Z",
-                    "contactIdentifier": "indie_contact_2",
-                    "noteIdentifier": "indie_note_1"
-                },
-                {
-                    "createdAt": "2024-04-01T10:00:00Z",
-                    "contactIdentifier": "indie_contact_2",
-                    "noteIdentifier": "indie_note_3"
-                }
-                
-            ],
-            "insightContactRelationships": [],
-            "circles": [],
-            "circleInsights": [],
-            "circleContactRelationships": [],
-            "insightCircleRelationships": []
         }
     }
 } 

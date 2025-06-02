@@ -89,36 +89,71 @@ extension SampleModeProvider {
     }
 }
 
-// MARK: - New Job Provider
+// MARK: - New Job 
 struct ChangedJobProvider: SampleModeProvider {
     var baseSystemPrompt: String {
-        return SampleModePrompts.ChangedJob.basePrompt
+        ""  // Empty string since basePrompt is not available
+    }
+
+    var suggestedQuestions: [SocialBrainMessage] {
+        [
+            SocialBrainMessage(content: "回顾一下我最近聊过的社交话题", isFromUser: false, timestamp: Date()),
+            SocialBrainMessage(content: "最近有哪些适合联络的人？", isFromUser: false, timestamp: Date()),
+            SocialBrainMessage(content: "明天要跟张总一对一面聊，帮我准备一下", isFromUser: false, timestamp: Date())
+        ]
     }
     
     func generateSystemPrompt(for context: PromptContext) async throws -> String {
-        var prompt = baseSystemPrompt
-        
-        // Add context-specific guidance
-        if context.isContactSpecific {
-            prompt += "\n\n" + String(format: SampleModePrompts.ChangedJob.contactSpecificGuidance, context.contact?.name ?? "the contact")
-        }
+        var prompt = ""
         
         // Add question-specific guidance
-        if context.question.contains("明天要跟张总一对一对聊") {
+        if context.question.contains("回顾") {
+            prompt += "\n\n" + SampleModePrompts.UnifiedPrompt.review
+        } else if context.question.contains("联络") {
+            prompt += "\n\n" + SampleModePrompts.UnifiedPrompt.followUp
+        } 
+        else if context.question.contains("一对一面聊") {
             prompt += SampleModePrompts.ChangedJob.oneOnOneMeetingGuidance
-        } else if context.question.contains("最近的社交") {
-            prompt += SampleModePrompts.ChangedJob.recentSocialGuidance
         }
         
         return prompt
     }
     
+
+}
+
+// MARK: - Indie Dev 
+struct IndieDevProvider: SampleModeProvider {
+    var baseSystemPrompt: String {
+        ""  // Empty string since basePrompt is not available
+    }
+
     var suggestedQuestions: [SocialBrainMessage] {
         [
-            SocialBrainMessage(content: "回顾我最近的社交", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "明天要跟张总一对一对聊，帮我准备一下", isFromUser: false, timestamp: Date())
+            SocialBrainMessage(content: "回顾一下我最近聊过的社交话题", isFromUser: false, timestamp: Date()),
+            SocialBrainMessage(content: "最近有哪些适合联络的人？", isFromUser: false, timestamp: Date()),
+            SocialBrainMessage(content: "@小蔡 邀请我下周去参加陶艺展，我想给陶艺展的艺术家介绍我的 社交大脑 ，怎么介绍比较好", isFromUser: false, timestamp: Date()),
         ]
     }
+    
+    func generateSystemPrompt(for context: PromptContext) async throws -> String {
+        var prompt = ""
+        
+        // Add question-specific guidance based on patterns
+        let question = context.question.lowercased()
+        if question.contains("回顾") {
+            prompt += "\n\n" + SampleModePrompts.UnifiedPrompt.review
+        } else if question.contains("联络") {
+            prompt += "\n\n" + SampleModePrompts.UnifiedPrompt.followUp
+        } else if question.contains("陶艺展") || question.contains("展览") {
+            prompt += "\n\n" + SampleModePrompts.IndieDev.exhibitionGuidance
+        }
+        
+        // Remove duplicate notes appending
+        return prompt
+    }
+    
+
 }
 
 // MARK: - New School
@@ -179,42 +214,6 @@ struct CareerPivotProvider: SampleModeProvider {
         [
             SocialBrainMessage(content: "回顾我最近的社交？", isFromUser: false, timestamp: Date()),
             SocialBrainMessage(content: "明天我要跟 林伟 聊聊，帮我回顾下关于他的社交备忘录", isFromUser: false, timestamp: Date())
-        ]
-    }
-}
-
-// MARK: - Indie Dev Provider
-struct IndieDevProvider: SampleModeProvider {
-    var baseSystemPrompt: String {
-        SampleModePrompts.IndieDev.basePrompt
-    }
-    
-    func generateSystemPrompt(for context: PromptContext) async throws -> String {
-        var prompt = baseSystemPrompt
-        
-        // Add contact-specific guidance if applicable
-        if context.isContactSpecific {
-            prompt += "\n\n" + String(format: SampleModePrompts.IndieDev.contactSpecificGuidance, context.contact?.name ?? "the developer")
-        }
-        
-        // Add question-specific guidance based on patterns
-        let question = context.question.lowercased()
-        if question.contains("回顾") || question.contains("最近") {
-            prompt += "\n\n" + SampleModePrompts.IndieDev.followUpGuidance
-        } else if question.contains("陶艺展") || question.contains("展览") {
-            prompt += "\n\n" + SampleModePrompts.IndieDev.exhibitionGuidance
-        } else if question.contains("项目") || question.contains("介绍") || question.contains("展示") {
-            prompt += "\n\n" + SampleModePrompts.IndieDev.projectShowcaseGuidance
-        }
-        
-        // Remove duplicate notes appending
-        return prompt
-    }
-    
-    var suggestedQuestions: [SocialBrainMessage] {
-        [
-            SocialBrainMessage(content: "回顾我最近的社交互动？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "@小蔡 邀请我下周去参加陶艺展，我想给陶艺展的艺术家介绍我的 社交大脑 ，怎么介绍比较好", isFromUser: false, timestamp: Date()),
         ]
     }
 }
