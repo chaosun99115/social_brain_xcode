@@ -306,7 +306,7 @@ struct SocialContactView: View {
             
             await MainActor.run {
                 appModeManager.isSampleMode = true
-                appModeManager.sampleModeType = mode.title
+                appModeManager.sampleModeType = (mode.id == "indie") ? "indieDev" : mode.id
                 refreshTrigger.toggle()
             }
         } catch {
@@ -481,7 +481,7 @@ struct ContactListView: View {
             
             await MainActor.run {
                 appModeManager.isSampleMode = true
-                appModeManager.sampleModeType = mode.title
+                appModeManager.sampleModeType = (mode.id == "indie") ? "indieDev" : mode.id
                 refreshTrigger.toggle()
             }
         } catch {
@@ -738,7 +738,7 @@ struct CircleListView: View {
             
             await MainActor.run {
                 appModeManager.isSampleMode = true
-                appModeManager.sampleModeType = mode.title
+                appModeManager.sampleModeType = (mode.id == "indie") ? "indieDev" : mode.id
                 refreshTrigger.toggle()
             }
         } catch {

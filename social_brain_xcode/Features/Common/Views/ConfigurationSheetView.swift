@@ -129,30 +129,6 @@ struct ConfigurationSheetView: View {
                 // Pro Features Section (Premium Features)
                 Section(header: Text("Pro功能")) {
                     VStack(spacing: 12) {
-                        // Temporarily disabled iCloud sync feature
-                        /*
-                        // iCloud Sync Toggle with Status View
-                        VStack(alignment: .leading, spacing: 8) {
-                            Toggle("iCloud同步", isOn: Binding(
-                                get: { isICloudSyncEnabled },
-                                set: { newValue in
-                                    if !isProUser {
-                                        pendingICloudSyncAction = newValue
-                                        showingProUpgrade = true
-                                        isICloudSyncEnabled = false
-                                        return
-                                    }
-                                    handleICloudSyncToggle(newValue)
-                                }
-                            ))
-                            
-                            if isICloudSyncEnabled && isProUser {
-                                SyncStatusView()
-                                    .padding(.leading, 8)
-                            }
-                        }
-                        */
-                        
                         // Face ID Toggle
                         Toggle("Face ID锁定", isOn: Binding(
                             get: { appSettingsManager.isFaceIDEnabled },
@@ -171,6 +147,24 @@ struct ConfigurationSheetView: View {
                             }
                         ))
                         .disabled(isAuthenticating)
+                        
+                        // Social Knowledge Base Navigation Link
+                        NavigationLink(destination: SocialKnowledgeBaseView()) {
+                            HStack {
+                                Text("社交知识库")
+                                Spacer()
+                                if !isProUser {
+                                    Text("Pro")
+                                        .font(.caption)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.yellow.opacity(0.2))
+                                        .foregroundColor(.yellow)
+                                        .cornerRadius(4)
+                                }
+                            }
+                        }
+                        .disabled(!isProUser)
                         
                         if !isProUser {
                             Text("升级到Pro以解锁所有高级功能")
@@ -516,5 +510,68 @@ struct ProUpgradeView_Previews: PreviewProvider {
         
         ProUpgradeView()
             .environment(\.colorScheme, .dark)
+    }
+}
+
+// MARK: - Social Knowledge Base View
+struct SocialKnowledgeBaseView: View {
+    struct KnowledgeItem: Identifiable {
+        let id = UUID()
+        let title: String
+        let description: String
+        let isNew: Bool
+    }
+    
+    let knowledgeItems: [KnowledgeItem] = [
+        KnowledgeItem(
+            title: "职场关系课",
+            description: "学习如何在职场中建立和维护有效的人际关系，提升职业发展",
+            isNew: true
+        ),
+        KnowledgeItem(
+            title: "软技能提升",
+            description: "掌握沟通、情商、领导力等关键软技能，提升个人影响力",
+            isNew: false
+        )
+    ]
+    
+    var body: some View {
+        List {
+            ForEach(knowledgeItems) { item in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(item.title)
+                            .font(.headline)
+                        if item.isNew {
+                            Text("新")
+                                .font(.caption)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.red.opacity(0.2))
+                                .foregroundColor(.red)
+                                .cornerRadius(4)
+                        }
+                        Spacer()
+                    }
+                    
+                    Text(item.description)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .navigationTitle("社交知识库")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// Add preview for SocialKnowledgeBaseView
+struct SocialKnowledgeBaseView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            SocialKnowledgeBaseView()
+        }
     }
 } 

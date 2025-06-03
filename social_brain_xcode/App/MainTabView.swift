@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @State private var selectedTab = 1 // Default to Social Notes (middle tab)
+    @State private var selectedTab = 1 // Default to Social Contact (middle tab)
     @EnvironmentObject var appModeManager: AppModeManager
     
     var body: some View {
@@ -17,15 +17,15 @@ struct MainTabView: View {
             }
             .tag(0)
             
-            SocialNotesView()
-                .tabItem {
-                    Label("社交笔记", systemImage: "doc.text")
-                }
-                .tag(1)
-            
             SocialContactView()
                 .tabItem {
                     Label("社交关系", systemImage: "person.2")
+                }
+                .tag(1)
+            
+            SocialNotesView()
+                .tabItem {
+                    Label("社交笔记", systemImage: "doc.text")
                 }
                 .tag(2)
         }

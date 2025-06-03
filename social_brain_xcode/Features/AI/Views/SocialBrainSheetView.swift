@@ -48,44 +48,73 @@ struct SocialBrainSheetView: View {
     
     // Add helper method to get provider
     private func getSampleProvider() -> SampleModeProvider? {
+        print("[SocialBrainSheetView] getSampleProvider started")
+        print("[SocialBrainSheetView] isSampleMode: \(appModeManager.isSampleMode)")
+        print("[SocialBrainSheetView] sampleModeType: \(appModeManager.sampleModeType ?? "nil")")
+        print("[SocialBrainSheetView] sourceType: \(sourceType)")
+        
+        // For contact-specific views, use ContactProvider
+        if sourceType == "contact" {
+            print("[SocialBrainSheetView] Using ContactProvider for contact view")
+            return ContactProvider()
+        }
+        
+        // For sample mode, use the configured provider
         guard appModeManager.isSampleMode,
-              let modeType = appModeManager.sampleModeType else { return nil }
+              let modeType = appModeManager.sampleModeType else {
+            print("[SocialBrainSheetView] No sample provider available")
+            return nil
+        }
+        
+        print("[SocialBrainSheetView] Getting provider for mode: \(modeType)")
         return SampleModeProviderFactory.getProvider(for: modeType)
     }
     
     // System prompt generation
     private func generateSystemPrompt() async throws {
-        // First check if we're in sample mode
-        if let sampleProvider = getSampleProvider() {
-            // Use the new prompt generation system with notes
-            let context = PromptContext(
-                mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
-                question: "",  // Initial prompt doesn't have a specific question
-                contact: contextContact
-            )
-            systemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
-            return
-        }
+        print("[SocialBrainSheetView] generateSystemPrompt started")
+        print("[SocialBrainSheetView] Context - sourceType: \(sourceType), sourceAction: \(sourceAction), sourceId: \(sourceId)")
         
-        // Use existing logic for non-sample mode
-        var prompt = "system prompt"
-        switch (sourceType, sourceAction) {
-        case ("contact", "general"):
-            print("[SocialBrainSheetView] Fetching contact context for ID: \(sourceId)")
+        // Always try to load the contact first if we're in contact context
+        if sourceType == "contact" {
+            print("[SocialBrainSheetView] Attempting to load contact for ID: \(sourceId)")
             let context = try await CoreDataManager.shared.viewContext
             let contactFetchRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
             contactFetchRequest.predicate = NSPredicate(format: "contactId == %@", sourceId as CVarArg)
             
             if let contact = try context.fetch(contactFetchRequest).first {
                 print("[SocialBrainSheetView] Found contact: \(contact.name ?? "unnamed")")
+                print("[SocialBrainSheetView] Setting contextContact")
                 contextContact = contact
-                
-                // Update suggested questions using the provider
-                await MainActor.run {
-                    initializeSuggestedQuestions()
-                }
-                
+                print("[SocialBrainSheetView] contextContact after setting: \(contextContact?.name ?? "nil")")
+            } else {
+                print("[SocialBrainSheetView] No contact found for ID: \(sourceId)")
+            }
+        }
+        
+        // Then proceed with sample provider or regular prompt generation
+        if let sampleProvider = getSampleProvider() {
+            print("[SocialBrainSheetView] Using sample provider: \(type(of: sampleProvider))")
+            // Use the new prompt generation system with notes
+            let context = PromptContext(
+                mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
+                question: "",  // Initial prompt doesn't have a specific question
+                contact: contextContact
+            )
+            print("[SocialBrainSheetView] Generating prompt with context - mode: \(context.mode), contact: \(context.contact?.name ?? "nil")")
+            systemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
+            print("[SocialBrainSheetView] Generated sample mode prompt:\n\(systemPrompt)")
+            return
+        }
+        
+        // Use existing logic for non-sample mode
+        var prompt = "system prompt"
+        print("[SocialBrainSheetView] Using non-sample mode prompt generation")
+        switch (sourceType, sourceAction) {
+        case ("contact", "general"):
+            if let contact = contextContact {
                 prompt += "Contact is \(contact.name ?? "failed to load contact name"). "
+                print("[SocialBrainSheetView] Adding contact context to prompt: \(contact.name ?? "unnamed")")
                 
                 // Use the new note fetching functionality
                 if let sampleProvider = getSampleProvider() {
@@ -94,9 +123,13 @@ struct SocialBrainSheetView: View {
                         question: "",
                         contact: contact
                     )
+                    print("[SocialBrainSheetView] Fetching relevant notes for contact")
                     let notesContext = try await sampleProvider.fetchRelevantNotes(for: context)
                     if !notesContext.isEmpty {
                         prompt += notesContext
+                        print("[SocialBrainSheetView] Added notes context to prompt")
+                    } else {
+                        print("[SocialBrainSheetView] No relevant notes found for contact")
                     }
                 }
             } else {
@@ -110,10 +143,11 @@ struct SocialBrainSheetView: View {
             prompt += "suggesting conversation topics, and identifying opportunities for deeper connection."
             
         default:
+            print("[SocialBrainSheetView] Using default prompt for non-contact context")
             prompt += "You are providing general social relationship advice."
         }
         
-        print("[SocialBrainSheetView] Generated System Prompt: \(prompt)")
+        print("[SocialBrainSheetView] Final generated prompt:\n\(prompt)")
         systemPrompt = prompt
     }
     
@@ -134,17 +168,31 @@ struct SocialBrainSheetView: View {
     
     // Modify initializeSuggestedQuestions
     private func initializeSuggestedQuestions() {
-        print("[SocialBrainSheetView] Initializing suggested questions...")
+        print("[SocialBrainSheetView] initializeSuggestedQuestions started")
+        print("[SocialBrainSheetView] Current contextContact: \(contextContact?.name ?? "nil")")
+        
         if let sampleProvider = getSampleProvider() {
             print("[SocialBrainSheetView] Sample provider found: \(type(of: sampleProvider))")
-            print("[SocialBrainSheetView] Using general sample mode questions for mode: \(appModeManager.sampleModeType ?? "nil")")
-            let questions = sampleProvider.suggestedQuestions
-            print("[SocialBrainSheetView] General sample mode questions: \(questions.map { $0.content })")
-            suggestedQuestions = questions
+            let context = PromptContext(
+                mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
+                question: "",
+                contact: contextContact
+            )
+            suggestedQuestions = sampleProvider.getSuggestedQuestions(for: context)
+            print("[SocialBrainSheetView] Questions for context: \(suggestedQuestions.map { $0.content })")
         } else {
-            print("[SocialBrainSheetView] Using fallback general questions.")
-            let questions = SuggestedQuestionsProvider.forContact(contextContact)
-            print("[SocialBrainSheetView] Fallback general questions: \(questions.map { $0.content })")
+            print("[SocialBrainSheetView] Using context-aware questions")
+            print("[SocialBrainSheetView] Calling forContext with:")
+            print("- sourceType: \(sourceType)")
+            print("- sourceAction: \(sourceAction)")
+            print("- contact: \(contextContact?.name ?? "nil")")
+            
+            let questions = SuggestedQuestionsProvider.forContext(
+                sourceType: sourceType,
+                sourceAction: sourceAction,
+                contact: contextContact
+            )
+            print("[SocialBrainSheetView] Received questions: \(questions.map { $0.content })")
             suggestedQuestions = questions
         }
     }
@@ -376,13 +424,14 @@ struct SocialBrainSheetView: View {
             print("- sourceAction: \(sourceAction)")
             print("- sourceId: \(sourceId)")
             
-            // Initialize suggested questions
-            initializeSuggestedQuestions()
-            
-            // Generate system prompt
+            // Generate system prompt first to load the contact
             Task {
                 do {
                     try await generateSystemPrompt()
+                    // Initialize suggested questions after contact is loaded
+                    await MainActor.run {
+                        initializeSuggestedQuestions()
+                    }
                 } catch {
                     print("[SocialBrainSheetView] Error generating system prompt: \(error)")
                     errorMessage = error.localizedDescription
@@ -636,19 +685,30 @@ struct SocialBrainSheetView: View {
     
     // Helper function to update system prompt with notes for non-sample mode
     private func updateSystemPromptWithNotes(_ notes: String) async throws {
+        print("[SocialBrainSheetView] updateSystemPromptWithNotes started")
+        print("[SocialBrainSheetView] Current system prompt:\n\(systemPrompt)")
+        print("[SocialBrainSheetView] Notes to add:\n\(notes)")
+        
         // First check if the system prompt already contains these notes
         if !systemPrompt.contains(notes) {
+            print("[SocialBrainSheetView] Notes not found in current prompt, adding them")
             // If not, append them or update accordingly
             if !systemPrompt.contains("相关笔记如下:") {
                 systemPrompt += "\n\n相关笔记如下:\n" + notes
+                print("[SocialBrainSheetView] Added new notes section to prompt")
             } else {
                 // If it already has notes section but different notes, replace it
+                print("[SocialBrainSheetView] Replacing existing notes section")
                 let components = systemPrompt.components(separatedBy: "相关笔记如下:")
                 if components.count > 1 {
                     systemPrompt = components[0] + "相关笔记如下:\n" + notes
                 }
             }
+        } else {
+            print("[SocialBrainSheetView] Notes already present in prompt, no update needed")
         }
+        
+        print("[SocialBrainSheetView] Updated system prompt:\n\(systemPrompt)")
     }
 }
 

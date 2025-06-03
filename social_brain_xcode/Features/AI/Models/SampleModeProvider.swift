@@ -16,6 +16,7 @@ struct PromptContext {
 enum SampleMode: String {
     case changedJob
     case indieDev
+    case contact  // Add new case for contact-specific mode
     case none
 }
 
@@ -26,6 +27,9 @@ protocol SampleModeProvider {
     
     // Updated to be async
     func generateSystemPrompt(for context: PromptContext) async throws -> String
+    
+    // Add new method for context-aware questions
+    func getSuggestedQuestions(for context: PromptContext) -> [SocialBrainMessage]
 }
 
 // MARK: - Sample Mode Provider Protocol Extension
@@ -42,7 +46,8 @@ extension SampleModeProvider {
         
         // Configure fetch request based on context
         if let contact = context.contact {
-            notesFetchRequest.predicate = NSPredicate(format: "contacts.contacts == %@", contact)
+            // Use a more explicit predicate that follows the relationship path
+            notesFetchRequest.predicate = NSPredicate(format: "SUBQUERY(contacts, $r, $r.contacts == %@).@count > 0", contact)
         } else {
             // In sample mode, we want to include both sample notes (type 0) and regular notes (type 1)
             notesFetchRequest.predicate = NSPredicate(format: "type == %d OR type == %d", NoteType.sample.rawValue, NoteType.regular.rawValue)
@@ -94,11 +99,22 @@ struct ChangedJobProvider: SampleModeProvider {
     }
 
     var suggestedQuestions: [SocialBrainMessage] {
+        // This will be overridden by forContext
         [
             SocialBrainMessage(content: "回顾一下我最近聊过的社交话题", isFromUser: false, timestamp: Date()),
             SocialBrainMessage(content: "最近有哪些适合联络的人？", isFromUser: false, timestamp: Date()),
             SocialBrainMessage(content: "明天要跟张总一对一面聊，帮我准备一下", isFromUser: false, timestamp: Date())
         ]
+    }
+    
+    // Override to only show social memo question for contacts
+    func getSuggestedQuestions(for context: PromptContext) -> [SocialBrainMessage] {
+        if let contact = context.contact, let name = contact.name {
+            return [
+                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date())
+            ]
+        }
+        return suggestedQuestions
     }
     
     func generateSystemPrompt(for context: PromptContext) async throws -> String {
@@ -116,8 +132,6 @@ struct ChangedJobProvider: SampleModeProvider {
         
         return prompt
     }
-    
-
 }
 
 // MARK: - Indie Dev 
@@ -127,11 +141,22 @@ struct IndieDevProvider: SampleModeProvider {
     }
 
     var suggestedQuestions: [SocialBrainMessage] {
+        // This will be overridden by forContext
         [
             SocialBrainMessage(content: "回顾一下我最近聊过的社交话题", isFromUser: false, timestamp: Date()),
             SocialBrainMessage(content: "最近有哪些适合联络的人？", isFromUser: false, timestamp: Date()),
             SocialBrainMessage(content: "@小蔡 邀请我下周去参加陶艺展，我想给陶艺展的艺术家介绍我的 社交大脑 ，怎么介绍比较好", isFromUser: false, timestamp: Date()),
         ]
+    }
+    
+    // Override to only show social memo question for contacts
+    func getSuggestedQuestions(for context: PromptContext) -> [SocialBrainMessage] {
+        if let contact = context.contact, let name = contact.name {
+            return [
+                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date())
+            ]
+        }
+        return suggestedQuestions
     }
     
     func generateSystemPrompt(for context: PromptContext) async throws -> String {
@@ -147,24 +172,81 @@ struct IndieDevProvider: SampleModeProvider {
             prompt += "\n\n" + SampleModePrompts.IndieDev.exhibitionGuidance
         }
         
-        // Remove duplicate notes appending
         return prompt
     }
-    
+}
 
+// MARK: - Contact Provider
+struct ContactProvider: SampleModeProvider {
+    var baseSystemPrompt: String {
+        """
+        """
+    }
+
+    var suggestedQuestions: [SocialBrainMessage] {
+        [
+            SocialBrainMessage(content: "回顾一下我们最近的互动", isFromUser: false, timestamp: Date()),
+            SocialBrainMessage(content: "有什么值得关注的话题？", isFromUser: false, timestamp: Date()),
+            SocialBrainMessage(content: "如何更好地维护这段关系？", isFromUser: false, timestamp: Date())
+        ]
+    }
+    
+    func getSuggestedQuestions(for context: PromptContext) -> [SocialBrainMessage] {
+        print("[ContactProvider] Getting suggested questions for context")
+        print("[ContactProvider] Contact: \(context.contact?.name ?? "nil")")
+        print("[ContactProvider] Question: \(context.question)")
+        
+        if let contact = context.contact, let name = contact.name {
+            print("[ContactProvider] Returning contact-specific question for: \(name)")
+            return [
+                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date())
+            ]
+        }
+        
+        print("[ContactProvider] Returning default questions")
+        return suggestedQuestions
+    }
+    
+    func generateSystemPrompt(for context: PromptContext) async throws -> String {
+        print("[ContactProvider] Generating system prompt")
+        print("[ContactProvider] Context - mode: \(context.mode), contact: \(context.contact?.name ?? "nil"), question: \(context.question)")
+        
+        var prompt = baseSystemPrompt
+        
+        // Add contact-specific context if available
+        if let contact = context.contact, let name = contact.name {
+            
+            // Add question-specific guidance
+            if context.question.contains("备忘录") || context.question.contains("社交记录") {
+                print("[ContactProvider] Adding social memo guidance")
+                prompt += "\n\n" + SampleModePrompts.UnifiedPrompt.contact
+            }
+        }
+        
+        print("[ContactProvider] Generated prompt:\n\(prompt)")
+        return prompt
+    }
 }
 
 // MARK: - Sample Mode Provider Factory
 struct SampleModeProviderFactory {
     static func getProvider(for mode: String) -> SampleModeProvider? {
+        print("[SampleModeProviderFactory] Getting provider for mode: \(mode)")
+        let provider: SampleModeProvider?
+        
         switch mode {
         case SampleMode.changedJob.rawValue:
-            return ChangedJobProvider()
+            provider = ChangedJobProvider()
         case SampleMode.indieDev.rawValue:
-            return IndieDevProvider()
+            provider = IndieDevProvider()
+        case SampleMode.contact.rawValue:
+            provider = ContactProvider()
         default:
-            return nil
+            provider = nil
         }
+        
+        print("[SampleModeProviderFactory] Provider type: \(type(of: provider ?? ChangedJobProvider()))")
+        return provider
     }
     
     static func generatePrompt(for mode: String, question: String, contact: Contact? = nil) async throws -> String? {
@@ -175,5 +257,17 @@ struct SampleModeProviderFactory {
             contact: contact
         )
         return try await provider.generateSystemPrompt(for: context)
+    }
+}
+
+// Add default implementation
+extension SampleModeProvider {
+    func getSuggestedQuestions(for context: PromptContext) -> [SocialBrainMessage] {
+        if let contact = context.contact, let name = contact.name {
+            return [
+                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date())
+            ]
+        }
+        return suggestedQuestions
     }
 } 

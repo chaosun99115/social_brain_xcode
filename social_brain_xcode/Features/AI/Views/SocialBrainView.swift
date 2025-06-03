@@ -144,9 +144,18 @@ struct SocialBrainView: View {
             print("[SocialBrainView] General sample mode questions: \(questions.map { $0.content })")
             suggestedQuestions = questions
         } else {
-            print("[SocialBrainView] Using fallback general questions.")
-            let questions = SuggestedQuestionsProvider.forContact(contextContact)
-            print("[SocialBrainView] Fallback general questions: \(questions.map { $0.content })")
+            print("[SocialBrainView] Using context-aware questions")
+            print("[SocialBrainView] Calling forContext with:")
+            print("- sourceType: \(sourceType)")
+            print("- sourceAction: \(sourceAction)")
+            print("- contact: \(contextContact?.name ?? "nil")")
+            
+            let questions = SuggestedQuestionsProvider.forContext(
+                sourceType: sourceType,
+                sourceAction: sourceAction,
+                contact: contextContact
+            )
+            print("[SocialBrainView] Received questions: \(questions.map { $0.content })")
             suggestedQuestions = questions
         }
     }
