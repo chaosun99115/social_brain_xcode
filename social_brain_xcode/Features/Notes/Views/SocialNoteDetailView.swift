@@ -46,13 +46,13 @@ struct SocialNoteDetailView: View {
                         VStack(alignment: .leading, spacing: 0) {
                             // Note details section (content only)
                             VStack(alignment: .leading, spacing: 16) {
-                                SelectableMentionText(text: note.content ?? "")
+                                MentionTextView(text: note.content ?? "")
+                                    .textSelection(.enabled)
                                     .font(.body)
                                     .foregroundColor(.primaryText)
                                     .lineSpacing(4)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .multilineTextAlignment(.leading)
-                                    .textSelection(.enabled)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
@@ -572,36 +572,5 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
-    }
-}
-
-// Add this new view after the ScrollOffsetPreferenceKey
-struct SelectableMentionText: View {
-    let text: String
-    
-    var body: some View {
-        Text(parseMentions(text))
-            .textSelection(.enabled)
-    }
-    
-    private func parseMentions(_ text: String) -> AttributedString {
-        var attributedString = AttributedString(text)
-        
-        // Find all mentions (text between @ symbols)
-        let pattern = "@([^@]+)@"
-        if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
-            let nsString = text as NSString
-            let matches = regex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
-            
-            // Apply mention styling
-            for match in matches.reversed() {
-                if let range = Range(match.range, in: attributedString) {
-                    attributedString[range].foregroundColor = .blue
-                    attributedString[range].backgroundColor = Color.blue.opacity(0.1)
-                }
-            }
-        }
-        
-        return attributedString
     }
 } 
