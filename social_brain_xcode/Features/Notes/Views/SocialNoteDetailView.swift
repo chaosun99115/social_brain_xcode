@@ -148,7 +148,17 @@ struct SocialNoteDetailView: View {
                     .padding(.vertical, 8)
                     .padding(.bottom, safeAreaPadding)
                 }
-                .background(Color.primaryBackground)
+                .background(
+                    Color.primaryBackground
+                        .edgesIgnoringSafeArea(.bottom)
+                )
+                .overlay(
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundColor(Color(.separator))
+                        .opacity(0.5),
+                    alignment: .top
+                )
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -184,7 +194,6 @@ struct SocialNoteDetailView: View {
             // Show the tab bar again when leaving this view
             hideTabBar(false)
         }
-        .edgesIgnoringSafeArea(.bottom)
         .sheet(isPresented: $showingEditModal) {
             SimpleNoteModalView(
                 initialText: note.content ?? "",  // Use note.content directly instead of editingNoteText
@@ -258,19 +267,23 @@ struct SocialNoteDetailView: View {
     
     // Function to hide/show the tab bar
     private func hideTabBar(_ hidden: Bool) {
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .map { $0 as? UIWindowScene }
-            .compactMap { $0 }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-            
-        if let keyWindow = keyWindow {
-            keyWindow.rootViewController?.children.forEach { child in
-                // Find the UITabBarController and hide its tabBar
-                if let tabBarController = child as? UITabBarController {
-                    tabBarController.tabBar.isHidden = hidden
+        DispatchQueue.main.async {
+            let keyWindow = UIApplication.shared.connectedScenes
+                .filter { $0.activationState == .foregroundActive }
+                .map { $0 as? UIWindowScene }
+                .compactMap { $0 }
+                .first?.windows
+                .filter { $0.isKeyWindow }
+                .first
+                
+            if let keyWindow = keyWindow {
+                keyWindow.rootViewController?.children.forEach { child in
+                    if let tabBarController = child as? UITabBarController {
+                        // Ensure the tab bar is properly hidden
+                        tabBarController.tabBar.isHidden = hidden
+                        // Also adjust the tab bar's alpha to ensure it's completely hidden
+                        tabBarController.tabBar.alpha = hidden ? 0 : 1
+                    }
                 }
             }
         }
