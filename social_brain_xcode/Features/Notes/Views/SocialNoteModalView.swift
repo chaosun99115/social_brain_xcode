@@ -35,9 +35,12 @@ struct SocialNoteModalView: View {
     // Input field height estimation for positioning
     private let estimatedInputFieldHeight: CGFloat = 60
     
+    let subType: NoteSubType // Update to use NoteSubType enum
+    
     // Initial prompt to start the conversation
-    init(initialPrompt: String = "今天遇到了哪些事，认识了哪些人？", onSave: @escaping (String) -> Void = { _ in }) {
+    init(initialPrompt: String = "今天遇到了哪些事，认识了哪些人？", subType: NoteSubType = .interactionRecord, onSave: @escaping (String) -> Void = { _ in }) {
         self._initialPrompt = State(initialValue: initialPrompt)
+        self.subType = subType
         self.onSave = onSave
     }
     
@@ -310,18 +313,13 @@ struct SocialNoteModalView: View {
     }
     
     private func saveNoteWithMentions(mentions: [String], alsoIncludeExisting: Bool = true) {
-        // mentions: the new contacts to create (if any)
-        // alsoIncludeExisting: if true, also relate to existing contacts
-        let allMentions = alsoIncludeExisting ? (existingMentionedContacts + mentions) : mentions
-        print("[SocialNoteModalView] 💾 Saving note. New contacts: \(mentions), All contacts: \(allMentions)")
+        let allMentions = alsoIncludeExisting ? mentions : []
         Task {
-            if !messageContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                // Use sample (type 0) for sample mode, regular (type 1) for non-sample mode
-                let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
-                if let _ = await noteManager.createNoteWithMentions(content: messageContent, type: noteType, mentions: allMentions) {
-                    onSave(messageContent)
-                    dismiss()
-                }
+            // Use sample (type 0) for sample mode, regular (type 1) for non-sample mode
+            let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
+            if let _ = await noteManager.createNoteWithMentions(content: messageContent, type: noteType, subType: subType.rawValue, mentions: allMentions) {
+                onSave(messageContent)
+                dismiss()
             }
         }
     }

@@ -125,6 +125,21 @@ struct CircleSelectionView: View {
     }
 }
 
+// Add NoteSubType enum before SimpleNoteModalView
+enum NoteSubType: Int16 {
+    case interactionRecord = 1  // 互动记录
+    case topicCollection = 2    // 话题库
+    
+    var displayName: String {
+        switch self {
+        case .interactionRecord:
+            return "互动记录"
+        case .topicCollection:
+            return "话题库"
+        }
+    }
+}
+
 struct SimpleNoteModalView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
@@ -133,6 +148,7 @@ struct SimpleNoteModalView: View {
     let initialText: String
     let onSave: (String) -> Void
     let noteId: UUID?
+    let subType: NoteSubType
     
     @StateObject private var textState = TextEditorState()
     @State private var textEditorHeight: CGFloat = 100
@@ -149,9 +165,10 @@ struct SimpleNoteModalView: View {
     @State private var showingMentionConfirmation = false
     @State private var isSaving = false
     
-    init(initialText: String, noteId: UUID? = nil, onSave: @escaping (String) -> Void) {
+    init(initialText: String, noteId: UUID? = nil, subType: NoteSubType = .interactionRecord, onSave: @escaping (String) -> Void) {
         self.initialText = initialText
         self.noteId = noteId
+        self.subType = subType
         self.onSave = onSave
         _textState = StateObject(wrappedValue: TextEditorState())
     }
@@ -389,7 +406,7 @@ struct SimpleNoteModalView: View {
         Task {
             // Use sample (type 0) for sample mode, regular (type 1) for non-sample mode
             let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
-            if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: noteType, mentions: allMentions) {
+            if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: noteType, subType: subType.rawValue, mentions: allMentions) {
                 onSave(textState.text)
                 dismiss()
             }
@@ -555,7 +572,7 @@ extension String {
 
 struct SimpleNoteModalView_Previews: PreviewProvider {
     static var previews: some View {
-        SimpleNoteModalView(initialText: "Test note") { _ in }
+        SimpleNoteModalView(initialText: "Test note", subType: .interactionRecord) { _ in }
             .environmentObject(NoteManager.shared)
     }
 } 

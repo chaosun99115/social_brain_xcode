@@ -6,6 +6,7 @@ struct SocialNote: Identifiable {
     let date: Date
     let content: String
     let type: NoteType
+    let subType: Int16
     let updateCompleted: Bool
     let isArchived: Bool
     
@@ -17,16 +18,18 @@ struct SocialNote: Identifiable {
         self.content = note.content ?? ""
         let rawType = Int(truncatingIfNeeded: note.type)
         self.type = NoteType(rawValue: rawType) ?? .regular
+        self.subType = note.subType
         self.updateCompleted = note.updateCompleted == 1
         self.isArchived = note.isArchived
     }
     
     // Initialize with default values
-    init(id: UUID = UUID(), date: Date = Date(), content: String, type: NoteType = .regular, updateCompleted: Bool = false, isArchived: Bool = false) {
+    init(id: UUID = UUID(), date: Date = Date(), content: String, type: NoteType = .regular, subType: Int16 = 0, updateCompleted: Bool = false, isArchived: Bool = false) {
         self.id = id
         self.date = date
         self.content = content
         self.type = type
+        self.subType = subType
         self.updateCompleted = updateCompleted
         self.isArchived = isArchived
     }

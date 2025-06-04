@@ -57,12 +57,14 @@ final class SeedDataManager {
         // This ensures the same identifier always gets the same UUID
         let uuidString = identifier.replacingOccurrences(of: "_", with: "-")
         if let existingUUID = entityUUIDs[identifier] {
+            print("[SeedDataManager] 🔄 Reusing existing UUID for \(identifier): \(existingUUID)")
             return existingUUID
         }
         
         // For identifiers that don't already have a UUID, generate one deterministically
         let uuid = UUID(uuidString: uuidString) ?? UUID()
         entityUUIDs[identifier] = uuid
+        print("[SeedDataManager] ✨ Generated new UUID for \(identifier): \(uuid)")
         return uuid
     }
     
@@ -132,6 +134,8 @@ final class SeedDataManager {
     // MARK: - Data Import
     
     func importSeedData(into context: NSManagedObjectContext, scenario: SeedDataScenario? = nil) async throws {
+        print("\n[SeedDataManager] 🚀 Starting seed data import...")
+        
         // Delete existing store before importing new data
         try deleteExistingStore(for: context)
         
@@ -182,6 +186,20 @@ final class SeedDataManager {
         entityUUIDs.removeAll()
         
         try await context.perform {
+            print("\n[SeedDataManager] 📝 Creating contacts...")
+            // Import Contacts
+            for contactData in seedData.contacts {
+                let contact = Contact(context: context)
+                let contactUUID = self.generateAndStoreUUID(for: contactData.uniqueIdentifier)
+                contact.contactId = contactUUID
+                contact.name = contactData.name
+                contact.type = contactData.type ?? 0
+                contact.createdAt = contactData.createdAt
+                contact.updatedAt = contactData.updatedAt
+                contact.recordStatus = contactData.recordStatus
+                print("[SeedDataManager] ✅ Created contact: \(contactData.name) with ID: \(contactUUID)")
+            }
+            
             // Import Notes
             for noteData in seedData.notes {
                 let note = Note(context: context)
@@ -189,23 +207,12 @@ final class SeedDataManager {
                 note.noteId = noteUUID
                 note.content = noteData.content
                 note.type = noteData.type
+                note.subType = noteData.subType
                 note.updateCompleted = noteData.updateCompleted
                 note.createdAt = noteData.createdAt
                 note.updatedAt = noteData.updatedAt
                 note.recordStatus = noteData.recordStatus
                 note.isArchived = false
-            }
-            
-            // Import Contacts
-            for contactData in seedData.contacts {
-                let contact = Contact(context: context)
-                let contactUUID = self.generateAndStoreUUID(for: contactData.uniqueIdentifier)
-                contact.contactId = contactUUID
-                contact.name = contactData.name
-                contact.type = contactData.type ?? 0  // Unwrap the optional with a default value of 0
-                contact.createdAt = contactData.createdAt
-                contact.updatedAt = contactData.updatedAt
-                contact.recordStatus = contactData.recordStatus
             }
             
             // Import Contact Insights
@@ -253,6 +260,11 @@ final class SeedDataManager {
             // Save context after creating all entities
             do {
                 try context.save()
+                print("\n[SeedDataManager] 💾 Saved context after entity creation")
+                
+                // Validate contacts after creation
+                print("\n[SeedDataManager] 🔍 Validating contacts after creation...")
+                try self.validateContacts(in: context)
             } catch {
                 print("[SeedDataManager] ❌ Error saving context after entity creation: \(error)")
                 throw error
@@ -260,12 +272,15 @@ final class SeedDataManager {
             
             // Create Note-Contact Relationships
             var relationshipErrors = 0
+            print("\n[SeedDataManager] 🔗 Creating note-contact relationships...")
 
             // First, fetch all notes and contacts to avoid repeated fetches
             let noteRequest: NSFetchRequest<Note> = Note.fetchRequest()
             let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
             let allNotes = try? context.fetch(noteRequest)
             let allContacts = try? context.fetch(contactRequest)
+
+            print("[SeedDataManager] 📊 Found \(allNotes?.count ?? 0) notes and \(allContacts?.count ?? 0) contacts")
 
             // Create dictionaries for quick lookup
             var notesByUUID: [UUID: Note] = [:]
@@ -274,137 +289,99 @@ final class SeedDataManager {
             allNotes?.forEach { note in
                 if let noteId = note.noteId {
                     notesByUUID[noteId] = note
+                    print("[SeedDataManager] 📝 Note: \(noteId) - \(note.content?.prefix(20) ?? "no content")")
                 }
             }
 
             allContacts?.forEach { contact in
                 if let contactId = contact.contactId {
                     contactsByUUID[contactId] = contact
+                    print("[SeedDataManager] 👤 Contact: \(contactId) - \(contact.name ?? "unnamed")")
                 }
             }
 
-            // Group relationships by contact for batch processing
-            var relationshipsByContact: [UUID: [(Note, Date)]] = [:]
-
-            // First pass: validate and group relationships
+            // Process each relationship individually to better handle errors
             for relationshipData in seedData.noteContactRelationships {
+                print("\n[SeedDataManager] 🔄 Processing relationship: note=\(relationshipData.noteIdentifier), contact=\(relationshipData.contactIdentifier)")
+                
                 let noteUUID = self.getUUID(for: relationshipData.noteIdentifier)
                 let contactUUID = self.getUUID(for: relationshipData.contactIdentifier)
                 
+                print("[SeedDataManager] ℹ️ Generated UUIDs - note: \(noteUUID?.uuidString ?? "nil"), contact: \(contactUUID?.uuidString ?? "nil")")
+                
+                // Check if we have valid UUIDs and can find the entities
                 guard let noteUUID = noteUUID,
-                      let contactUUID = contactUUID,
-                      let note = notesByUUID[noteUUID],
-                      let contact = contactsByUUID[contactUUID] else {
+                      let contactUUID = contactUUID else {
+                    print("[SeedDataManager] ⚠️ Failed to find UUIDs for relationship")
+                    if noteUUID == nil { print("  - Note UUID not found for: \(relationshipData.noteIdentifier)") }
+                    if contactUUID == nil { print("  - Contact UUID not found for: \(relationshipData.contactIdentifier)") }
                     relationshipErrors += 1
                     continue
                 }
                 
-                // Group by contact for batch processing
-                relationshipsByContact[contactUUID, default: []].append((note, relationshipData.createdAt))
-            }
-
-            // Second pass: create relationships in batches per contact
-            for (contactUUID, noteData) in relationshipsByContact {
-                guard let contact = contactsByUUID[contactUUID] else { continue }
+                // Find the note and contact
+                guard let note = notesByUUID[noteUUID],
+                      let contact = contactsByUUID[contactUUID] else {
+                    print("[SeedDataManager] ⚠️ Failed to find entities for relationship")
+                    if notesByUUID[noteUUID] == nil { print("  - Note not found with UUID: \(noteUUID)") }
+                    if contactsByUUID[contactUUID] == nil { print("  - Contact not found with UUID: \(contactUUID)") }
+                    relationshipErrors += 1
+                    continue
+                }
                 
-                // Create all relationships for this contact
-                let relationships = noteData.map { (note, createdAt) -> NoteContactRelationship in
+                // Check if relationship already exists
+                let existingRequest: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
+                existingRequest.predicate = NSPredicate(format: "notes.noteId == %@ AND contacts.contactId == %@",
+                                                      noteUUID as CVarArg, contactUUID as CVarArg)
+                
+                do {
+                    let existingRelationships = try context.fetch(existingRequest)
+                    if !existingRelationships.isEmpty {
+                        print("[SeedDataManager] ℹ️ Relationship already exists, skipping")
+                        continue
+                    }
+                    
+                    // Create new relationship
                     let relationship = NoteContactRelationship(context: context)
                     relationship.relationshipId = UUID()
-                    relationship.createdAt = createdAt
-                    
-                    // Set both sides of the relationship
+                    relationship.createdAt = relationshipData.createdAt
                     relationship.notes = note
                     relationship.contacts = contact
                     
-                    // Add to contact's notes set
-                    contact.addToNotes(relationship)
+                    print("[SeedDataManager] ✅ Created relationship: \(relationship.relationshipId?.uuidString ?? "nil")")
                     
-                    return relationship
-                }
-                
-                // Save relationships for this contact
-                do {
-                    // Verify relationships before saving
-                    for relationship in relationships {
-                        guard relationship.notes != nil && relationship.contacts != nil else {
-                            throw NSError(domain: "SeedDataManager", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid relationship state"])
-                        }
-                    }
-                    
-                    // Save this batch
+                    // Save immediately after each relationship creation
                     try context.save()
+                    print("[SeedDataManager] 💾 Saved relationship to context")
                     
-                    // Verify relationships after saving
-                    for relationship in relationships {
-                        guard relationship.notes != nil && relationship.contacts != nil else {
-                            throw NSError(domain: "SeedDataManager", code: 4, userInfo: [NSLocalizedDescriptionKey: "Relationship lost references"])
-                        }
+                    // Verify the relationship was created correctly
+                    if relationship.notes == nil || relationship.contacts == nil {
+                        print("[SeedDataManager] ⚠️ Relationship verification failed after creation")
+                        context.delete(relationship)
+                        try context.save()
+                        relationshipErrors += 1
+                        continue
                     }
+                    
+                    // Double-check the relationship exists in the database
+                    let verifyRequest: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
+                    verifyRequest.predicate = NSPredicate(format: "relationshipId == %@", relationship.relationshipId! as CVarArg)
+                    let verifyResults = try context.fetch(verifyRequest)
+                    print("[SeedDataManager] 🔍 Verification: Found \(verifyResults.count) relationships after save")
+                    
                 } catch {
-                    relationshipErrors += noteData.count
-                    
-                    // Rollback this batch
-                    context.rollback()
-                    
-                    // Try individual saves as fallback
-                    for (note, createdAt) in noteData {
-                        do {
-                            let relationship = NoteContactRelationship(context: context)
-                            relationship.relationshipId = UUID()
-                            relationship.createdAt = createdAt
-                            relationship.notes = note
-                            relationship.contacts = contact
-                            contact.addToNotes(relationship)
-                            
-                            try context.save()
-                        } catch {
-                            relationshipErrors += 1
-                        }
-                    }
+                    print("[SeedDataManager] ⚠️ Error creating relationship: \(error)")
+                    relationshipErrors += 1
+                    continue
                 }
             }
 
             if relationshipErrors > 0 {
                 print("[SeedDataManager] ⚠️ \(relationshipErrors) note-contact relationships failed to create")
+            } else {
+                print("[SeedDataManager] ✅ All note-contact relationships created successfully")
             }
             
-            // Create Insight-Contact Relationships
-            relationshipErrors = 0
-            for relationshipData in seedData.insightContactRelationships {
-                let contactUUID = self.getUUID(for: relationshipData.contactIdentifier)
-                let insightUUID = self.getUUID(for: relationshipData.insightIdentifier)
-                
-                if contactUUID == nil || insightUUID == nil {
-                    relationshipErrors += 1
-                    continue
-                }
-                
-                let relationship = InsightContactRelationship(context: context)
-                relationship.relationshipId = UUID()
-                relationship.createdAt = relationshipData.createdAt  // Date from seed data
-                
-                let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
-                contactRequest.predicate = NSPredicate(format: "contactId == %@", contactUUID! as CVarArg)
-                
-                let insightRequest: NSFetchRequest<ContactInsight> = ContactInsight.fetchRequest()
-                insightRequest.predicate = NSPredicate(format: "insightId == %@", insightUUID! as CVarArg)
-                
-                let contacts = try? context.fetch(contactRequest)
-                let insights = try? context.fetch(insightRequest)
-                
-                guard let contact = contacts?.first, let insight = insights?.first else {
-                    relationshipErrors += 1
-                    continue
-                }
-                
-                relationship.contacts = contact
-                relationship.insights = insight
-            }
-            if relationshipErrors > 0 {
-                print("[SeedDataManager] ⚠️ \(relationshipErrors) insight-contact relationships failed to create")
-            }
-
             // Create Circle-Contact Relationships
             relationshipErrors = 0
             
@@ -502,6 +479,56 @@ final class SeedDataManager {
                 print("[SeedDataManager] ❌ Error saving final context: \(error)")
                 throw error
             }
+
+            // Final validation before completion
+            print("\n[SeedDataManager] 🔍 Performing final validation...")
+            try self.validateContacts(in: context)
+            
+            print("\n[SeedDataManager] ✅ Seed data import completed successfully")
+        }
+    }
+
+    // Add validation function
+    private func validateContacts(in context: NSManagedObjectContext) throws {
+        let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
+        let allContacts = try context.fetch(contactRequest)
+        
+        // Check for nil contactIds
+        let contactsWithNilId = allContacts.filter { $0.contactId == nil }
+        if !contactsWithNilId.isEmpty {
+            print("\n[SeedDataManager] ⚠️ VALIDATION ERROR: Found \(contactsWithNilId.count) contacts with nil contactId:")
+            for contact in contactsWithNilId {
+                print("  - Contact: \(contact.name ?? "unnamed")")
+            }
+        }
+        
+        // Check for duplicate contactIds
+        let contactIds = allContacts.compactMap { $0.contactId }
+        let uniqueIds = Set(contactIds)
+        if contactIds.count != uniqueIds.count {
+            print("\n[SeedDataManager] ⚠️ VALIDATION ERROR: Found duplicate contactIds")
+            let duplicates = Dictionary(grouping: contactIds) { $0 }
+                .filter { $1.count > 1 }
+                .keys
+            for duplicateId in duplicates {
+                print("  - Duplicate ID: \(duplicateId)")
+                let contactsWithId = allContacts.filter { $0.contactId == duplicateId }
+                for contact in contactsWithId {
+                    print("    * Contact: \(contact.name ?? "unnamed")")
+                }
+            }
+        }
+        
+        // Verify relationships
+        for contact in allContacts {
+            guard let contactId = contact.contactId else { continue }
+            let relationshipRequest: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
+            relationshipRequest.predicate = NSPredicate(format: "contacts.contactId == %@", contactId as CVarArg)
+            let relationships = try context.fetch(relationshipRequest)
+            
+            if relationships.isEmpty {
+                print("[SeedDataManager] ℹ️ Contact \(contact.name ?? "unnamed") (\(contactId)) has no note relationships")
+            }
         }
     }
 }
@@ -513,7 +540,6 @@ struct SeedData: Codable {
     let contacts: [ContactData]
     let contactInsights: [ContactInsightData]
     let noteContactRelationships: [NoteContactRelationshipData]
-    let insightContactRelationships: [InsightContactRelationshipData]
     let circles: [CircleData]
     let circleInsights: [CircleInsightData]
     let circleContactRelationships: [CircleContactRelationshipData]
@@ -524,6 +550,7 @@ struct NoteData: Codable {
     let uniqueIdentifier: String  // Used to generate and track UUID
     let content: String
     let type: Int16
+    let subType: Int16  // Added subType field
     let updateCompleted: Int16
     let createdAt: Date
     let updatedAt: Date
@@ -580,12 +607,6 @@ struct NoteContactRelationshipData: Codable {
     let createdAt: Date
     let noteIdentifier: String    // References the uniqueIdentifier of the note
     let contactIdentifier: String // References the uniqueIdentifier of the contact
-}
-
-struct InsightContactRelationshipData: Codable {
-    let createdAt: Date
-    let contactIdentifier: String // References the uniqueIdentifier of the contact
-    let insightIdentifier: String // References the uniqueIdentifier of the insight
 }
 
 struct CircleData: Codable {

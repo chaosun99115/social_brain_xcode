@@ -32,6 +32,7 @@
                     "uniqueIdentifier": "note_1",
                     "content": "前同事 @王志明 今天正好出差住来上海，晚上约了他吃饭。\n\n吃饭的时候，聊了最近的近况。他现在已经是公司的技术总监了，最近还完成了商学院的课程。\n\n生活上，他现在还是保持每周跑步的习惯，也建议我要保持定期运动的习惯。\n\n我提起了公司最近有裁员计划，想跳槽的想法，他说回去会帮我内推，HR会联系我。",
                     "type": 0,
+                    "subType": 1,
                     "updateCompleted": 1,
                     "createdAt": "2025-04-10T10:00:00Z",
                     "updatedAt": "2025-04-10T10:00:00Z",
@@ -41,6 +42,7 @@
                     "uniqueIdentifier": "note_2",
                     "content": "今天HR给我发了Offer，总算走完了招聘流程。我给 @王志明 发了微信表示了对他的感谢。",
                     "type": 0,
+                    "subType": 1,
                     "updateCompleted": 1,
                     "createdAt": "2025-05-01T10:00:00Z",
                     "updatedAt": "2025-05-01T10:00:00Z",
@@ -50,6 +52,7 @@
                     "uniqueIdentifier": "note_3",
                     "content": "入职第一天见面，产品总监 @张方 在和我的谈话中提到了知道我认识公司的技术总监 @王志明 。他说他和 @王志明 是商学院校友，经常一起参加行业论坛。\n\n张方问话很直接，几乎不用客套语。当我提到上家负责的几个重点项目时，追问了许多细节，特别是数据如何支持这些决策。\n\n他说希望下周找个时间一对一聊聊，了解我对团队的第一印象。我注意到张总办公桌上放着一本新书黄仁勋的自传《英伟达之芯》，看起来看了一大半了。",
                     "type": 0,
+                    "subType": 1,
                     "updateCompleted": 1,
                     "createdAt": "2025-05-10T10:00:00Z",
                     "updatedAt": "2025-05-10T10:00:00Z",
@@ -59,6 +62,7 @@
                     "uniqueIdentifier": "note_4",
                     "content": "和产品部同事 @小周 一起吃了午饭，他聊到他之前在一个互联网大厂做了4年产品，去年才加入现公司。他分享说大厂锻炼人的节奏和执行力，但有时缺乏思考深度。\n\n小周提到周末常去爬山，说那是他\"清空大脑、重整思路\"的方式。",
                     "type": 0,
+                    "subType": 1,
                     "updateCompleted": 1,
                     "createdAt": "2025-05-21T10:00:00Z",
                     "updatedAt": "2025-05-21T10:00:00Z",
@@ -66,8 +70,9 @@
                 },
                 {
                     "uniqueIdentifier": "note_5",
-                    "content": "今天和 @张方 一起讨论了产品问题。\n\n聊着聊着谈到了了AI时代产品经理的转型。临走前他也给我推荐了黄仁勋的自传《英伟达之芯》，说黄仁勋的管理理念很有值得借鉴的地方。\n\n最后 @张方 还聊起了自己孩子的择校问题。他说他7岁的孩子现在在国际学校上学，学费很贵，但是孩子的学习表现却不是太好。",
+                    "content": "爬山\n\n\n\n与 @小周 聊过这个话题\n\n社交素材收集：\n\n挖笋：佘山每年3月有兰笋文化节，可以亲手挖笋\n\n深坑酒店：佘山附近有名的酒店，是全世界第一个建造在石坑内的酒店\n\n裸心堡：莫干山很有名的民宿，是在苏格兰传教士的城堡式别墅上重建而来的",
                     "type": 0,
+                    "subType": 2,
                     "updateCompleted": 1,   
                     "createdAt": "2025-05-23T10:00:00Z",
                     "updatedAt": "2025-05-23T10:00:00Z",
@@ -75,8 +80,29 @@
                 },
                 {
                     "uniqueIdentifier": "note_6",
+                    "content": "今天和 @张方 一起讨论了产品问题。\n\n聊着聊着谈到了了AI时代产品经理的转型。临走前他也给我推荐了黄仁勋的自传《英伟达之芯》，说黄仁勋的管理理念很有值得借鉴的地方。\n\n最后 @张方 还聊起了自己孩子的择校问题。他说他7岁的孩子现在在国际学校上学，学费很贵，但是孩子的学习表现却不是太好。",
+                    "type": 0,
+                    "subType": 1,
+                    "updateCompleted": 1,   
+                    "createdAt": "2025-05-23T10:00:00Z",
+                    "updatedAt": "2025-05-23T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "note_7",
+                    "content": "国际学校\n\n\n\n与 @张方 聊过这个话题\n\n社交素材收集：\n\n课程 ：国际学校通常使用 IB 课程（国际文凭课程）、A - Level 课程（英国高中课程）AP 课程（美国大学先修课程）。\n\n费用：外籍学校（上海哈罗、上海惠灵顿）学费 20 - 30 万元，民办双语学校（上海平和，上海星河湾） 10 - 20 万元，公立国际部（上海中学国际部，复旦附中国际部） 1 - 3 万元。校服费、校车费、海外游学（年均 3 - 5 万元）。",
+                    "type": 0,
+                    "subType": 2,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-29T10:00:00Z",
+                    "updatedAt": "2025-05-29T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "note_8",
                     "content": "今天不是太忙，晚上下单了 @张方 推荐的《英伟达之芯》。争取跟一对一面聊之前，把这本书看完，跟 @张方 分享分享读书心得。",
                     "type": 0,
+                    "subType": 1,
                     "updateCompleted": 1,
                     "createdAt": "2025-05-29T10:00:00Z",
                     "updatedAt": "2025-05-29T10:00:00Z",
@@ -84,66 +110,6 @@
                 }
             ],
             "contactInsights": [
-                {
-                    "uniqueIdentifier": "insight_1",
-                    "type": 0,
-                    "category": "update",
-                    "order": 0,
-                    "content": "入职第一天见面，@张总 提到认识我上家公司的产品总监王明。他说他和王明是商学院校友，经常一起参加行业论坛。",
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "insight_2",
-                    "type": 0,
-                    "category": "update",
-                    "order": 0,
-                    "content": "上周刚从三亚度假回来，找机会可以聊聊他的旅行，看看他下一次旅行打算在哪里",
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "insight_3",
-                    "type": 0,
-                    "category": "update",
-                    "order": 0,
-                    "content": "周末开始带7岁的儿子去公园骑自行车，可以聊聊孩子的周末安排，看看能不能安排小孩一起玩",
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "insight_4",
-                    "type": 0,
-                    "category": "update",
-                    "order": 0,
-                    "content": "注意：张总注重结果，不喜欢模糊的表述，你的所有互动都要有对应的行动。",
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "insight_5",
-                    "type": 0,
-                    "category": "review",
-                    "order": 0,
-                    "content": "第一次见面：入职第一天见面时，他提到认识我上家公司的产品总监",
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
-                    "recordStatus": 1
-                },
-                {
-                    "uniqueIdentifier": "insight_6",
-                    "type": 0,
-                    "category": "review",
-                    "order": 0,
-                    "content": "第二次见面：和陈总一起午餐时，她分享了一些教育心得，可以找机会请教她关于教育规划的建议。",  
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "updatedAt": "2024-03-20T10:00:00Z",
-                    "recordStatus": 1
-                }
             ],
             "noteContactRelationships": [
                 {
@@ -168,7 +134,12 @@
                 },
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_2",
+                    "contactIdentifier": "contact_3",
+                    "noteIdentifier": "note_4"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "contact_3",
                     "noteIdentifier": "note_5"
                 },
                 {
@@ -178,42 +149,16 @@
                 },
                 {
                     "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_3",
-                    "noteIdentifier": "note_4"
+                    "contactIdentifier": "contact_2",
+                    "noteIdentifier": "note_7"
+                },
+                {
+                    "createdAt": "2024-03-20T10:00:00Z",
+                    "contactIdentifier": "contact_2",
+                    "noteIdentifier": "note_8"
                 }
             ],
-            "insightContactRelationships": [
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "insightIdentifier": "insight_1"
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "insightIdentifier": "insight_2"    
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "insightIdentifier": "insight_3"
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "insightIdentifier": "insight_4"
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "insightIdentifier": "insight_5"
-                },
-                {
-                    "createdAt": "2024-03-20T10:00:00Z",
-                    "contactIdentifier": "contact_1",
-                    "insightIdentifier": "insight_6"
-                }
-            ],
+            "insightContactRelationships": [],
             "circles": [
                 {
                     "uniqueIdentifier": "circle_1",
@@ -328,6 +273,7 @@
                     "uniqueIdentifier": "indie_note_1",
                     "content": "今天参加了iOS独立开发者大会，我分享了 社交大脑 的应用场景。会后认识了 @Ben ，他目前在运营自己的自媒体，自媒体的内容和社交大脑的应用场景有重合的地方。他对社交大脑很感兴趣，我们加了微信，之后要给他发邀请码请他试用。",
                     "type": 0,
+                    "subType": 1,
                     "updateCompleted": 1,
                     "createdAt": "2025-05-01T10:00:00Z",
                     "updatedAt": "2025-05-01T10:00:00Z",
@@ -337,6 +283,7 @@
                     "uniqueIdentifier": "indie_note_2",
                     "content": "今天跟前同事 @小李 吃了个饭。他问了挺多我做独立开发的体会。他分享说公司最近已经有过一次大裁员，他也开始担心被裁员后的出路，不知道独立开发是不是一条可以走得通的路。",
                     "type": 0,
+                    "subType": 1,
                     "updateCompleted": 1,
                     "createdAt": "2025-05-06T10:00:00Z",
                     "updatedAt": "2025-05-06T10:00:00Z",
@@ -346,6 +293,7 @@
                     "uniqueIdentifier": "indie_note_3",
                     "content": "今天参加了朋友 @小周 的生日聚会，认识了她的大学同学 @小蔡 。小蔡性格开朗，是个设计师。小蔡谈到她工作之余最大的爱好是陶艺，已经坚持了三年多。",
                     "type": 0,
+                    "subType": 1,
                     "updateCompleted": 1,
                     "createdAt": "2025-05-10T10:00:00Z",
                     "updatedAt": "2025-05-10T10:00:00Z",
@@ -355,6 +303,7 @@
                     "uniqueIdentifier": "indie_note_4",
                     "content": "今天 @小蔡 分享了一个陶艺展览的朋友圈。我发了个评论，她在回复里提到下周六还有一个陶艺展览，问我是否有兴趣一起去。\n\n虽然我对陶艺了解不多，但考虑到艺术家们一般也需要维护圈子内的各种关系，这可能是个接社交大脑种子用户的好机会，我答应的她的邀请",
                     "type": 0,
+                    "subType": 1,
                     "updateCompleted": 1,
                     "createdAt": "2025-05-15T10:00:00Z",
                     "updatedAt": "2025-05-15T10:00:00Z",
@@ -364,6 +313,7 @@
                     "uniqueIdentifier": "indie_note_5",
                     "content": "为了准备在陶艺展览，今天阅读了几篇关于艺术家职业发展的文章和采访，汇总的发现如下：\n\n艺术家平均每月参加3-5场行业活动，他们的事业发展非常依赖人脉网络（画廊运营、收藏家、评论家、同行），能够高效管理关系，进而专注于创作的工具是很多艺术家的潜在需求。",
                     "type": 0,
+                    "subType": 1,
                     "updateCompleted": 1,
                     "createdAt": "2025-05-17T10:00:00Z",
                     "updatedAt": "2025-05-17T10:00:00Z",

@@ -263,7 +263,7 @@ class NoteManager: ObservableObject {
         }
     }
 
-    func createNoteWithMentions(content: String, type: NoteType = .regular, mentions: [String]) async -> Note? {
+    func createNoteWithMentions(content: String, type: NoteType = .regular, subType: Int16 = 1, mentions: [String]) async -> Note? {
         let backgroundContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
         backgroundContext.parent = context
         
@@ -275,6 +275,7 @@ class NoteManager: ObservableObject {
             note.updatedAt = Date()
             note.recordStatus = 0 // unsynced
             note.type = Int16(type.rawValue)
+            note.subType = subType // Set the subType
             note.updateCompleted = 0 // false
             
             // Add contacts

@@ -95,6 +95,7 @@
         <attribute name="isArchived" optional="YES" attributeType="Boolean" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="noteId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="subType" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="type" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updateCompleted" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>

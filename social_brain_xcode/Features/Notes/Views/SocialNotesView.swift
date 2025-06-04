@@ -3,6 +3,7 @@ import CoreData
 
 struct SocialNotesView: View {
     @State private var searchText = ""
+    @State private var selectedTab = 0 // 0 for 互动记录, 1 for 话题库
     @State private var showingNoteModal = false
     @State private var showingSimpleNoteModal = false
     @State private var selectedNote: SocialNote? = nil
@@ -15,23 +16,53 @@ struct SocialNotesView: View {
     @EnvironmentObject var appModeManager: AppModeManager
     @Environment(\.managedObjectContext) private var viewContext
     
-    var filteredNotes: [SocialNote] {
-        let allNotes = noteManager.fetchNotes()
-            .map { SocialNote(from: $0) }
-            .filter { !$0.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-        
-        // Filter notes based on app mode
-        let modeFilteredNotes = allNotes.filter { note in
-            if appModeManager.isSampleMode {
-                return note.type.rawValue == 0 // Only show type 0 in sample mode
-            } else {
-                return note.type.rawValue == 1 // Only show type 1 in non-sample mode
+    // MARK: - Note Filtering and Processing
+    
+    // Separate function to convert Core Data notes to SocialNote model
+    private func convertToSocialNotes(_ coreDataNotes: [Note]) -> [SocialNote] {
+        coreDataNotes.compactMap { note in
+            guard let content = note.content,
+                  !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return nil
             }
+            return SocialNote(from: note)
         }
+    }
+    
+    // Separate function to get all valid notes
+    private func getAllValidNotes() -> [SocialNote] {
+        let coreDataNotes = noteManager.fetchNotes()
+        return convertToSocialNotes(coreDataNotes)
+    }
+    
+    // Separate function to determine expected type and subType
+    private func getExpectedTypes() -> (type: Int16, subType: Int16) {
+        let isSampleMode = appModeManager.isSampleMode
+        let isInteractionRecordTab = selectedTab == 0
         
-        // Sort notes based on app mode
-        let sortedNotes = modeFilteredNotes.sorted { note1, note2 in
-            if appModeManager.isSampleMode {
+        let expectedType: Int16 = isSampleMode ? 0 : 1
+        let expectedSubType: Int16 = isInteractionRecordTab ? 1 : 2
+        
+        return (expectedType, expectedSubType)
+    }
+    
+    // Helper function to filter notes based on app mode and tab
+    private func filterNotesByModeAndTab(_ notes: [SocialNote]) -> [SocialNote] {
+        let (expectedType, expectedSubType) = getExpectedTypes()
+        
+        return notes.filter { note in
+            let typeMatches = note.type.rawValue == expectedType
+            let subTypeMatches = note.subType == expectedSubType
+            return typeMatches && subTypeMatches
+        }
+    }
+    
+    // Helper function to sort notes based on app mode
+    private func sortNotes(_ notes: [SocialNote]) -> [SocialNote] {
+        let isSampleMode = appModeManager.isSampleMode
+        
+        return notes.sorted { note1, note2 in
+            if isSampleMode {
                 // Ascending order (oldest first) for sample mode
                 return note1.date < note2.date
             } else {
@@ -39,12 +70,35 @@ struct SocialNotesView: View {
                 return note1.date > note2.date
             }
         }
+    }
+    
+    // Helper function to filter notes by search text
+    private func filterNotesBySearch(_ notes: [SocialNote], searchText: String) -> [SocialNote] {
+        guard !searchText.isEmpty else { return notes }
         
-        // Apply search filter if search text exists
-        if searchText.isEmpty {
-            return sortedNotes
+        return notes.filter { note in
+            note.content.localizedCaseInsensitiveContains(searchText)
         }
-        return sortedNotes.filter { $0.content.localizedCaseInsensitiveContains(searchText) }
+    }
+    
+    // Separate function to process notes through all filters
+    private func processNotes() -> [SocialNote] {
+        // Step 1: Get all valid notes
+        let allValidNotes = getAllValidNotes()
+        
+        // Step 2: Apply mode and tab filtering
+        let modeFilteredNotes = filterNotesByModeAndTab(allValidNotes)
+        
+        // Step 3: Sort notes
+        let sortedNotes = sortNotes(modeFilteredNotes)
+        
+        // Step 4: Apply search filter if needed
+        return filterNotesBySearch(sortedNotes, searchText: searchText)
+    }
+    
+    // Simplified computed property that uses the processing function
+    var filteredNotes: [SocialNote] {
+        processNotes()
     }
     
     var body: some View {
@@ -53,65 +107,46 @@ struct SocialNotesView: View {
                 Color.primaryBackground
                     .ignoresSafeArea()
                 
-                // Main content area (no custom header for navigation bar)
                 VStack(spacing: 0) {
-                    if filteredNotes.isEmpty {
-                        VStack(spacing: 32) {
-                            Spacer()
-                            VStack(spacing: 12) {
-                                Text("在这里记录您的社交互动")
-                                    .font(.body)
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(.center)
-                                Text("\"社交大脑\"将协助管理您的社交网络")
-                                    .font(.body)
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(.center)
-                            }
-                            VStack(spacing: 16) {
-                                Button(action: {
-                                    showingSampleNoteDialog = true
-                                }) {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: SampleModeConfig.UIConstants.sampleButtonIcon)
-                                        Text(SampleModeConfig.UIConstants.sampleButtonTitle)
-                                    }
-                                    .font(.subheadline)
-                                    .foregroundColor(Color.primaryAction)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 8)
-                                    .background(Color.white)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(Color.primaryAction, lineWidth: 1)
-                                    )
-                                    .cornerRadius(8)
-                                }
-                                .padding(.horizontal, 60)
-                            }
-                            Spacer()
-                        }
-                    } else {
-                        ScrollViewReader { proxy in
-                            ScrollView {
-                                SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
-                                    selectedNote = note
-                                    showingNoteDetail = true
-                                })
-                                .padding(.top, 10)
-                                .id(refreshTrigger)
-
-                                Spacer().frame(height: 80)
-                            }
-                            .refreshable {
-                                await refreshNotes()
-                                withAnimation {
-                                    proxy.scrollTo("top", anchor: .top)
+                    // Tab selector
+                    HStack(spacing: 0) {
+                        TabButton(
+                            title: "互动记录",
+                            isSelected: selectedTab == 0,
+                            action: { 
+                                withAnimation(.easeInOut(duration: 0.4)) { 
+                                    selectedTab = 0 
                                 }
                             }
-                        }
+                        )
+                        
+                        TabButton(
+                            title: "话题库",
+                            isSelected: selectedTab == 1,
+                            action: { 
+                                withAnimation(.easeInOut(duration: 0.4)) { 
+                                    selectedTab = 1 
+                                }
+                            }
+                        )
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.top, 2)
+                    
+                    // TabView for content
+                    TabView(selection: $selectedTab) {
+                        // 互动记录 Tab
+                        notesListView
+                            .tag(0)
+                        
+                        // 话题库 Tab
+                        notesListView
+                            .tag(1)
+                    }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .animation(.easeInOut(duration: 0.4), value: selectedTab)
                 }
+                
                 // Floating Action Button
                 VStack {
                     Spacer()
@@ -121,28 +156,32 @@ struct SocialNotesView: View {
                             showingSimpleNoteModal = true
                         }) {
                             Image(systemName: "plus")
-                                .font(.system(size: 22, weight: .bold, design: .default))
+                                .font(.system(size: 24, weight: .medium))
                                 .foregroundColor(.white)
                                 .frame(width: 56, height: 56)
-                                .background(Color.primaryAction)
+                                .background(Color.accentColor)
                                 .clipShape(SwiftUI.Circle())
-                                .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
+                                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
                         }
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 20)
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 16)
                     }
                 }
             }
             .navigationTitle("社交笔记")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索笔记")
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarBackground(Color.primaryBackground, for: .navigationBar)
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     if appModeManager.isSampleMode {
                         Button(action: {
                             appModeManager.isSampleMode = false
                             appModeManager.sampleModeType = nil
-                            refreshTrigger.toggle()
+                            Task {
+                                await refreshNotes()
+                            }
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
@@ -158,20 +197,9 @@ struct SocialNotesView: View {
                     Button(action: {
                         showingConfigurationSheet = true
                     }) {
-                        Image(systemName: "ellipsis")
-                            .foregroundColor(.primary)
+                        Image(systemName: "gear")
+                            .foregroundColor(.primaryText)
                     }
-                }
-            }
-            .sheet(isPresented: $showingNoteModal) {
-                SocialNoteModalView(initialPrompt: "今天遇到了哪些事，认识了哪些人？") { noteText in
-                    // Only refresh the notes list
-                    NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
-                }
-            }
-            .sheet(isPresented: $showingSimpleNoteModal) {
-                SimpleNoteModalView(initialText: "") { noteText in
-                    refreshTrigger.toggle()
                 }
             }
             .confirmationDialog(
@@ -205,6 +233,12 @@ struct SocialNotesView: View {
             .sheet(isPresented: $showingConfigurationSheet) {
                 ConfigurationSheetView()
             }
+            .sheet(isPresented: $showingSimpleNoteModal) {
+                simpleNoteModalView
+            }
+            .sheet(isPresented: $showingNoteModal) {
+                socialNoteModalView
+            }
         }
         .onChange(of: showingSimpleNoteModal) { newValue in
             if !newValue {
@@ -224,6 +258,67 @@ struct SocialNotesView: View {
         }
     }
     
+    private var notesListView: some View {
+        Group {
+            if filteredNotes.isEmpty {
+                VStack(spacing: 32) {
+                    Spacer()
+                    VStack(spacing: 12) {
+                        Text(selectedTab == 0 ? "在这里记录您的社交互动" : "在这里记录您的社交话题")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        Text("\"社交大脑\"将协助管理您的社交网络")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    VStack(spacing: 16) {
+                        Button(action: {
+                            showingSampleNoteDialog = true
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: selectedTab == 0 ? "person.2.fill" : "lightbulb.fill")
+                                Text(selectedTab == 0 ? "查看示例记录" : "查看示例话题")
+                            }
+                            .font(.subheadline)
+                            .foregroundColor(Color.primaryAction)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Color.white)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.primaryAction, lineWidth: 1)
+                            )
+                            .cornerRadius(8)
+                        }
+                        .padding(.horizontal, 60)
+                    }
+                    Spacer()
+                }
+            } else {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        SocialNotesList(notes: filteredNotes, onNoteSelected: { note in
+                            selectedNote = note
+                            showingNoteDetail = true
+                        })
+                        .padding(.top, 10)
+                        .id(refreshTrigger)
+                        
+                        Spacer().frame(height: 80)
+                    }
+                    .refreshable {
+                        await refreshNotes()
+                        withAnimation {
+                            proxy.scrollTo("top", anchor: .top)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     private func setupNotificationObservers() {
         NotificationCenter.default.addObserver(forName: Notification.Name("RefreshNotesList"), object: nil, queue: .main) { _ in
             refreshTrigger.toggle()
@@ -238,7 +333,6 @@ struct SocialNotesView: View {
         // Simulate a small delay to show the refresh animation
         try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
         
-        // Update on main thread
         await MainActor.run {
             refreshTrigger.toggle()
         }
@@ -279,6 +373,41 @@ struct SocialNotesView: View {
         formatter.timeStyle = .none
         formatter.doesRelativeDateFormatting = true
         return formatter.string(from: date)
+    }
+    
+    // Add helper function to get tab bar height
+    private func getTabBarHeight() -> CGFloat {
+        let standardTabBarHeight: CGFloat = 49
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+        
+        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
+        return standardTabBarHeight + bottomInset
+    }
+    
+    private var simpleNoteModalView: some View {
+        SimpleNoteModalView(
+            initialText: "",
+            subType: selectedTab == 0 ? .interactionRecord : .topicCollection
+        ) { _ in
+            Task { @MainActor in
+                await refreshNotes()
+            }
+        }
+    }
+    
+    private var socialNoteModalView: some View {
+        SocialNoteModalView(
+            subType: selectedTab == 0 ? .interactionRecord : .topicCollection
+        ) { _ in
+            Task { @MainActor in
+                await refreshNotes()
+            }
+        }
     }
 }
 
