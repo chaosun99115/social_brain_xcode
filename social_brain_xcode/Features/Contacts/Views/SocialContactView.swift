@@ -177,7 +177,7 @@ struct SocialContactView: View {
                     .padding(.horizontal, 8)
                     .padding(.top, 2)
                     
-                    // Modify TabView to use CircleListView for circles tab
+                    // TabView for content
                     TabView(selection: $selectedTab) {
                         // 熟人 Tab
                         ContactListView(
@@ -212,11 +212,8 @@ struct SocialContactView: View {
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .animation(.easeInOut(duration: 0.4), value: selectedTab)
-                }
-                
-                // Floating Action Button - Add safe area padding
-                VStack {
-                    Spacer()
+                    
+                    // Floating Action Button - Moved inside VStack
                     HStack {
                         Spacer()
                         Button(action: {
@@ -234,8 +231,8 @@ struct SocialContactView: View {
                                 .clipShape(SwiftUI.Circle())
                                 .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
                         }
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 20 + getTabBarHeight()) // Add tab bar height to padding
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 16)
                     }
                 }
                 
