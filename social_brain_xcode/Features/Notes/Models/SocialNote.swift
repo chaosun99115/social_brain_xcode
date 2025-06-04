@@ -18,7 +18,7 @@ struct SocialNote: Identifiable {
         self.content = note.content ?? ""
         let rawType = Int(truncatingIfNeeded: note.type)
         self.type = NoteType(rawValue: rawType) ?? .regular
-        self.subType = Int16(truncatingIfNeeded: note.subType)
+        self.subType = note.subType
         self.updateCompleted = note.updateCompleted == 1
         self.isArchived = note.isArchived
     }

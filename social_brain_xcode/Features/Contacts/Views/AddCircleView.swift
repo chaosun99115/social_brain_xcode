@@ -14,6 +14,7 @@ struct AddCircleView: View {
     @State private var showingContactPicker = false
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var keyboardHeight: CGFloat = 0
     
     // New: All contacts for picker
     @State private var allContacts: [Contact] = []
@@ -39,44 +40,83 @@ struct AddCircleView: View {
     
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 24) {
-                // 圈子名称输入框
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("圈子名称")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 16)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // 圈子名称输入框
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("圈子名称")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 16)
+                        
+                        HStack {
+                            TextField("圈子名称", text: $circleName)
+                                .font(.body)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 12)
+                        }
+                        .background(Color.white)
+                        .cornerRadius(0)
+                    }
+                    .padding(.top, 16)
+                    .onChange(of: circleName) { newValue in
+                        isNameValid = !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    }
                     
-                    HStack {
-                        TextField("圈子名称", text: $circleName)
-                            .font(.body)
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 12)
+                    // Selected Contacts Section
+                    if !selectedContacts.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("已选择的联系人")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 16)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(selectedContacts.compactMap { id in
+                                        allContacts.first { $0.contactId == id }
+                                    }, id: \.contactId) { contact in
+                                        HStack(spacing: 4) {
+                                            Text(contact.name ?? "")
+                                                .font(.subheadline)
+                                                .foregroundColor(.primary)
+                                            
+                                            Button(action: {
+                                                selectedContacts.remove(contact.contactId!)
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .foregroundColor(.gray)
+                                                    .font(.system(size: 16))
+                                            }
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.white)
+                                        .cornerRadius(16)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                            }
+                        }
                     }
-                    .background(Color.white)
-                    .cornerRadius(0)
-                }
-                .padding(.top, 16)
-                .onChange(of: circleName) { newValue in
-                    isNameValid = !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                }
-                
-                // 添加熟人按钮
-                Button(action: {
-                    showingContactPicker = true
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus")
-                            .foregroundColor(Color.blue)
-                        Text("添加熟人")
-                            .foregroundColor(Color.blue)
-                            .font(.system(size: 17, weight: .regular))
+                    
+                    // 添加熟人按钮
+                    Button(action: {
+                        showingContactPicker = true
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                                .foregroundColor(Color.blue)
+                            Text("添加熟人")
+                                .foregroundColor(Color.blue)
+                                .font(.system(size: 17, weight: .regular))
+                        }
                     }
+                    .padding(.leading, 16)
+                    .padding(.top, 4)
+                    
+                    Spacer(minLength: keyboardHeight)
                 }
-                .padding(.leading, 16)
-                .padding(.top, 4)
-                
-                Spacer()
             }
             .background(backgroundColor.ignoresSafeArea())
             .navigationTitle("创建圈子")
@@ -121,14 +161,15 @@ struct AddCircleView: View {
                 Task {
                     await loadContacts()
                 }
+                setupKeyboardObservers()
+            }
+            .onDisappear {
+                removeKeyboardObservers()
             }
             .onChange(of: appModeManager.isSampleMode) { newValue in
                 Task {
                     await loadContacts()
                 }
-            }
-            .task {
-                await loadContacts()
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
@@ -139,6 +180,30 @@ struct AddCircleView: View {
             UINavigationBar.appearance().compactAppearance = defaultAppearance
             UINavigationBar.appearance().scrollEdgeAppearance = defaultAppearance
         }
+    }
+    
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+            }
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            keyboardHeight = 0
+        }
+    }
+    
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self)
     }
     
     private func loadContacts() async {

@@ -29,8 +29,6 @@ struct ContactSelectionView: View {
                             Text(contact.name ?? "")
                                 .foregroundColor(.primary)
                             Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.gray)
                         }
                     }
                 }

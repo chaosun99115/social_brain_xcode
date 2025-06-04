@@ -649,10 +649,19 @@ struct SocialBrainView: View {
             if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
                let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
                 
-                // Calculate keyboard height without input accessory
+                // Get the keyboard height without input accessory
                 let keyboardHeight = keyboardFrame.height
                 
+                // Calculate input accessory height if present
+                if let window = UIApplication.shared.windows.first,
+                   let inputAccessoryView = window.inputAccessoryView {
+                    self.inputAccessoryHeight = inputAccessoryView.frame.height
+                } else {
+                    self.inputAccessoryHeight = 0
+                }
+                
                 withAnimation(.easeInOut(duration: duration)) {
+                    // Use the raw keyboard height without input accessory adjustment
                     self.keyboardHeight = keyboardHeight
                     self.isKeyboardVisible = true
                 }
@@ -668,6 +677,7 @@ struct SocialBrainView: View {
                 withAnimation(.easeInOut(duration: duration)) {
                     self.keyboardHeight = 0
                     self.isKeyboardVisible = false
+                    self.inputAccessoryHeight = 0
                 }
             }
         }
@@ -996,16 +1006,24 @@ struct GrowingTextView: UIViewRepresentable {
         textView.textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
         textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         
-        // Configure input accessory view with proper height
+        // Configure input accessory view with proper height and clear background
         let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 1))
         accessoryView.backgroundColor = .clear
         textView.inputAccessoryView = accessoryView
         
-        // Disable the system input assistant view
+        // Disable the system input assistant view and other smart features
         textView.autocorrectionType = .no
         textView.smartDashesType = .no
         textView.smartQuotesType = .no
         textView.smartInsertDeleteType = .no
+        
+        // Disable the input assistant bar
+        textView.inputAssistantItem.leadingBarButtonGroups = []
+        textView.inputAssistantItem.trailingBarButtonGroups = []
+        
+        // Set proper content insets to avoid overlap with keyboard
+        textView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        textView.scrollIndicatorInsets = textView.contentInset
         
         return textView
     }
