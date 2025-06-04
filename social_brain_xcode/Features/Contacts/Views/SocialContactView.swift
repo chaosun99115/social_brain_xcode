@@ -16,6 +16,7 @@ struct SocialContactView: View {
     @State private var showingAddCircleSheet = false
     @State private var showingEditCircleContactsSheet = false
     @State private var showingConfigurationSheet = false
+    @State private var isViewActive = false
     
     // Fetch contacts from CoreData (initial load)
     private func loadContacts() async {
@@ -160,6 +161,9 @@ struct SocialContactView: View {
                             selectedTab: 0
                         )
                         .tag(0)
+                        .onAppear {
+                            updateLayout()
+                        }
                         
                         // 圈子 Tab
                         CircleListView(
@@ -172,12 +176,15 @@ struct SocialContactView: View {
                             onSampleModeSelected: { await refreshContacts() }
                         )
                         .tag(1)
+                        .onAppear {
+                            updateLayout()
+                        }
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .animation(.easeInOut(duration: 0.4), value: selectedTab)
                 }
                 
-                // Floating Action Button
+                // Floating Action Button - Add safe area padding
                 VStack {
                     Spacer()
                     HStack {
@@ -198,7 +205,7 @@ struct SocialContactView: View {
                                 .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
                         }
                         .padding(.trailing, 20)
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 20 + getTabBarHeight()) // Add tab bar height to padding
                     }
                 }
                 
@@ -280,6 +287,18 @@ struct SocialContactView: View {
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
+        .onAppear {
+            isViewActive = true
+            updateLayout()
+        }
+        .onDisappear {
+            isViewActive = false
+        }
+        .onChange(of: isViewActive) { newValue in
+            if newValue {
+                updateLayout()
+            }
+        }
     }
     
     @State private var showingSampleDialog = false
@@ -318,6 +337,39 @@ struct SocialContactView: View {
         // Optionally trigger refresh in parent
         await refreshContacts()
     }
+    
+    // Add helper function to get tab bar height
+    private func getTabBarHeight() -> CGFloat {
+        // Standard tab bar height is 49 points
+        let standardTabBarHeight: CGFloat = 49
+        
+        // Get the bottom safe area inset
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+        
+        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
+        
+        // Return total height including safe area
+        return standardTabBarHeight + bottomInset
+    }
+    
+    // Add function to update layout
+    private func updateLayout() {
+        // Ensure tab bar is visible and properly laid out
+        DispatchQueue.main.async {
+            if let tabBarController = UIApplication.shared.windows.first?.rootViewController?.children.first as? UITabBarController {
+                tabBarController.tabBar.isHidden = false
+                tabBarController.view.layoutIfNeeded()
+            }
+            
+            // Force layout update for the entire window
+            UIApplication.shared.windows.first?.layoutIfNeeded()
+        }
+    }
 }
 
 // Extracted ContactListView for reuse
@@ -351,7 +403,7 @@ struct ContactListView: View {
                 emptyTabView
             } else {
                 List {
-                    ForEach(contacts, id: \ .contactId) { contact in
+                    ForEach(contacts, id: \.contactId) { contact in
                         NavigationLink(destination: SocialContactDetailView(contact: contact)) {
                             ContactCardView(contact: contact)
                                 .contentShape(Rectangle())
@@ -365,6 +417,15 @@ struct ContactListView: View {
                 .listStyle(.plain)
                 .refreshable {
                     await onRefresh()
+                }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: getTabBarHeight())
+                }
+                .onAppear {
+                    // Force layout update when list appears
+                    DispatchQueue.main.async {
+                        UIApplication.shared.windows.first?.layoutIfNeeded()
+                    }
                 }
             }
         }
@@ -492,6 +553,20 @@ struct ContactListView: View {
         isImportingSample = false
         // Optionally trigger refresh in parent
         await onSampleModeSelected()
+    }
+    
+    // Add helper function to get tab bar height
+    private func getTabBarHeight() -> CGFloat {
+        let standardTabBarHeight: CGFloat = 49
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+        
+        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
+        return standardTabBarHeight + bottomInset
     }
 }
 
@@ -635,6 +710,15 @@ struct CircleListView: View {
                 .refreshable {
                     await onRefresh()
                 }
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: getTabBarHeight())
+                }
+                .onAppear {
+                    // Force layout update when list appears
+                    DispatchQueue.main.async {
+                        UIApplication.shared.windows.first?.layoutIfNeeded()
+                    }
+                }
             }
         }
         .sheet(isPresented: $showingCreateCircle) {
@@ -749,6 +833,20 @@ struct CircleListView: View {
         isImportingSample = false
         // Optionally trigger refresh in parent
         await onSampleModeSelected()
+    }
+    
+    // Add helper function to get tab bar height
+    private func getTabBarHeight() -> CGFloat {
+        let standardTabBarHeight: CGFloat = 49
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+        
+        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
+        return standardTabBarHeight + bottomInset
     }
 }
 

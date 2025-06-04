@@ -57,8 +57,10 @@ struct SocialNoteDetailView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 16)
-                            // Extra bottom padding to ensure content isn't covered by the bottom toolbar
-                            Spacer(minLength: 80)
+                            // Add safe area inset for tab bar
+                            .safeAreaInset(edge: .bottom) {
+                                Color.clear.frame(height: getTabBarHeight())
+                            }
                         }
                     }
                     .coordinateSpace(name: "scrollView")
@@ -148,17 +150,7 @@ struct SocialNoteDetailView: View {
                     .padding(.vertical, 8)
                     .padding(.bottom, safeAreaPadding)
                 }
-                .background(
-                    Color.primaryBackground
-                        .edgesIgnoringSafeArea(.bottom)
-                )
-                .overlay(
-                    Rectangle()
-                        .frame(height: 1)
-                        .foregroundColor(Color(.separator))
-                        .opacity(0.5),
-                    alignment: .top
-                )
+                .background(Color.primaryBackground)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -189,11 +181,20 @@ struct SocialNoteDetailView: View {
         .onAppear {
             loadContactInsights()
             hideTabBar(true)
+            // Ensure proper layout when appearing
+            DispatchQueue.main.async {
+                UIApplication.shared.windows.first?.layoutIfNeeded()
+            }
         }
         .onDisappear {
             // Show the tab bar again when leaving this view
             hideTabBar(false)
+            // Ensure proper layout when disappearing
+            DispatchQueue.main.async {
+                UIApplication.shared.windows.first?.layoutIfNeeded()
+            }
         }
+        .edgesIgnoringSafeArea(.bottom)
         .sheet(isPresented: $showingEditModal) {
             SimpleNoteModalView(
                 initialText: note.content ?? "",  // Use note.content directly instead of editingNoteText
@@ -265,25 +266,36 @@ struct SocialNoteDetailView: View {
         }
     }
     
-    // Function to hide/show the tab bar
+    // Add helper function to get tab bar height
+    private func getTabBarHeight() -> CGFloat {
+        let standardTabBarHeight: CGFloat = 49
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+        
+        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
+        return standardTabBarHeight + bottomInset
+    }
+    
+    // Update hideTabBar function to handle layout updates
     private func hideTabBar(_ hidden: Bool) {
-        DispatchQueue.main.async {
-            let keyWindow = UIApplication.shared.connectedScenes
-                .filter { $0.activationState == .foregroundActive }
-                .map { $0 as? UIWindowScene }
-                .compactMap { $0 }
-                .first?.windows
-                .filter { $0.isKeyWindow }
-                .first
-                
-            if let keyWindow = keyWindow {
-                keyWindow.rootViewController?.children.forEach { child in
-                    if let tabBarController = child as? UITabBarController {
-                        // Ensure the tab bar is properly hidden
-                        tabBarController.tabBar.isHidden = hidden
-                        // Also adjust the tab bar's alpha to ensure it's completely hidden
-                        tabBarController.tabBar.alpha = hidden ? 0 : 1
-                    }
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .map { $0 as? UIWindowScene }
+            .compactMap { $0 }
+            .first?.windows
+            .filter { $0.isKeyWindow }
+            .first
+            
+        if let keyWindow = keyWindow {
+            keyWindow.rootViewController?.children.forEach { child in
+                if let tabBarController = child as? UITabBarController {
+                    tabBarController.tabBar.isHidden = hidden
+                    // Force layout update
+                    tabBarController.view.layoutIfNeeded()
                 }
             }
         }
