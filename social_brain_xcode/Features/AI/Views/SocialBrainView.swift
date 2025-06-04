@@ -646,14 +646,16 @@ struct SocialBrainView: View {
             object: nil,
             queue: .main
         ) { notification in
-            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                // Calculate input accessory height if present
-                if let inputAccessoryView = UIApplication.shared.windows.first?.rootViewController?.view.window?.rootViewController?.inputAccessoryView {
-                    inputAccessoryHeight = inputAccessoryView.frame.height
-                }
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+               let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
                 
-                keyboardHeight = keyboardFrame.height - inputAccessoryHeight
-                isKeyboardVisible = true
+                // Calculate keyboard height without input accessory
+                let keyboardHeight = keyboardFrame.height
+                
+                withAnimation(.easeInOut(duration: duration)) {
+                    self.keyboardHeight = keyboardHeight
+                    self.isKeyboardVisible = true
+                }
             }
         }
         
@@ -661,9 +663,13 @@ struct SocialBrainView: View {
             forName: UIResponder.keyboardWillHideNotification,
             object: nil,
             queue: .main
-        ) { _ in
-            keyboardHeight = 0
-            isKeyboardVisible = false
+        ) { notification in
+            if let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
+                withAnimation(.easeInOut(duration: duration)) {
+                    self.keyboardHeight = 0
+                    self.isKeyboardVisible = false
+                }
+            }
         }
     }
     
@@ -990,12 +996,16 @@ struct GrowingTextView: UIViewRepresentable {
         textView.textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
         textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         
-        // Configure input accessory view
-        textView.inputAccessoryView = {
-            let view = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0))
-            view.backgroundColor = .clear
-            return view
-        }()
+        // Configure input accessory view with proper height
+        let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 1))
+        accessoryView.backgroundColor = .clear
+        textView.inputAccessoryView = accessoryView
+        
+        // Disable the system input assistant view
+        textView.autocorrectionType = .no
+        textView.smartDashesType = .no
+        textView.smartQuotesType = .no
+        textView.smartInsertDeleteType = .no
         
         return textView
     }

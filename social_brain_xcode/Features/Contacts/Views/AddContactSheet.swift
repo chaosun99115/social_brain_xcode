@@ -82,7 +82,7 @@ struct AddContactSheet: View {
                     .padding(.horizontal, 0)
                 }
             }
-            .navigationTitle(isEditMode ? "编辑联系人" : "新建联系人")
+            .navigationTitle(isEditMode ? "编辑联系人" : "创建熟人")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

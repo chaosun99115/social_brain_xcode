@@ -32,19 +32,11 @@ struct SocialContactView: View {
             }
         }
         
-        print("\n[SocialContactView] 🔄 Starting loadContacts()")
         let fetchedContacts = contactManager.fetchContacts()
-        print("[SocialContactView] 📊 Fetched \(fetchedContacts.count) contacts")
-        
-        // Log contact IDs before filtering
-        for contact in fetchedContacts {
-            print("[SocialContactView] ℹ️ Contact before filter: \(contact.name ?? "unnamed") - ID: \(contact.contactId?.uuidString ?? "nil")")
-        }
         
         // Filter out contacts with nil contactId and validate relationships
         let validContacts = fetchedContacts.filter { contact in
             guard let contactId = contact.contactId else {
-                print("[SocialContactView] ⚠️ Filtering out contact with nil contactId: \(contact.name ?? "unnamed")")
                 return false
             }
             
@@ -52,20 +44,12 @@ struct SocialContactView: View {
                 try contactManager.validateContactRelationships(contact)
                 return true
             } catch {
-                print("[SocialContactView] ⚠️ Contact validation failed for \(contact.name ?? "unnamed"): \(error)")
                 return false
             }
         }
         
-        print("[SocialContactView] ✅ After filtering: \(validContacts.count) valid contacts")
-        // Log contact IDs after filtering
-        for contact in validContacts {
-            print("[SocialContactView] ℹ️ Contact after filter: \(contact.name ?? "unnamed") - ID: \(contact.contactId?.uuidString ?? "nil")")
-        }
-        
         await MainActor.run {
             self.contacts = validContacts
-            print("[SocialContactView] 💾 Updated contacts array with \(self.contacts.count) contacts")
         }
     }
     
@@ -111,38 +95,27 @@ struct SocialContactView: View {
     }
     
     var filteredContacts: [Contact] {
-        print("\n[SocialContactView] 🔄 Computing filteredContacts")
         let filtered: [Contact]
         if appModeManager.isSampleMode {
             filtered = contacts
-            print("[SocialContactView] ℹ️ Using all contacts in sample mode: \(filtered.count) contacts")
         } else {
             // Filter contacts based on tab selection and note type
             filtered = contacts.filter { contact in
                 guard let contactId = contact.contactId else {
-                    print("[SocialContactView] ⚠️ Found nil contactId in filteredContacts: \(contact.name ?? "unnamed")")
                     return false
                 }
                 let notes = ContactManager.shared.getNotesForContact(contactId: contactId)
-                let hasValidNotes = notes.contains(where: { $0.type != 0 })
-                
-                if !hasValidNotes {
-                    print("[SocialContactView] ℹ️ Contact \(contact.name ?? "unnamed") has no valid notes")
-                }
-                return hasValidNotes
+                return notes.contains(where: { $0.type != 0 })
             }
-            print("[SocialContactView] ℹ️ Filtered to \(filtered.count) contacts with valid notes")
         }
         
         if searchText.isEmpty {
             return filtered
         }
-        let searchFiltered = filtered.filter { contact in
+        return filtered.filter { contact in
             guard let name = contact.name else { return false }
             return name.localizedCaseInsensitiveContains(searchText)
         }
-        print("[SocialContactView] 🔍 After search filter: \(searchFiltered.count) contacts")
-        return searchFiltered
     }
     
     var body: some View {
@@ -274,8 +247,8 @@ struct SocialContactView: View {
                     Button(action: {
                         showingConfigurationSheet = true
                     }) {
-                        Image(systemName: "ellipsis")
-                            .foregroundColor(.primary)
+                        Image(systemName: "gear")
+                            .foregroundColor(.primaryText)
                     }
                 }
             }
@@ -420,17 +393,13 @@ struct ContactListView: View {
     
     // Add a computed property to ensure we have valid contacts with IDs
     private var validContacts: [Contact] {
-        print("\n[ContactListView] 🔍 Validating contacts for ForEach")
         let valid = contacts.compactMap { contact -> (Contact, UUID)? in
             guard let contactId = contact.contactId else {
-                print("[ContactListView] ⚠️ Found contact with nil ID: \(contact.name ?? "unnamed")")
                 return nil
             }
-            print("[ContactListView] ✅ Valid contact: \(contact.name ?? "unnamed") - ID: \(contactId.uuidString)")
             return (contact, contactId)
         }.map { $0.0 }
         
-        print("[ContactListView] 📊 Using \(valid.count) valid contacts out of \(contacts.count) total")
         return valid
     }
     

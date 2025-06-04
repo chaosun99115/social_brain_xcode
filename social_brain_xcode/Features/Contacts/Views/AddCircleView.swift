@@ -79,7 +79,7 @@ struct AddCircleView: View {
                 Spacer()
             }
             .background(backgroundColor.ignoresSafeArea())
-            .navigationTitle("新建联系人")
+            .navigationTitle("创建圈子")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
