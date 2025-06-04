@@ -149,6 +149,7 @@ struct SimpleNoteModalView: View {
     let onSave: (String) -> Void
     let noteId: UUID?
     let subType: NoteSubType
+    let modalTitle: String
     
     @StateObject private var textState = TextEditorState()
     @State private var textEditorHeight: CGFloat = 100
@@ -165,10 +166,11 @@ struct SimpleNoteModalView: View {
     @State private var showingMentionConfirmation = false
     @State private var isSaving = false
     
-    init(initialText: String, noteId: UUID? = nil, subType: NoteSubType = .interactionRecord, onSave: @escaping (String) -> Void) {
+    init(initialText: String, noteId: UUID? = nil, subType: NoteSubType = .interactionRecord, modalTitle: String = "新建想法", onSave: @escaping (String) -> Void) {
         self.initialText = initialText
         self.noteId = noteId
         self.subType = subType
+        self.modalTitle = modalTitle
         self.onSave = onSave
         _textState = StateObject(wrappedValue: TextEditorState())
     }
@@ -215,7 +217,7 @@ struct SimpleNoteModalView: View {
                                 }
                                 .frame(maxHeight: .infinity)
                             }
-                            .navigationTitle("新建想法")
+                            .navigationTitle(modalTitle)
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
                                 ToolbarItem(placement: .navigationBarLeading) {
@@ -572,7 +574,7 @@ extension String {
 
 struct SimpleNoteModalView_Previews: PreviewProvider {
     static var previews: some View {
-        SimpleNoteModalView(initialText: "Test note", subType: .interactionRecord) { _ in }
+        SimpleNoteModalView(initialText: "Test note", subType: .interactionRecord, modalTitle: "记录互动") { _ in }
             .environmentObject(NoteManager.shared)
     }
 } 

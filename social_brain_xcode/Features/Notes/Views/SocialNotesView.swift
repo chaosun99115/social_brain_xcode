@@ -392,7 +392,8 @@ struct SocialNotesView: View {
     private var simpleNoteModalView: some View {
         SimpleNoteModalView(
             initialText: "",
-            subType: selectedTab == 0 ? .interactionRecord : .topicCollection
+            subType: selectedTab == 0 ? .interactionRecord : .topicCollection,
+            modalTitle: selectedTab == 0 ? "记录互动" : "收集话题"
         ) { _ in
             Task { @MainActor in
                 await refreshNotes()
