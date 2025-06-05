@@ -41,6 +41,7 @@
 		AFAE473F2DF1DEC500DD10E0 /* DefaultPrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE473E2DF1DEC500DD10E0 /* DefaultPrompts.swift */; };
 		AFAE47412DF1E21700DD10E0 /* PromptDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE47402DF1E21700DD10E0 /* PromptDetailView.swift */; };
 		AFAE47432DF1F76B00DD10E0 /* CreatePromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE47422DF1F76B00DD10E0 /* CreatePromptView.swift */; };
+		AFAE47492DF2012200DD10E0 /* PromptConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE47482DF2012200DD10E0 /* PromptConfiguration.swift */; };
 		AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E22DA70C770066907B /* Localizable.strings */; };
 		AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = AFBD50E42DA70C770066907B /* InfoPlist.strings */; };
 		AFBD50F42DA70DDC0066907B /* SocialContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBD50F22DA70DDC0066907B /* SocialContactView.swift */; };
@@ -108,6 +109,7 @@
 		AFAE473E2DF1DEC500DD10E0 /* DefaultPrompts.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DefaultPrompts.swift; sourceTree = "<group>"; };
 		AFAE47402DF1E21700DD10E0 /* PromptDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptDetailView.swift; sourceTree = "<group>"; };
 		AFAE47422DF1F76B00DD10E0 /* CreatePromptView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CreatePromptView.swift; sourceTree = "<group>"; };
+		AFAE47482DF2012200DD10E0 /* PromptConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptConfiguration.swift; sourceTree = "<group>"; };
 		AFBD50E32DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = Localizable.strings; sourceTree = "<group>"; };
 		AFBD50E52DA70C770066907B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = InfoPlist.strings; sourceTree = "<group>"; };
 		AFBD50F22DA70DDC0066907B /* SocialContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialContactView.swift; sourceTree = "<group>"; };
@@ -183,6 +185,7 @@
 			children = (
 				AFAE47392DF1DEB000DD10E0 /* Prompts */,
 				AFAE471A2DE799ED00DD10E0 /* StoreKit */,
+				AFAE47442DF200E300DD10E0 /* Settings */,
 				AFAE46F52DE75D7900DD10E0 /* Common */,
 				AFA2761E2DB03BC900C29B81 /* Notes */,
 				AFA276242DB03D2600C29B81 /* Contacts */,
@@ -405,6 +408,21 @@
 			path = Prompts;
 			sourceTree = "<group>";
 		};
+		AFAE47442DF200E300DD10E0 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				AFAE47452DF200E300DD10E0 /* Views */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		AFAE47452DF200E300DD10E0 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 		AFBD50E12DA70C770066907B /* zh-Hans.lproj */ = {
 			isa = PBXGroup;
 			children = (
@@ -445,6 +463,7 @@
 			isa = PBXGroup;
 			children = (
 				AFAE473E2DF1DEC500DD10E0 /* DefaultPrompts.swift */,
+				AFAE47482DF2012200DD10E0 /* PromptConfiguration.swift */,
 				AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */,
 			);
 			path = Prompts;
@@ -589,6 +608,7 @@
 				AFF98BC32DA075730001DD70 /* social_brain_xcode.xcdatamodeld in Sources */,
 				AF6D11272DB00A330071D444 /* SocialNoteModalView.swift in Sources */,
 				AF8398972DBAC6AD00382EA6 /* SocialNoteDetailView.swift in Sources */,
+				AFAE47492DF2012200DD10E0 /* PromptConfiguration.swift in Sources */,
 				AFAE47412DF1E21700DD10E0 /* PromptDetailView.swift in Sources */,
 				AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */,
 				AFBF98972DCAA44300AF626E /* DeepSeekChatService.swift in Sources */,
