@@ -1,6 +1,7 @@
 import SwiftUI
 import LocalAuthentication
 import CloudKit
+import CoreData
 
 // MARK: - iCloud Sync Implementation Notes
 /*
@@ -83,6 +84,19 @@ struct ConfigurationSheetView: View {
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        
+        // Check and re-ingest prompts if needed
+        let context = PersistenceController.shared.container.viewContext
+        let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+        do {
+            let count = try context.count(for: fetchRequest)
+            if count != DefaultPrompts.prompts.count {
+                // If the number of prompts doesn't match, re-ingest
+                PromptService.shared.reingestDefaultPrompts(in: context)
+            }
+        } catch {
+            print("Error checking prompt count: \(error)")
+        }
     }
     
     var body: some View {
@@ -149,9 +163,9 @@ struct ConfigurationSheetView: View {
                         .disabled(isAuthenticating)
                         
                         // Social Knowledge Base Navigation Link
-                        NavigationLink(destination: SocialKnowledgeBaseView()) {
+                        NavigationLink(destination: PromptListView()) {
                             HStack {
-                                Text("社交知识库")
+                                Text("社交经验库")
                                 Spacer()
                                 if !isProUser {
                                     Text("Pro")

@@ -74,6 +74,12 @@ struct social_brain_xcodeApp: App {
         if #available(iOS 15.0, *) {
             UITabBar.appearance().scrollEdgeAppearance = appearance
         }
+        
+        // Ingest default prompts if needed
+        let context = PersistenceController.shared.container.viewContext
+        if PromptService.shared.needsPromptIngestion(in: context) {
+            PromptService.shared.ingestDefaultPrompts(in: context)
+        }
     }
     
     var body: some Scene {
