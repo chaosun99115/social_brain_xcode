@@ -3,9 +3,12 @@ import Foundation
 /// Default prompts that will be ingested when the app is first installed
 enum DefaultPrompts {
     /// Returns an array of default prompts to be ingested
-    static let prompts: [(name: String, display: String, content: String, type: String)] = [
+    static let prompts: [(identifier: Int, name: String, intro: String, display: String, content: String, type: Int16)] = [
         (
-            name: "职场社交技巧",
+            // 0*: sample mode, 1: regular mode
+            identifier: 01,
+            name: "回顾社交话题",
+            intro: "intro1j简介内容",
             display: "职场社交技巧指南",
             content: """
             在职场中建立和维护良好的人际关系是职业发展的重要一环。以下是一些实用的职场社交技巧：
@@ -35,10 +38,13 @@ enum DefaultPrompts {
             - 分享有价值的信息
             - 在他人需要时提供帮助
             """,
-            type: "职场"
+            // 0: hidden, 1: open
+            type: 0
         ),
         (
-            name: "社交场合话题",
+            identifier: 02,
+            name: "联络",
+            intro: "intro2简介内容",
             display: "社交场合话题指南",
             content: """
             在不同社交场合中，合适的话题选择可以帮助建立良好的互动氛围：
@@ -68,7 +74,7 @@ enum DefaultPrompts {
             - 寻找共同兴趣
             - 适时引导新话题
             """,
-            type: "社交"
+            type: 0
         )
     ]
 } 

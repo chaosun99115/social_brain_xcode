@@ -90,9 +90,9 @@ struct ConfigurationSheetView: View {
         let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
         do {
             let count = try context.count(for: fetchRequest)
-            if count != DefaultPrompts.prompts.count {
-                // If the number of prompts doesn't match, re-ingest
-                PromptService.shared.reingestDefaultPrompts(in: context)
+            if count == 0 {
+                // Only re-ingest if there are no prompts at all
+                PromptService.shared.ingestDefaultPrompts(in: context)
             }
         } catch {
             print("Error checking prompt count: \(error)")
@@ -162,24 +162,6 @@ struct ConfigurationSheetView: View {
                         ))
                         .disabled(isAuthenticating)
                         
-                        // Social Knowledge Base Navigation Link
-                        NavigationLink(destination: PromptListView()) {
-                            HStack {
-                                Text("社交经验库")
-                                Spacer()
-                                if !isProUser {
-                                    Text("Pro")
-                                        .font(.caption)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Color.yellow.opacity(0.2))
-                                        .foregroundColor(.yellow)
-                                        .cornerRadius(4)
-                                }
-                            }
-                        }
-                        .disabled(!isProUser)
-                        
                         if !isProUser {
                             Text("升级到Pro以解锁所有高级功能")
                                 .font(.caption)
@@ -187,6 +169,26 @@ struct ConfigurationSheetView: View {
                                 .padding(.top, 4)
                         }
                     }
+                }
+                
+                // Social Knowledge Base Section
+                Section(header: Text("高级功能")) {
+                    NavigationLink(destination: PromptListView()) {
+                        HStack {
+                            Text("社交经验库")
+                            Spacer()
+                            if !isProUser {
+                                Text("Pro")
+                                    .font(.caption)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.yellow.opacity(0.2))
+                                    .foregroundColor(.yellow)
+                                    .cornerRadius(4)
+                            }
+                        }
+                    }
+                    .disabled(!isProUser)
                 }
                 
                 // About Section

@@ -67,8 +67,8 @@ class PromptService {
                 prompt.updatedAt = Date()
                 prompt.recordStatus = 0
                 prompt.order = 0
-                
-                logger.debug("Ingested prompt \(index + 1): \(promptData.name) (Type: \(promptData.type))")
+                prompt.intro = promptData.intro
+                logger.debug("Ingested prompt \(index + 1): \(promptData.name) (Type: \(promptData.type)), Intro: \(promptData.intro)")
             }
             
             // Save context
@@ -127,7 +127,7 @@ class PromptService {
                     Prompt \(index + 1):
                     - Name: \(prompt.name ?? "nil")
                     - Display: \(prompt.display ?? "nil")
-                    - Type: \(prompt.type ?? "nil")
+                    - Type: \(prompt.type)
                     - Content Length: \(prompt.content?.count ?? 0)
                     - Created: \(prompt.createdAt?.description ?? "nil")
                     - Updated: \(prompt.updatedAt?.description ?? "nil")

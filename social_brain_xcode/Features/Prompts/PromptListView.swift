@@ -15,24 +15,23 @@ struct PromptListView: View {
         List {
             ForEach(prompts, id: \.id) { prompt in
                 NavigationLink(destination: PromptDetailView(prompt: prompt)) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(prompt.name ?? "")
-                            .font(.headline)
-                        if let type = prompt.type {
-                            Text(type)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding(.vertical, 4)
+                    Text(prompt.name ?? "")
+                        .font(.body)
+                        .padding(.vertical, 4)
                 }
             }
         }
         .navigationTitle("社交经验库")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink(destination: CreatePromptView()) {
+                    Image(systemName: "plus")
+                }
+            }
+        }
         .onAppear {
             logger.debug("PromptListView appeared with \(prompts.count) prompts")
-            // Debug print all prompts when view appears
             PromptService.shared.debugPrintAllPrompts(in: viewContext)
         }
     }
