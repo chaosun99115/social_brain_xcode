@@ -51,6 +51,9 @@ struct SocialBrainView: View {
     // Add PromptConfigurationManager
     private let promptManager = PromptConfigurationManager.shared
     
+    // Add PromptGenerator
+    private let promptGenerator = PromptGenerator.shared
+    
     // Add helper method to get provider
     private func getSampleProvider() -> SampleModeProvider? {
         guard appModeManager.isSampleMode,
@@ -63,110 +66,22 @@ struct SocialBrainView: View {
         print("[SocialBrainView] Generating system prompt")
         print("[SocialBrainView] Current mode - isSampleMode: \(appModeManager.isSampleMode), sampleModeType: \(appModeManager.sampleModeType ?? "nil")")
         
-        // First check if we're in sample mode
-        if appModeManager.isSampleMode {
-            print("[SocialBrainView] In sample mode, fetching prompts")
-            // Get prompts based on source type and sample mode
-            let context = try await CoreDataManager.shared.viewContext
-            
-            // Debug: Check CoreData directly for prompts
-            let prompts = promptManager.getPromptsForSourceType(
-                sourceType,
-                sampleMode: appModeManager.sampleModeType,
-                context: context
-            )
-            print("[SocialBrainView] Retrieved \(prompts.count) prompts for sample mode")
-            
-            if let firstPrompt = prompts.first {
-                print("[SocialBrainView] Using first prompt: id=\(firstPrompt.identifier), display=\(firstPrompt.display)")
-                let prompts = promptManager.getSystemAndUserPrompts(from: firstPrompt)
-                systemPrompt = prompts.systemPrompt
-                return
-            } else {
-                print("[SocialBrainView] No prompts found for sample mode")
-            }
-        }
-        
-        // Use regular mode prompts
-        print("[SocialBrainView] Falling back to regular mode prompts")
-        let context = try await CoreDataManager.shared.viewContext
-        let prompts = promptManager.getPromptsForSourceType(
-            sourceType,
-            sampleMode: nil,  // Use regular mode
-            context: context
+        systemPrompt = try await promptGenerator.generateSystemPrompt(
+            sourceType: sourceType,
+            sourceAction: sourceAction,
+            sourceId: sourceId,
+            sampleMode: appModeManager.sampleModeType,
+            contact: contextContact
         )
-        print("[SocialBrainView] Retrieved \(prompts.count) prompts for regular mode")
-        
-        if let firstPrompt = prompts.first {
-            print("[SocialBrainView] Using first regular mode prompt: id=\(firstPrompt.identifier), display=\(firstPrompt.display)")
-            let prompts = promptManager.getSystemAndUserPrompts(from: firstPrompt)
-            systemPrompt = prompts.systemPrompt
-            return
-        }
-        
-        // Fallback system prompt if no prompts found
-        var prompt = "system prompt"
-        switch (sourceType, sourceAction) {
-        case ("contact", "general"):
-            print("[SocialBrainView] Fetching contact context for ID: \(sourceId)")
-            let context = try await CoreDataManager.shared.viewContext
-            let contactFetchRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
-            contactFetchRequest.predicate = NSPredicate(format: "contactId == %@", sourceId as CVarArg)
-            
-            if let contact = try context.fetch(contactFetchRequest).first {
-                print("[SocialBrainView] Found contact: \(contact.name ?? "unnamed")")
-                contextContact = contact
-                
-                // Update suggested questions using the provider
-                await MainActor.run {
-                    initializeSuggestedQuestions()
-                }
-                
-                prompt += "Contact is \(contact.name ?? "failed to load contact name"). "
-                
-                // Use the new note fetching functionality
-                if let sampleProvider = getSampleProvider() {
-                    let context = PromptContext(
-                        mode: .none,
-                        question: "",
-                        contact: contact
-                    )
-                    let notesContext = try await sampleProvider.fetchRelevantNotes(for: context)
-                    if !notesContext.isEmpty {
-                        prompt += notesContext
-                    }
-                }
-            } else {
-                print("[SocialBrainView] No contact found for ID: \(sourceId)")
-                prompt += "contact + general (ID: \(sourceId)). "
-                prompt += "Focus on general relationship management, communication strategies, and maintaining healthy connections."
-            }
-            
-            prompt += "You are analyzing a specific contact with ID: \(sourceId). "
-            prompt += "Focus on providing insights about this contact's relationship with the user, "
-            prompt += "suggesting conversation topics, and identifying opportunities for deeper connection."
-            
-        default:
-            prompt += "You are providing general social relationship advice."
-        }
-        
-        print("[SocialBrainView] Generated System Prompt: \(prompt)")
-        systemPrompt = prompt
     }
     
     // Initial message based on context
     private func generateInitialMessage() -> String {
-        switch (sourceType, sourceAction) {
-        case ("contact", "general"):
-            if let contact = contextContact {
-                return "关于 \(contact.name ?? "这个联系人")，你想问什么"
-            }
-            return "关于这个联系人，你想问什么"
-        case ("contact", "insights"):
-            return "Please analyze this contact and provide insights about our relationship."
-        default:
-            return "How can you help me with my social relationships?"
-        }
+        return promptGenerator.generateInitialMessage(
+            sourceType: sourceType,
+            sourceAction: sourceAction,
+            contact: contextContact
+        )
     }
     
     // Modify initializeSuggestedQuestions to use prompt configuration
@@ -232,31 +147,12 @@ struct SocialBrainView: View {
     
     // Improve the extraction function to be more robust
     private func extractUserQuestion(from text: String) -> String {
-        // Check if the text contains any of the possible note markers
-        let noteMarkers = ["相关笔记如下:", "笔记如下", "Notes:"]
-        
-        for marker in noteMarkers {
-            if let range = text.range(of: marker) {
-                // Return only the part before the marker
-                let questionPart = String(text[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-                // If the extracted part is empty, return a default message
-                return questionPart.isEmpty ? "请分析这些笔记" : questionPart
-            }
-        }
-        return text
+        return promptGenerator.extractUserQuestion(from: text)
     }
     
     // Extract notes from text
     private func extractNotes(from text: String) -> String? {
-        let noteMarkers = ["相关笔记如下:", "笔记如下", "Notes:"]
-        
-        for marker in noteMarkers {
-            if let range = text.range(of: marker) {
-                // Return the part after the marker
-                return String(text[range.lowerBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-        }
-        return nil
+        return promptGenerator.extractNotes(from: text)
     }
     
     var body: some View {
@@ -764,19 +660,7 @@ struct SocialBrainView: View {
     
     // Helper function to update system prompt with notes for non-sample mode
     private func updateSystemPromptWithNotes(_ notes: String) async throws {
-        // First check if the system prompt already contains these notes
-        if !systemPrompt.contains(notes) {
-            // If not, append them or update accordingly
-            if !systemPrompt.contains("相关笔记如下:") {
-                systemPrompt += "\n\n相关笔记如下:\n" + notes
-            } else {
-                // If it already has notes section but different notes, replace it
-                let components = systemPrompt.components(separatedBy: "相关笔记如下:")
-                if components.count > 1 {
-                    systemPrompt = components[0] + "相关笔记如下:\n" + notes
-                }
-            }
-        }
+        systemPrompt = promptGenerator.updateSystemPromptWithNotes(systemPrompt, notes: notes)
     }
 }
 

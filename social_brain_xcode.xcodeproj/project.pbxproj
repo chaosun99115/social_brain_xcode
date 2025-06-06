@@ -10,6 +10,7 @@
 		AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */; };
 		AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */; };
 		AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A42DF346E1000F4F17 /* EditContactView.swift */; };
+		AF4501C52DF38503000F4F17 /* PromptGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501C42DF38503000F4F17 /* PromptGenerator.swift */; };
 		AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */; };
 		AF56DC272DCBE13D00F56D6E /* SeedDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC232DCBE13D00F56D6E /* SeedDataManager.swift */; };
 		AF56DC282DCBE13D00F56D6E /* SeedDataExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */; };
@@ -53,7 +54,6 @@
 		AFBF98952DCAA44300AF626E /* AIServiceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98922DCAA44300AF626E /* AIServiceManager.swift */; };
 		AFBF98962DCAA44300AF626E /* AIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98932DCAA44300AF626E /* AIChatService.swift */; };
 		AFBF98972DCAA44300AF626E /* DeepSeekChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */; };
-		AFDDDC8F2DCE7B0900425764 /* SystemPrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */; };
 		AFDDDC942DD2759200425764 /* SuggestedQuestionsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC932DD2759200425764 /* SuggestedQuestionsProvider.swift */; };
 		AFDDDC982DD289A100425764 /* ConfirmationDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC972DD289A100425764 /* ConfirmationDialog.swift */; };
 		AFDDDC9B2DD393DF00425764 /* CircleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDC992DD393DC00425764 /* CircleManager.swift */; };
@@ -79,6 +79,7 @@
 		AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KIMIChatService.swift; sourceTree = "<group>"; };
 		AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditCircleContactsSheet.swift; sourceTree = "<group>"; };
 		AF4501A42DF346E1000F4F17 /* EditContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditContactView.swift; sourceTree = "<group>"; };
+		AF4501C42DF38503000F4F17 /* PromptGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptGenerator.swift; sourceTree = "<group>"; };
 		AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DoubaoChatService.swift; sourceTree = "<group>"; };
 		AF56DC232DCBE13D00F56D6E /* SeedDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeedDataManager.swift; sourceTree = "<group>"; };
 		AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeedDataExample.swift; sourceTree = "<group>"; };
@@ -122,7 +123,6 @@
 		AFBF98922DCAA44300AF626E /* AIServiceManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AIServiceManager.swift; sourceTree = "<group>"; };
 		AFBF98932DCAA44300AF626E /* AIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AIChatService.swift; sourceTree = "<group>"; };
 		AFBF98942DCAA44300AF626E /* DeepSeekChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeepSeekChatService.swift; sourceTree = "<group>"; };
-		AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemPrompts.swift; sourceTree = "<group>"; };
 		AFDDDC932DD2759200425764 /* SuggestedQuestionsProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuggestedQuestionsProvider.swift; sourceTree = "<group>"; };
 		AFDDDC972DD289A100425764 /* ConfirmationDialog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConfirmationDialog.swift; sourceTree = "<group>"; };
 		AFDDDC992DD393DC00425764 /* CircleManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleManager.swift; sourceTree = "<group>"; };
@@ -467,7 +467,7 @@
 			children = (
 				AFAE473E2DF1DEC500DD10E0 /* DefaultPrompts.swift */,
 				AFAE47482DF2012200DD10E0 /* PromptConfiguration.swift */,
-				AFDDDC8E2DCE7B0900425764 /* SystemPrompts.swift */,
+				AF4501C42DF38503000F4F17 /* PromptGenerator.swift */,
 			);
 			path = Prompts;
 			sourceTree = "<group>";
@@ -628,6 +628,7 @@
 				AFAE47202DE799ED00DD10E0 /* StoreKitManager.swift in Sources */,
 				AFF98BD12DA0772F0001DD72 /* SocialNotesView.swift in Sources */,
 				AFAE47212DE799ED00DD10E0 /* SubscriptionView.swift in Sources */,
+				AF4501C52DF38503000F4F17 /* PromptGenerator.swift in Sources */,
 				AFAE46EF2DE646B300DD10E0 /* AddCircleView.swift in Sources */,
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
 				AFAE47222DE799ED00DD10E0 /* SubscriptionStatusView.swift in Sources */,
@@ -638,7 +639,6 @@
 				AFAE473D2DF1DEB000DD10E0 /* PromptService.swift in Sources */,
 				AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */,
 				AFDDDC9C2DD393DF00425764 /* CircleInsightManager.swift in Sources */,
-				AFDDDC8F2DCE7B0900425764 /* SystemPrompts.swift in Sources */,
 				AFBF98902DCAA43B00AF626E /* AIConfig.swift in Sources */,
 				AFAE473C2DF1DEB000DD10E0 /* PromptListView.swift in Sources */,
 				AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */,
