@@ -66,22 +66,12 @@ struct SocialBrainView: View {
         // First check if we're in sample mode
         if appModeManager.isSampleMode {
             print("[SocialBrainView] In sample mode, fetching prompts")
-            // Get prompts based on sample mode
+            // Get prompts based on source type and sample mode
             let context = try await CoreDataManager.shared.viewContext
             
-            // Debug: Check CoreData directly for prompts 111 and 121
-            let fetchRequest111: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-            fetchRequest111.predicate = NSPredicate(format: "identifier == %d", 111)
-            let results111 = try context.fetch(fetchRequest111)
-            print("[SocialBrainView] Direct CoreData fetch for identifier 111: \(results111.count) results")
-            
-            let fetchRequest121: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-            fetchRequest121.predicate = NSPredicate(format: "identifier == %d", 121)
-            let results121 = try context.fetch(fetchRequest121)
-            print("[SocialBrainView] Direct CoreData fetch for identifier 121: \(results121.count) results")
-            
-            let prompts = promptManager.getPromptsForMode(
-                .sample,
+            // Debug: Check CoreData directly for prompts
+            let prompts = promptManager.getPromptsForSourceType(
+                sourceType,
                 sampleMode: appModeManager.sampleModeType,
                 context: context
             )
@@ -100,7 +90,11 @@ struct SocialBrainView: View {
         // Use regular mode prompts
         print("[SocialBrainView] Falling back to regular mode prompts")
         let context = try await CoreDataManager.shared.viewContext
-        let prompts = promptManager.getPromptsForMode(.regular, context: context)
+        let prompts = promptManager.getPromptsForSourceType(
+            sourceType,
+            sampleMode: nil,  // Use regular mode
+            context: context
+        )
         print("[SocialBrainView] Retrieved \(prompts.count) prompts for regular mode")
         
         if let firstPrompt = prompts.first {
@@ -183,11 +177,10 @@ struct SocialBrainView: View {
         Task {
             do {
                 let context = try await CoreDataManager.shared.viewContext
-                let promptMode: PromptDisplayMode = appModeManager.isSampleMode ? .sample : .regular
                 
-                // Get all prompts for the current mode
-                let prompts = promptManager.getPromptsForMode(
-                    promptMode,
+                // Get prompts based on source type and sample mode
+                let prompts = promptManager.getPromptsForSourceType(
+                    sourceType,
                     sampleMode: appModeManager.sampleModeType,
                     context: context
                 )
@@ -195,9 +188,8 @@ struct SocialBrainView: View {
                 if !prompts.isEmpty {
                     // Create suggested questions from all prompts
                     let questions = prompts.map { prompt in
-                        let prompts = promptManager.getSystemAndUserPrompts(from: prompt)
                         return SocialBrainMessage(
-                            content: prompts.userPrompt,
+                            content: prompt.display,
                             isFromUser: false,
                             timestamp: Date()
                         )
@@ -486,9 +478,10 @@ struct SocialBrainView: View {
             Text(errorMessage ?? "An unknown error occurred")
         }
         .onAppear {
-            print("- sourceType: \(sourceType)")
-            print("- sourceAction: \(sourceAction)")
-            print("- sourceId: \(sourceId)")
+            print("[SocialBrainView] View appeared with context:")
+            print("[SocialBrainView] - sourceType: \(sourceType)")
+            print("[SocialBrainView] - sourceAction: \(sourceAction)")
+            print("[SocialBrainView] - sourceId: \(sourceId)")
             
             // Initialize suggested questions
             initializeSuggestedQuestions()

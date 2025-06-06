@@ -23,15 +23,24 @@ protocol PromptDisplayable {
 
 /// Adapter to make Prompt conform to PromptDisplayable
 struct PromptAdapter: PromptDisplayable {
-    private let prompt: Prompt
+    let prompt: Prompt
     
-    init(prompt: Prompt) {
+    init(prompt: Prompt, customDisplay: String? = nil) {
         self.prompt = prompt
+        self._customDisplay = customDisplay
     }
     
     var identifier: Int { Int(prompt.identifier) }
-    var display: String { prompt.display ?? "" }
+    var display: String {
+        _customDisplay ?? prompt.display ?? ""
+    }
     var content: String { prompt.content ?? "" }
+    
+    // Add computed properties for sorting
+    var order: Int16 { prompt.order }
+    var createdAt: Date? { prompt.createdAt }
+    
+    private var _customDisplay: String?
 }
 
 /// Configuration for sample mode prompt mapping
@@ -56,6 +65,40 @@ struct SampleModePromptMapping {
     }
 }
 
+/// Configuration for source type and sample mode mapping
+struct SourceTypePromptMapping {
+    /// Maps source type and sample mode to prompt identifiers
+    static let sourceTypeToPromptIdentifiers: [String: [String: [Int]]] = [
+        "general": [
+            "changedJob": [1, 2, 4],
+            "indieDev": [1, 2, 3],
+            "regular": [1, 2]
+        ],
+        "contact": [
+            "changedJob": [5],
+            "indieDev": [5],
+            "regular": [5]
+        ],
+        "note": [
+            "changedJob": [1],
+            "indieDev": [1],
+            "regular": [2]
+        ]
+    ]
+    
+    /// Get prompt identifiers for a specific source type and sample mode
+    static func getPromptIdentifiers(for sourceType: String, sampleMode: String?) -> [Int] {
+        let mode = sampleMode ?? "regular"
+        return sourceTypeToPromptIdentifiers[sourceType]?[mode] ?? []
+    }
+    
+    /// Check if a prompt identifier belongs to a specific source type and sample mode
+    static func isPromptInSourceType(_ identifier: Int, sourceType: String, sampleMode: String?) -> Bool {
+        let mode = sampleMode ?? "regular"
+        return sourceTypeToPromptIdentifiers[sourceType]?[mode]?.contains(identifier) ?? false
+    }
+}
+
 /// Manages prompt configuration and display logic
 class PromptConfigurationManager {
     static let shared = PromptConfigurationManager()
@@ -76,8 +119,11 @@ class PromptConfigurationManager {
             let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
             let existingCount = try context.count(for: fetchRequest)
             
+            // Get all identifiers from the source type mapping
+            let allIdentifiers = Set(SourceTypePromptMapping.sourceTypeToPromptIdentifiers.values.flatMap { $0.values.flatMap { $0 } })
+            
             // Detailed verification for each prompt identifier
-            for identifier in [111, 121] {
+            for identifier in allIdentifiers {
                 let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
                 fetchRequest.predicate = NSPredicate(format: "identifier == %d", identifier)
                 
@@ -123,56 +169,70 @@ class PromptConfigurationManager {
         // Removed debug print statements
     }
     
-    /// Returns the appropriate prompt based on the current display mode and sample mode
+    /// Processes a prompt's display text to replace dynamic content
     /// - Parameters:
-    ///   - mode: The current display mode
+    ///   - displayText: The original display text from the prompt
+    ///   - contact: Optional contact to use for replacements
+    /// - Returns: Processed display text with replacements
+    func processDisplayText(_ displayText: String, contact: Contact?) -> String {
+        var processedText = displayText
+        
+        // Replace <contect> with contact name if available
+        if let contact = contact, let contactName = contact.name {
+            processedText = processedText.replacingOccurrences(of: "<contect>", with: contactName)
+        }
+        
+        return processedText
+    }
+    
+    /// Returns the appropriate prompts based on source type and sample mode
+    /// - Parameters:
+    ///   - sourceType: The source type (general, contact, note)
     ///   - sampleMode: The current sample mode (if in sample mode)
     ///   - context: CoreData context
+    ///   - contact: Optional contact for dynamic text replacement
     /// - Returns: Array of prompts that match the criteria
-    func getPromptsForMode(_ mode: PromptDisplayMode, sampleMode: String? = nil, context: NSManagedObjectContext) -> [PromptDisplayable] {
+    func getPromptsForSourceType(_ sourceType: String, sampleMode: String? = nil, context: NSManagedObjectContext, contact: Contact? = nil) -> [PromptDisplayable] {
         // Ensure we're using the main context
         let mainContext = context.concurrencyType == .mainQueueConcurrencyType ? context : context.parent ?? context
         
-        // Perform a quick verification of the database state
-        do {
-            let verifyRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-            _ = try mainContext.count(for: verifyRequest)
-            
-            // If in sample mode, verify the specific prompt we're looking for
-            if mode == .sample, let sampleMode = sampleMode {
-                let identifiers = SampleModePromptMapping.getPromptIdentifiers(for: sampleMode)
-                for identifier in identifiers {
-                    let specificRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-                    specificRequest.predicate = NSPredicate(format: "identifier == %d", identifier)
-                    _ = try mainContext.count(for: specificRequest)
-                }
-            }
-        } catch {
-            // Handle error silently
+        // Get available prompt identifiers for this source type and sample mode
+        let availableIdentifiers = SourceTypePromptMapping.getPromptIdentifiers(for: sourceType, sampleMode: sampleMode)
+        
+        guard !availableIdentifiers.isEmpty else {
+            return []
         }
         
-        switch mode {
-        case .regular:
-            return fetchPromptsWithIdentifier(1, context: mainContext)
-        case .sample:
-            guard let sampleMode = sampleMode else {
-                return []
+        // Return all prompts for the available identifiers
+        var prompts: [PromptDisplayable] = []
+        for identifier in availableIdentifiers {
+            let fetchedPrompts = fetchPromptsWithIdentifier(identifier, context: mainContext)
+            // Process each prompt's display text
+            let processedPrompts = fetchedPrompts.compactMap { prompt -> PromptDisplayable? in
+                if let adapter = prompt as? PromptAdapter {
+                    let processedDisplay = processDisplayText(adapter.display, contact: contact)
+                    return PromptAdapter(prompt: adapter.prompt, customDisplay: processedDisplay)
+                }
+                // If it's not a PromptAdapter, try to convert it to one
+                if let promptEntity = (prompt as? PromptAdapter)?.prompt {
+                    let processedDisplay = processDisplayText(prompt.display, contact: contact)
+                    return PromptAdapter(prompt: promptEntity, customDisplay: processedDisplay)
+                }
+                return nil
             }
-            
-            // Get available prompt identifiers for this sample mode
-            let availableIdentifiers = SampleModePromptMapping.getPromptIdentifiers(for: sampleMode)
-            
-            guard !availableIdentifiers.isEmpty else {
-                return []
+            prompts.append(contentsOf: processedPrompts)
+        }
+        
+        // Sort prompts by order and createdAt
+        return prompts.sorted { (p1, p2) in
+            if let adapter1 = p1 as? PromptAdapter,
+               let adapter2 = p2 as? PromptAdapter {
+                if adapter1.order != adapter2.order {
+                    return adapter1.order < adapter2.order
+                }
+                return (adapter1.createdAt ?? Date()) > (adapter2.createdAt ?? Date())
             }
-            
-            // Return all prompts for the available identifiers
-            var prompts: [PromptDisplayable] = []
-            for identifier in availableIdentifiers {
-                let fetchedPrompts = fetchPromptsWithIdentifier(identifier, context: mainContext)
-                prompts.append(contentsOf: fetchedPrompts)
-            }
-            return prompts
+            return false
         }
     }
     
@@ -206,6 +266,7 @@ class PromptConfigurationManager {
                 }
             }
             
+            // Always return PromptAdapter instances
             return results.map { PromptAdapter(prompt: $0) }
         } catch {
             return []
@@ -214,12 +275,12 @@ class PromptConfigurationManager {
     
     /// Returns the appropriate prompt based on the current display mode and sample mode
     /// - Parameters:
-    ///   - mode: The current display mode
+    ///   - sourceType: The source type (general, contact, note)
     ///   - sampleMode: The current sample mode (if in sample mode)
     ///   - context: CoreData context
     /// - Returns: The selected prompt if available
-    func getPromptForMode(_ mode: PromptDisplayMode, sampleMode: String? = nil, context: NSManagedObjectContext) -> PromptDisplayable? {
-        let prompts = getPromptsForMode(mode, sampleMode: sampleMode, context: context)
+    func getPromptForSourceType(_ sourceType: String, sampleMode: String? = nil, context: NSManagedObjectContext) -> PromptDisplayable? {
+        let prompts = getPromptsForSourceType(sourceType, sampleMode: sampleMode, context: context)
         return prompts.first
     }
     
@@ -240,17 +301,19 @@ class PromptConfigurationManager {
         
         // Check if all configured modes have prompt mappings
         for mode in configuredModes {
-            if SampleModePromptMapping.getPromptIdentifiers(for: mode).isEmpty {
+            if SourceTypePromptMapping.getPromptIdentifiers(for: "general", sampleMode: mode).isEmpty {
                 print("Warning: Sample mode '\(mode)' has no prompt mappings")
                 return false
             }
         }
         
         // Check if all prompt mappings correspond to configured modes
-        for mode in SampleModePromptMapping.modeToPromptIdentifiers.keys {
-            if !configuredModes.contains(mode) {
-                print("Warning: Prompt mapping exists for undefined sample mode '\(mode)'")
-                return false
+        if let generalMappings = SourceTypePromptMapping.sourceTypeToPromptIdentifiers["general"] {
+            for mode in generalMappings.keys {
+                if !configuredModes.contains(mode) {
+                    print("Warning: Prompt mapping exists for undefined sample mode '\(mode)'")
+                    return false
+                }
             }
         }
         

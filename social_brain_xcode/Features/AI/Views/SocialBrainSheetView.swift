@@ -9,6 +9,9 @@ struct SocialBrainSheetView: View {
     let sourceId: String
     @Environment(\.dismiss) private var dismiss
     
+    // Add PromptConfigurationManager
+    private let promptManager = PromptConfigurationManager.shared
+    
     // Context data
     @State private var contextContact: Contact?
     @State private var contextNotes: [Note] = []
@@ -171,29 +174,62 @@ struct SocialBrainSheetView: View {
         print("[SocialBrainSheetView] initializeSuggestedQuestions started")
         print("[SocialBrainSheetView] Current contextContact: \(contextContact?.name ?? "nil")")
         
-        if let sampleProvider = getSampleProvider() {
-            print("[SocialBrainSheetView] Sample provider found: \(type(of: sampleProvider))")
-            let context = PromptContext(
-                mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
-                question: "",
-                contact: contextContact
-            )
-            suggestedQuestions = sampleProvider.getSuggestedQuestions(for: context)
-            print("[SocialBrainSheetView] Questions for context: \(suggestedQuestions.map { $0.content })")
-        } else {
-            print("[SocialBrainSheetView] Using context-aware questions")
-            print("[SocialBrainSheetView] Calling forContext with:")
-            print("- sourceType: \(sourceType)")
-            print("- sourceAction: \(sourceAction)")
-            print("- contact: \(contextContact?.name ?? "nil")")
+        // Try to get prompt-based questions first
+        Task {
+            do {
+                let context = try await CoreDataManager.shared.viewContext
+                
+                // Get prompts based on source type and sample mode, passing the contact for dynamic text replacement
+                let prompts = promptManager.getPromptsForSourceType(
+                    sourceType,
+                    sampleMode: appModeManager.sampleModeType,
+                    context: context,
+                    contact: contextContact  // Pass the contact for dynamic text replacement
+                )
+                
+                if !prompts.isEmpty {
+                    // Create suggested questions from all prompts
+                    let questions = prompts.map { prompt in
+                        return SocialBrainMessage(
+                            content: prompt.display,
+                            isFromUser: false,
+                            timestamp: Date()
+                        )
+                    }
+                    await MainActor.run {
+                        suggestedQuestions = questions
+                    }
+                    return
+                }
+            } catch {
+                print("[SocialBrainSheetView] Error fetching prompts: \(error)")
+            }
             
-            let questions = SuggestedQuestionsProvider.forContext(
-                sourceType: sourceType,
-                sourceAction: sourceAction,
-                contact: contextContact
-            )
-            print("[SocialBrainSheetView] Received questions: \(questions.map { $0.content })")
-            suggestedQuestions = questions
+            // Fallback to existing logic if no prompts found
+            if let sampleProvider = getSampleProvider() {
+                print("[SocialBrainSheetView] Sample provider found: \(type(of: sampleProvider))")
+                let context = PromptContext(
+                    mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
+                    question: "",
+                    contact: contextContact
+                )
+                suggestedQuestions = sampleProvider.getSuggestedQuestions(for: context)
+                print("[SocialBrainSheetView] Questions for context: \(suggestedQuestions.map { $0.content })")
+            } else {
+                print("[SocialBrainSheetView] Using context-aware questions")
+                print("[SocialBrainSheetView] Calling forContext with:")
+                print("- sourceType: \(sourceType)")
+                print("- sourceAction: \(sourceAction)")
+                print("- contact: \(contextContact?.name ?? "nil")")
+                
+                let questions = SuggestedQuestionsProvider.forContext(
+                    sourceType: sourceType,
+                    sourceAction: sourceAction,
+                    contact: contextContact
+                )
+                print("[SocialBrainSheetView] Received questions: \(questions.map { $0.content })")
+                suggestedQuestions = questions
+            }
         }
     }
     
@@ -420,9 +456,10 @@ struct SocialBrainSheetView: View {
             Text(errorMessage ?? "An unknown error occurred")
         }
         .onAppear {
-            print("- sourceType: \(sourceType)")
-            print("- sourceAction: \(sourceAction)")
-            print("- sourceId: \(sourceId)")
+            print("[SocialBrainSheetView] View appeared with context:")
+            print("[SocialBrainSheetView] - sourceType: \(sourceType)")
+            print("[SocialBrainSheetView] - sourceAction: \(sourceAction)")
+            print("[SocialBrainSheetView] - sourceId: \(sourceId)")
             
             // Generate system prompt first to load the contact
             Task {
