@@ -6,12 +6,14 @@ struct SocialBrainMessage: Identifiable {
     let isFromUser: Bool
     let timestamp: Date
     let suggestedAction: String?
+    let promptIdentifier: Int?
     
-    init(content: String, isFromUser: Bool, timestamp: Date, suggestedAction: String? = nil) {
+    init(content: String, isFromUser: Bool, timestamp: Date, suggestedAction: String? = nil, promptIdentifier: Int? = nil) {
         self.content = content
         self.isFromUser = isFromUser
         self.timestamp = timestamp
         self.suggestedAction = suggestedAction
+        self.promptIdentifier = promptIdentifier
     }
     
     // Mock data for Social Brain - suggested questions and responses

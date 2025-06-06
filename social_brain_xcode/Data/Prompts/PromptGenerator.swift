@@ -15,34 +15,54 @@ class PromptGenerator {
     ///   - sourceId: The ID of the source (e.g., contact ID)
     ///   - sampleMode: Optional sample mode type
     ///   - contact: Optional contact for context
+    ///   - promptIdentifier: The identifier of the prompt (0 for custom questions)
+    ///   - promptDisplay: The display text of the prompt (custom question for custom prompts)
     /// - Returns: A tuple containing the system prompt and any error that occurred
     func generateSystemPrompt(
         sourceType: String,
         sourceAction: String,
         sourceId: String,
         sampleMode: String?,
-        contact: Contact?
+        contact: Contact?,
+        promptIdentifier: Int = 0,
+        promptDisplay: String? = nil
     ) async throws -> String {
-        print("[PromptGenerator] Generating system prompt")
-        print("[PromptGenerator] Context - sourceType: \(sourceType), sourceAction: \(sourceAction), sourceId: \(sourceId)")
+        // Log only metadata and identifiers
+        print("[PromptGenerator] Generating prompt - Type: \(sourceType), Action: \(sourceAction), ID: \(sourceId), PromptID: \(promptIdentifier)")
+        if let contactName = contact?.name {
+            print("[PromptGenerator] Contact: \(contactName)")
+        }
+        if let mode = sampleMode {
+            print("[PromptGenerator] Sample Mode: \(mode)")
+        }
+        if let display = promptDisplay {
+            print("[PromptGenerator] Prompt Display: \(display)")
+        }
         
-        // First try to get prompts from configuration
-        let context = try await CoreDataManager.shared.viewContext
-        let prompts = promptManager.getPromptsForSourceType(
-            sourceType,
-            sampleMode: sampleMode,
-            context: context,
-            contact: contact
-        )
-        
-        if let firstPrompt = prompts.first {
-            print("[PromptGenerator] Using configured prompt: id=\(firstPrompt.identifier)")
-            let prompts = promptManager.getSystemAndUserPrompts(from: firstPrompt)
-            return prompts.systemPrompt
+        // First try to get prompts from configuration if we have a valid identifier
+        if promptIdentifier > 0 {
+            let context = try await CoreDataManager.shared.viewContext
+            let prompts = promptManager.getPromptsForSourceType(
+                sourceType,
+                sampleMode: sampleMode,
+                context: context,
+                contact: contact
+            )
+            
+            if let firstPrompt = prompts.first(where: { $0.identifier == promptIdentifier }) {
+                print("[PromptGenerator] Using configured prompt with ID: \(firstPrompt.identifier)")
+                let prompts = promptManager.getSystemAndUserPrompts(from: firstPrompt)
+                return prompts.systemPrompt
+            }
         }
         
         // Fallback to dynamic prompt generation
         var prompt = "system prompt"
+        
+        // Add prompt context if available
+        if let display = promptDisplay {
+            prompt += "\nUser Question: \(display)\n"
+        }
         
         switch (sourceType, sourceAction) {
         case ("contact", "general"):
@@ -75,7 +95,8 @@ class PromptGenerator {
             prompt += "You are providing general social relationship advice."
         }
         
-        print("[PromptGenerator] Generated prompt:\n\(prompt)")
+        // Only log that we generated a prompt, not its content
+        print("[PromptGenerator] Generated system prompt (content hidden)")
         return prompt
     }
     

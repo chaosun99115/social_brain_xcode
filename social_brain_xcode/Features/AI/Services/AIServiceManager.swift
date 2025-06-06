@@ -39,7 +39,8 @@ class AIServiceManager {
             content: content,
             isFromUser: false,
             timestamp: Date(),
-            suggestedAction: nil // You can implement logic to extract suggested actions from the response
+            suggestedAction: nil, // You can implement logic to extract suggested actions from the response
+            promptIdentifier: nil // AI responses don't have prompt identifiers
         )
     }
 } 

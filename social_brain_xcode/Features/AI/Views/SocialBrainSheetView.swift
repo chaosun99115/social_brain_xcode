@@ -98,12 +98,32 @@ struct SocialBrainSheetView: View {
             }
         }
         
+        // Get the appropriate prompt identifier based on the mode
+        let promptIdentifier: Int
+        if appModeManager.isSampleMode {
+            if let modeType = appModeManager.sampleModeType {
+                switch modeType {
+                case "changedJob":
+                    promptIdentifier = 111
+                case "indieDev":
+                    promptIdentifier = 121
+                default:
+                    promptIdentifier = 1
+                }
+            } else {
+                promptIdentifier = 1
+            }
+        } else {
+            promptIdentifier = 1
+        }
+        
         systemPrompt = try await promptGenerator.generateSystemPrompt(
             sourceType: sourceType,
             sourceAction: sourceAction,
             sourceId: sourceId,
             sampleMode: appModeManager.sampleModeType,
-            contact: contextContact
+            contact: contextContact,
+            promptIdentifier: promptIdentifier
         )
     }
     
@@ -116,7 +136,7 @@ struct SocialBrainSheetView: View {
         )
     }
     
-    // Modify initializeSuggestedQuestions
+    // Modify initializeSuggestedQuestions to store prompt identifiers
     private func initializeSuggestedQuestions() {
         print("[SocialBrainSheetView] initializeSuggestedQuestions started")
         print("[SocialBrainSheetView] Current contextContact: \(contextContact?.name ?? "nil")")
@@ -135,12 +155,13 @@ struct SocialBrainSheetView: View {
                 )
                 
                 if !prompts.isEmpty {
-                    // Create suggested questions from all prompts
+                    // Create suggested questions from all prompts, storing the identifier
                     let questions = prompts.map { prompt in
                         return SocialBrainMessage(
                             content: prompt.display,
                             isFromUser: false,
-                            timestamp: Date()
+                            timestamp: Date(),
+                            promptIdentifier: prompt.identifier  // Store the identifier
                         )
                     }
                     await MainActor.run {
@@ -230,7 +251,7 @@ struct SocialBrainSheetView: View {
                                         SuggestedQuestionBubble(text: question.content)
                                             .contentShape(Rectangle())
                                             .onTapGesture {
-                                                handleSuggestedQuestion(question.content)
+                                                handleSuggestedQuestion(question.content, promptIdentifier: question.promptIdentifier)
                                             }
                                     }
                                 }
@@ -433,9 +454,27 @@ struct SocialBrainSheetView: View {
         }
     }
     
-    private func handleSuggestedQuestion(_ question: String) {
+    private func handleSuggestedQuestion(_ question: String, promptIdentifier: Int? = nil) {
         inputText = question
-        sendMessage()
+        // Pass the prompt identifier when generating system prompt
+        Task {
+            do {
+                systemPrompt = try await promptGenerator.generateSystemPrompt(
+                    sourceType: sourceType,
+                    sourceAction: sourceAction,
+                    sourceId: sourceId,
+                    sampleMode: appModeManager.sampleModeType,
+                    contact: contextContact,
+                    promptIdentifier: promptIdentifier ?? 0,
+                    promptDisplay: question
+                )
+                sendMessage()
+            } catch {
+                print("[SocialBrainSheetView] Error generating system prompt: \(error)")
+                errorMessage = error.localizedDescription
+                showError = true
+            }
+        }
     }
     
     private func sendMessage() {

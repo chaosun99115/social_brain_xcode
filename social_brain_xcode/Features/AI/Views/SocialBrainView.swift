@@ -66,12 +66,32 @@ struct SocialBrainView: View {
         print("[SocialBrainView] Generating system prompt")
         print("[SocialBrainView] Current mode - isSampleMode: \(appModeManager.isSampleMode), sampleModeType: \(appModeManager.sampleModeType ?? "nil")")
         
+        // Get the appropriate prompt identifier based on the mode
+        let promptIdentifier: Int
+        if appModeManager.isSampleMode {
+            if let modeType = appModeManager.sampleModeType {
+                switch modeType {
+                case "changedJob":
+                    promptIdentifier = 111
+                case "indieDev":
+                    promptIdentifier = 121
+                default:
+                    promptIdentifier = 1
+                }
+            } else {
+                promptIdentifier = 1
+            }
+        } else {
+            promptIdentifier = 1
+        }
+        
         systemPrompt = try await promptGenerator.generateSystemPrompt(
             sourceType: sourceType,
             sourceAction: sourceAction,
             sourceId: sourceId,
             sampleMode: appModeManager.sampleModeType,
-            contact: contextContact
+            contact: contextContact,
+            promptIdentifier: promptIdentifier
         )
     }
     
@@ -84,7 +104,7 @@ struct SocialBrainView: View {
         )
     }
     
-    // Modify initializeSuggestedQuestions to use prompt configuration
+    // Modify initializeSuggestedQuestions to store prompt identifiers
     private func initializeSuggestedQuestions() {
         print("[SocialBrainView] Initializing suggested questions...")
         
@@ -101,12 +121,13 @@ struct SocialBrainView: View {
                 )
                 
                 if !prompts.isEmpty {
-                    // Create suggested questions from all prompts
+                    // Create suggested questions from all prompts, storing the identifier
                     let questions = prompts.map { prompt in
                         return SocialBrainMessage(
                             content: prompt.display,
                             isFromUser: false,
-                            timestamp: Date()
+                            timestamp: Date(),
+                            promptIdentifier: prompt.identifier  // Store the identifier
                         )
                     }
                     await MainActor.run {
@@ -195,7 +216,7 @@ struct SocialBrainView: View {
                                         SuggestedQuestionBubble(text: question.content)
                                             .contentShape(Rectangle())
                                             .onTapGesture {
-                                                handleSuggestedQuestion(question.content)
+                                                handleSuggestedQuestion(question.content, promptIdentifier: question.promptIdentifier)
                                             }
                                     }
                                 }
@@ -422,9 +443,27 @@ struct SocialBrainView: View {
         }
     }
     
-    private func handleSuggestedQuestion(_ question: String) {
+    private func handleSuggestedQuestion(_ question: String, promptIdentifier: Int? = nil) {
         inputText = question
-        sendMessage()
+        // Pass the prompt identifier when generating system prompt
+        Task {
+            do {
+                systemPrompt = try await promptGenerator.generateSystemPrompt(
+                    sourceType: sourceType,
+                    sourceAction: sourceAction,
+                    sourceId: sourceId,
+                    sampleMode: appModeManager.sampleModeType,
+                    contact: contextContact,
+                    promptIdentifier: promptIdentifier ?? 0,
+                    promptDisplay: question
+                )
+                sendMessage()
+            } catch {
+                print("[SocialBrainView] Error generating system prompt: \(error)")
+                errorMessage = error.localizedDescription
+                showError = true
+            }
+        }
     }
     
     private func sendMessage() {
@@ -677,11 +716,17 @@ struct LoadingModal: View {
             VStack(spacing: 0) {
                 // Header with loading message
                 VStack(spacing: 0) {
-                    Text("正在生成社交建议。。。")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundColor(.primaryText)
-                        .multilineTextAlignment(.center)
-                        .padding(.vertical, 20)
+                    HStack(spacing: 12) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .primaryText))
+                            .scaleEffect(1.2)
+                        
+                        Text("正在生成回应")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(.primaryText)
+                    }
+                    .multilineTextAlignment(.center)
+                    .padding(.vertical, 20)
                 }
                 .frame(maxWidth: .infinity)
                 .background(colorScheme == .dark ? Color(UIColor.systemGray6) : Color(UIColor.systemBackground))
@@ -690,7 +735,7 @@ struct LoadingModal: View {
                 // Quote area with arrows
                 ZStack {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("好的沟通不在于你是否能达成眼前的目标，而在于你能否不断地自我塑造。")
+                        Text("好的社交不在于你是否能达成眼前的目标，而在于你能否不断地自我塑造。")
                             .font(.system(size: 16))
                             .foregroundColor(.primaryText)
                             .lineSpacing(5)

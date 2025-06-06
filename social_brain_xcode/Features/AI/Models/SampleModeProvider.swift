@@ -101,9 +101,9 @@ struct ChangedJobProvider: SampleModeProvider {
     var suggestedQuestions: [SocialBrainMessage] {
         // This will be overridden by forContext
         [
-            SocialBrainMessage(content: "回顾一下我最近聊过的社交话题", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "最近有哪些适合联络的人？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "明天要跟张总一对一面聊，帮我准备一下", isFromUser: false, timestamp: Date())
+            SocialBrainMessage(content: "回顾一下我最近聊过的社交话题", isFromUser: false, timestamp: Date(), promptIdentifier: 1),
+            SocialBrainMessage(content: "最近有哪些适合联络的人？", isFromUser: false, timestamp: Date(), promptIdentifier: 2),
+            SocialBrainMessage(content: "明天要跟张总一对一面聊，帮我准备一下", isFromUser: false, timestamp: Date(), promptIdentifier: 3)
         ]
     }
     
@@ -111,7 +111,7 @@ struct ChangedJobProvider: SampleModeProvider {
     func getSuggestedQuestions(for context: PromptContext) -> [SocialBrainMessage] {
         if let contact = context.contact, let name = contact.name {
             return [
-                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date())
+                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date(), promptIdentifier: 1)
             ]
         }
         return suggestedQuestions
@@ -143,9 +143,9 @@ struct IndieDevProvider: SampleModeProvider {
     var suggestedQuestions: [SocialBrainMessage] {
         // This will be overridden by forContext
         [
-            SocialBrainMessage(content: "回顾一下我最近聊过的社交话题", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "最近有哪些适合联络的人？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "@小蔡 邀请我下周去参加陶艺展，我想给陶艺展的艺术家介绍我的 社交大脑 ，怎么介绍比较好", isFromUser: false, timestamp: Date()),
+            SocialBrainMessage(content: "回顾一下我最近聊过的社交话题", isFromUser: false, timestamp: Date(), promptIdentifier: 1),
+            SocialBrainMessage(content: "最近有哪些适合联络的人？", isFromUser: false, timestamp: Date(), promptIdentifier: 2),
+            SocialBrainMessage(content: "@小蔡 邀请我下周去参加陶艺展，我想给陶艺展的艺术家介绍我的 社交大脑 ，怎么介绍比较好", isFromUser: false, timestamp: Date(), promptIdentifier: 4)
         ]
     }
     
@@ -153,7 +153,7 @@ struct IndieDevProvider: SampleModeProvider {
     func getSuggestedQuestions(for context: PromptContext) -> [SocialBrainMessage] {
         if let contact = context.contact, let name = contact.name {
             return [
-                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date())
+                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date(), promptIdentifier: 1)
             ]
         }
         return suggestedQuestions
@@ -185,9 +185,9 @@ struct ContactProvider: SampleModeProvider {
 
     var suggestedQuestions: [SocialBrainMessage] {
         [
-            SocialBrainMessage(content: "回顾一下我们最近的互动", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "有什么值得关注的话题？", isFromUser: false, timestamp: Date()),
-            SocialBrainMessage(content: "如何更好地维护这段关系？", isFromUser: false, timestamp: Date())
+            SocialBrainMessage(content: "回顾一下我们最近的互动", isFromUser: false, timestamp: Date(), promptIdentifier: 1),
+            SocialBrainMessage(content: "有什么值得关注的话题？", isFromUser: false, timestamp: Date(), promptIdentifier: 2),
+            SocialBrainMessage(content: "如何更好地维护这段关系？", isFromUser: false, timestamp: Date(), promptIdentifier: 3)
         ]
     }
     
@@ -199,7 +199,7 @@ struct ContactProvider: SampleModeProvider {
         if let contact = context.contact, let name = contact.name {
             print("[ContactProvider] Returning contact-specific question for: \(name)")
             return [
-                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date())
+                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date(), promptIdentifier: 1)
             ]
         }
         
@@ -265,7 +265,7 @@ extension SampleModeProvider {
     func getSuggestedQuestions(for context: PromptContext) -> [SocialBrainMessage] {
         if let contact = context.contact, let name = contact.name {
             return [
-                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date())
+                SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date(), promptIdentifier: 1)
             ]
         }
         return suggestedQuestions
