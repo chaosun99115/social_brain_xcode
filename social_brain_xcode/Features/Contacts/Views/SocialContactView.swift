@@ -104,8 +104,8 @@ struct SocialContactView: View {
                 guard let contactId = contact.contactId else {
                     return false
                 }
-                // Show all contacts in non-sample mode
-                return true
+                // Only show type=1 contacts in non-sample mode
+                return contact.type == 1
             }
         }
         

@@ -800,7 +800,7 @@ struct LoadingModal: View {
             VStack(spacing: 0) {
                 // Header with loading message
                 VStack(spacing: 0) {
-                    Text("正在检索你的笔记。。。")
+                    Text("正在生成社交建议。。。")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.primaryText)
                         .multilineTextAlignment(.center)
@@ -817,47 +817,19 @@ struct LoadingModal: View {
                             .font(.system(size: 16))
                             .foregroundColor(.primaryText)
                             .lineSpacing(5)
-                            .padding(.horizontal, 40) // Increased horizontal padding for arrows
+                            .padding(.horizontal, 40)
                             .padding(.top, 24)
                             .padding(.bottom, 20)
                             .multilineTextAlignment(.leading)
                         
-                        // Source attribution with line
-                        VStack(spacing: 8) {
-                            Divider()
-                                .padding(.horizontal, 40)
-                            
-                            Text("————《沟通的方法》")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(.gray)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.bottom, 20)
-                        }
+                        // Source attribution
+                        Text("————《沟通的方法》")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.trailing, 40)
+                            .padding(.bottom, 20)
                     }
-                    
-                    // Side arrows
-                    HStack {
-                        // Left arrow button
-                        Button(action: {}) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.gray)
-                        }
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                        
-                        Spacer()
-                        
-                        // Right arrow button
-                        Button(action: {}) {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.gray)
-                        }
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                    }
-                    .padding(.horizontal, 8)
                 }
                 .frame(maxWidth: .infinity)
                 .background(colorScheme == .dark ? Color(UIColor.systemGray5) : Color(UIColor.systemBackground))

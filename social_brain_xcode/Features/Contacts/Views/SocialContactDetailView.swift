@@ -23,6 +23,7 @@ struct SocialContactDetailView: View {
     @State private var isReviewsExpanded = false
     @State private var showingEditContactSheet = false
     @State private var refreshTrigger = false
+    @State private var showingNoteModal = false
     
     // Add property to determine if this is a contact view
     private var isContactView: Bool {
@@ -143,12 +144,22 @@ struct SocialContactDetailView: View {
             }
             
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    showingEditContactSheet = true
-                }) {
-                    Text("编辑")
-                        .font(.system(size: 17))
-                        .foregroundColor(.green)
+                if activeTab == .notes {
+                    Button(action: {
+                        showingNoteModal = true
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.green)
+                    }
+                } else {
+                    Button(action: {
+                        showingEditContactSheet = true
+                    }) {
+                        Text("编辑")
+                            .font(.system(size: 17))
+                            .foregroundColor(.green)
+                    }
                 }
             }
         }
@@ -168,6 +179,18 @@ struct SocialContactDetailView: View {
         }
         .fullScreenCover(isPresented: $showingEditContactSheet) {
             EditContactView(contact: contact, refreshTrigger: $refreshTrigger)
+        }
+        .sheet(isPresented: $showingNoteModal) {
+            SimpleNoteModalView(
+                initialText: "",
+                subType: .interactionRecord,
+                modalTitle: "记录与\(contact.name ?? "联系人")的互动",
+                onSave: { _ in
+                    loadContactNotes()
+                }
+            )
+            .environmentObject(NoteManager.shared)
+            .environmentObject(appModeManager)
         }
         .onAppear {
             loadContactNotes()
@@ -270,7 +293,7 @@ struct SocialContactDetailView: View {
     // MARK: - Basic Info Section
     private var basicInfoSectionView: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Name Field
+            // Name Field - Always show since it's required
             ContactInfoField(
                 placeholder: "姓名",
                 text: contact.name ?? "",
@@ -282,18 +305,19 @@ struct SocialContactDetailView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
             
-            // Telephone Field
+            // Telephone Field - Show with placeholder if nil
             ContactInfoField(
                 placeholder: "电话",
-                text: contact.tel ?? "",
-                isMultiline: false
+                text: contact.tel ?? "未设置",
+                isMultiline: false,
+                isEmpty: contact.tel == nil
             )
             
             Divider()
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
             
-            // Birthday Field
+            // Birthday Field - Show with placeholder if nil
             VStack(alignment: .leading, spacing: 0) {
                 Text("生日")
                     .foregroundColor(.secondary)
@@ -307,8 +331,8 @@ struct SocialContactDetailView: View {
                             .foregroundColor(.primary)
                             .font(.body)
                     } else {
-                        Text("")
-                            .foregroundColor(.primary)
+                        Text("未设置")
+                            .foregroundColor(.secondary)
                             .font(.body)
                     }
                     Spacer()
@@ -323,28 +347,22 @@ struct SocialContactDetailView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
             
-            // Memo Section - New Implementation
-            if let memo = contact.memo, !memo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("备注")
-                        .foregroundColor(.secondary)
-                        .font(.subheadline)
-                        .padding(.top, 12)
-                        .padding(.leading, 16)
-                    
-                    Text(memo)
-                        .font(.body)
-                        .foregroundColor(.primary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .background(Color(.systemBackground))
+            // Memo Section - Always show but with placeholder if empty
+            VStack(alignment: .leading, spacing: 8) {
+                Text("备注")
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+                    .padding(.top, 12)
+                    .padding(.leading, 16)
                 
-                Divider()
+                Text(contact.memo?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "未设置")
+                    .font(.body)
+                    .foregroundColor(contact.memo?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true ? .secondary : .primary)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .background(Color(.systemBackground))
             
             Spacer()
         }
@@ -760,12 +778,13 @@ struct CheckboxView: View {
     }
 }
 
-// Add new ContactInfoField view for read-only display
+// Update ContactInfoField to handle empty state
 struct ContactInfoField: View {
     let placeholder: String
     let text: String
     let isMultiline: Bool
     let defaultHeight: CGFloat?
+    let isEmpty: Bool
     
     // Constants for sizing
     private let minHeight: CGFloat = 44
@@ -773,45 +792,45 @@ struct ContactInfoField: View {
     private let horizontalPadding: CGFloat = 16
     private let verticalPadding: CGFloat = 12
     
-    init(placeholder: String, text: String, isMultiline: Bool, defaultHeight: CGFloat? = nil) {
+    init(placeholder: String, text: String, isMultiline: Bool, defaultHeight: CGFloat? = nil, isEmpty: Bool = false) {
         self.placeholder = placeholder
         self.text = text
         self.isMultiline = isMultiline
         self.defaultHeight = defaultHeight
+        self.isEmpty = isEmpty
     }
     
     var body: some View {
-        // Only show the field if there's actual content
-        if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            ZStack(alignment: .topLeading) {
-                // Background
-                Color(.systemBackground)
-                    .cornerRadius(0)
+        ZStack(alignment: .topLeading) {
+            // Background
+            Color(.systemBackground)
+                .cornerRadius(0)
+            
+            VStack(alignment: .leading, spacing: 0) {
+                // Fixed label
+                Text(placeholder)
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+                    .padding(.top, verticalPadding)
+                    .padding(.leading, horizontalPadding)
                 
-                VStack(alignment: .leading, spacing: 0) {
-                    // Fixed label
-                    Text(placeholder)
-                        .foregroundColor(.secondary)
-                        .font(.subheadline)
-                        .padding(.top, verticalPadding)
-                        .padding(.leading, horizontalPadding)
-                    
-                    // Text display area
-                    if isMultiline {
-                        Text(text)
-                            .font(.body)
-                            .frame(minHeight: defaultHeight ?? minHeight, maxHeight: maxHeight, alignment: .topLeading)
-                            .padding(.horizontal, horizontalPadding)
-                            .padding(.vertical, 4)
-                            .background(Color.clear)
-                    } else {
-                        Text(text)
-                            .font(.body)
-                            .frame(height: minHeight, alignment: .leading)
-                            .padding(.horizontal, horizontalPadding)
-                            .padding(.vertical, 4)
-                            .background(Color.clear)
-                    }
+                // Text display area
+                if isMultiline {
+                    Text(text)
+                        .font(.body)
+                        .foregroundColor(isEmpty ? .secondary : .primary)
+                        .frame(minHeight: defaultHeight ?? minHeight, maxHeight: maxHeight, alignment: .topLeading)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.vertical, 4)
+                        .background(Color.clear)
+                } else {
+                    Text(text)
+                        .font(.body)
+                        .foregroundColor(isEmpty ? .secondary : .primary)
+                        .frame(height: minHeight, alignment: .leading)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.vertical, 4)
+                        .background(Color.clear)
                 }
             }
         }

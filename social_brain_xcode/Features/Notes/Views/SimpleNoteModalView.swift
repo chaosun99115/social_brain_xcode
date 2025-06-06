@@ -207,7 +207,7 @@ struct SimpleNoteModalView: View {
                                     
                                     // Placeholder text with matching font size
                                     if textState.text.isEmpty {
-                                        Text("现在的想法是...")
+                                        Text("记录社交笔记")
                                             .font(.system(size: 17, weight: .regular))
                                             .foregroundColor(.secondary)
                                             .padding(.horizontal, 16)

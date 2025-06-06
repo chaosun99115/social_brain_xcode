@@ -294,6 +294,7 @@ struct AddContactSheet: View {
             contact.contactId = UUID()
             contact.name = trimmedName
             contact.tel = tel.trimmingCharacters(in: .whitespacesAndNewlines)
+            contact.memo = memo.trimmingCharacters(in: .whitespacesAndNewlines)
             print("[DEBUG] saveContact: Saving birthday: \(String(describing: birthday))")
             contact.birthday = birthday
             contact.createdAt = Date()

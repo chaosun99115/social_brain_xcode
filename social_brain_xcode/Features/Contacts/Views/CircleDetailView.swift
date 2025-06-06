@@ -48,81 +48,30 @@ struct CircleDetailView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // Contacts Section
-                        VStack(alignment: .leading, spacing: 12) {
-                            if filteredContacts.isEmpty {
-                                Text("No contacts in this circle")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondaryText)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding()
-                            } else {
-                                ForEach(Array(filteredContacts.enumerated()), id: \.element.contactId) { idx, contact in
-                                    NavigationLink(destination: SocialContactDetailView(contact: contact)) {
-                                        HStack(spacing: 16) {
-                                            // Contact Info
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(contact.name ?? "")
-                                                    .font(.system(size: 17))
-                                                    .foregroundColor(.primaryText)
-                                            }
-                                            
-                                            Spacer()
-                                            
-                                            Image(systemName: "chevron.right")
-                                                .font(.system(size: 14, weight: .medium))
-                                                .foregroundColor(.secondaryText)
-                                        }
-                                        .contentShape(Rectangle())  // Makes entire row tappable
-                                        .padding(.vertical, 4)
-                                        .padding(.horizontal, 20)
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                    
-                                    Divider()
-                                        .padding(.leading, 20)
-                                        .padding(.vertical, 1)
-                                }
-                                .background(Color.cardBackground)
-                                .cornerRadius(12)
-                                .padding(.horizontal, 16)
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .scaleEffect(1.5)
+                } else if filteredContacts.isEmpty {
+                    emptyContactsView
+                } else {
+                    List {
+                        ForEach(filteredContacts, id: \.contactId) { contact in
+                            NavigationLink(destination: SocialContactDetailView(contact: contact)) {
+                                ContactCardView(contact: contact)
+                                    .contentShape(Rectangle())
                             }
+                            .buttonStyle(PlainButtonStyle())
+                            .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                            .listRowSeparator(.visible)
+                            .listRowBackground(Color.cardBackground)
                         }
                     }
-                    .padding(.vertical)
-                    Spacer().frame(height: 40)
-                }
-                .background(Color.primaryBackground)
-                
-                // Fixed bottom toolbar that respects safe areas
-                VStack(spacing: 0) {
-                    Divider()
-                    
-                    // Bottom toolbar content
-                    HStack(spacing: 0) {
-                        // AI Insights button
-                        Button(action: {
-                            showingSocialBrain = true
-                        }) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "sparkles")
-                                    .font(.system(size: 20))
-                                Text("关系备忘录")
-                                    .font(.system(size: 16))
-                            }
-                            .foregroundColor(.accentColor)
-                            .frame(maxWidth: .infinity)
-                        }
+                    .listStyle(.plain)
+                    .safeAreaInset(edge: .bottom) {
+                        Color.clear.frame(height: getTabBarHeight())
                     }
-                    .frame(height: 44)
-                    .padding(.bottom, safeAreaPadding)
                 }
-                .background(
-                    VisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
-                        .ignoresSafeArea()
-                )
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -134,7 +83,7 @@ struct CircleDetailView: View {
                 }) {
                     Text("编辑")
                         .font(.system(size: 17))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(.green)
                 }
             }
         }
@@ -162,14 +111,28 @@ struct CircleDetailView: View {
             await loadCircleData()
         }
         .onAppear {
-            // Hide the tab bar
             hideTabBar(true)
         }
         .onDisappear {
-            // Show the tab bar again when leaving this view
             hideTabBar(false)
         }
-        .edgesIgnoringSafeArea(.bottom)
+    }
+    
+    private var emptyContactsView: some View {
+        VStack(spacing: 32) {
+            Spacer()
+            VStack(spacing: 12) {
+                Text("这个圈子还没有熟人")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                Text("点击编辑按钮添加熟人")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            Spacer()
+        }
     }
     
     private func loadCircleData() async {
@@ -200,33 +163,18 @@ struct CircleDetailView: View {
         return formatter.localizedString(for: date, relativeTo: Date())
     }
     
-    // Dynamic safe area padding for different devices
-    private var safeAreaPadding: CGFloat {
-        // Get the bottom safe area inset
+    // Add helper function to get tab bar height
+    private func getTabBarHeight() -> CGFloat {
+        let standardTabBarHeight: CGFloat = 49
         let keyWindow = UIApplication.shared.connectedScenes
             .filter { $0.activationState == .foregroundActive }
             .compactMap { $0 as? UIWindowScene }
             .first?.windows
             .filter { $0.isKeyWindow }
             .first
-            
+        
         let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
-        
-        // Add padding based on whether device has home indicator
-        return bottomInset > 0 ? bottomInset + 8 : 8
-    }
-    
-    // UIViewRepresentable wrapper for UIVisualEffectView to use blur effects
-    struct VisualEffectView: UIViewRepresentable {
-        var effect: UIVisualEffect?
-        
-        func makeUIView(context: UIViewRepresentableContext<Self>) -> UIVisualEffectView {
-            UIVisualEffectView()
-        }
-        
-        func updateUIView(_ uiView: UIVisualEffectView, context: UIViewRepresentableContext<Self>) {
-            uiView.effect = effect
-        }
+        return standardTabBarHeight + bottomInset
     }
     
     // Function to hide/show the tab bar
@@ -241,7 +189,6 @@ struct CircleDetailView: View {
         
         if let keyWindow = keyWindow {
             keyWindow.rootViewController?.children.forEach { child in
-                // Find the UITabBarController and hide its tabBar
                 if let tabBarController = child as? UITabBarController {
                     tabBarController.tabBar.isHidden = hidden
                 }
