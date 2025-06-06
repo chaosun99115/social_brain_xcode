@@ -99,13 +99,13 @@ struct SocialContactView: View {
         if appModeManager.isSampleMode {
             filtered = contacts
         } else {
-            // Filter contacts based on tab selection and note type
+            // Filter contacts based on tab selection and contact type
             filtered = contacts.filter { contact in
                 guard let contactId = contact.contactId else {
                     return false
                 }
-                let notes = ContactManager.shared.getNotesForContact(contactId: contactId)
-                return notes.contains(where: { $0.type != 0 })
+                // Show all contacts in non-sample mode
+                return true
             }
         }
         

@@ -231,7 +231,7 @@ struct AddContactSheet: View {
             }
             .sheet(isPresented: $showingBirthdayPicker) {
                 NavigationView {
-                    Form {
+                    VStack {
                         DatePicker(
                             "生日",
                             selection: $tempBirthday,
@@ -239,9 +239,13 @@ struct AddContactSheet: View {
                         )
                         .datePickerStyle(.wheel)
                         .labelsHidden()
+                        .frame(maxHeight: 200)
+                        .padding(.horizontal)
                         .onChange(of: tempBirthday) { newValue in
                             print("Temp birthday changed to: \(newValue)")
                         }
+                        
+                        Spacer()
                     }
                     .navigationTitle("生日")
                     .navigationBarTitleDisplayMode(.inline)
@@ -265,6 +269,7 @@ struct AddContactSheet: View {
                     }
                 }
                 .presentationDetents([.height(280)])
+                .interactiveDismissDisabled()
             }
         }
         .accentColor(.green)
@@ -272,87 +277,60 @@ struct AddContactSheet: View {
     
     private func saveContact() {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return }
+        guard !trimmedName.isEmpty else { 
+            print("[DEBUG] saveContact: Name is empty, aborting save")
+            return 
+        }
         
         do {
+            print("[DEBUG] saveContact: Starting to save new contact with name: \(trimmedName)")
             // Create new contact
             let contact = Contact(context: viewContext)
             contact.contactId = UUID()
             contact.name = trimmedName
             contact.tel = tel.trimmingCharacters(in: .whitespacesAndNewlines)
-            print("Saving birthday: \(String(describing: birthday))")
+            print("[DEBUG] saveContact: Saving birthday: \(String(describing: birthday))")
             contact.birthday = birthday
             contact.createdAt = Date()
             contact.updatedAt = Date()
             
-            // Create initial note for memo if not empty
-            if !memo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                let note = Note(context: viewContext)
-                note.noteId = UUID()
-                note.content = memo
-                note.type = 2 // Memo type
-                note.createdAt = Date()
-                note.updatedAt = Date()
-                
-                // Create the relationship
-                let relationship = NoteContactRelationship(context: viewContext)
-                relationship.relationshipId = UUID()
-                relationship.createdAt = Date()
-                relationship.notes = note
-                relationship.contacts = contact
-            }
-            
             try viewContext.save()
+            print("[DEBUG] saveContact: Successfully saved new contact with ID: \(String(describing: contact.contactId))")
             refreshTrigger.toggle()
             dismiss()
         } catch {
+            print("[DEBUG] saveContact: Error saving contact: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
             showingError = true
         }
     }
     
     private func updateContact() {
-        guard let contact = contact else { return }
+        guard let contact = contact else { 
+            print("[DEBUG] updateContact: No contact provided for update")
+            return 
+        }
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return }
+        guard !trimmedName.isEmpty else { 
+            print("[DEBUG] updateContact: Name is empty, aborting update")
+            return 
+        }
         
         do {
+            print("[DEBUG] updateContact: Starting to update contact with ID: \(String(describing: contact.contactId))")
             // Update contact
             contact.name = trimmedName
             contact.tel = tel.trimmingCharacters(in: .whitespacesAndNewlines)
-            print("Updating birthday: \(String(describing: birthday))")
+            print("[DEBUG] updateContact: Updating birthday: \(String(describing: birthday))")
             contact.birthday = birthday
             contact.updatedAt = Date()
             
-            // Update or create memo note
-            if let contactId = contact.contactId {
-                let notes = ContactManager.shared.getNotesForContact(contactId: contactId)
-                if let memoNote = notes.first(where: { $0.type == 2 }) {
-                    // Update existing memo
-                    memoNote.content = memo
-                    memoNote.updatedAt = Date()
-                } else if !memo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    // Create new memo note
-                    let note = Note(context: viewContext)
-                    note.noteId = UUID()
-                    note.content = memo
-                    note.type = 2 // Memo type
-                    note.createdAt = Date()
-                    note.updatedAt = Date()
-                    
-                    // Create the relationship
-                    let relationship = NoteContactRelationship(context: viewContext)
-                    relationship.relationshipId = UUID()
-                    relationship.createdAt = Date()
-                    relationship.notes = note
-                    relationship.contacts = contact
-                }
-            }
-            
             try viewContext.save()
+            print("[DEBUG] updateContact: Successfully updated contact with ID: \(String(describing: contact.contactId))")
             refreshTrigger.toggle()
             dismiss()
         } catch {
+            print("[DEBUG] updateContact: Error updating contact: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
             showingError = true
         }
