@@ -78,7 +78,12 @@ struct AddContactSheet: View {
     @FocusState private var focusedField: Field?
     
     // Add state for temporary date selection
-    @State private var tempBirthday: Date = Date()
+    @State private var tempBirthday: Date = {
+        let calendar = Calendar.current
+        let today = Date()
+        let startOfToday = calendar.startOfDay(for: today)
+        return calendar.date(byAdding: .year, value: -30, to: startOfToday) ?? startOfToday
+    }()
     
     // Define focusable fields
     private enum Field {
@@ -102,14 +107,8 @@ struct AddContactSheet: View {
         if let contact = contact {
             self._name = State(initialValue: contact.name ?? "")
             self._tel = State(initialValue: contact.tel ?? "")
+            self._memo = State(initialValue: contact.memo ?? "")
             self._birthday = State(initialValue: contact.birthday)
-            // Find memo note (type=2) for this contact
-            if let contactId = contact.contactId {
-                let notes = ContactManager.shared.getNotesForContact(contactId: contactId)
-                if let memoNote = notes.first(where: { $0.type == 2 }) {
-                    self._memo = State(initialValue: memoNote.content ?? "")
-                }
-            }
         }
         
         // Configure navigation bar appearance
@@ -128,9 +127,6 @@ struct AddContactSheet: View {
             ZStack {
                 Color(.systemGroupedBackground)
                     .ignoresSafeArea()
-                    .onTapGesture {
-                        focusedField = nil
-                    }
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -154,9 +150,11 @@ struct AddContactSheet: View {
                         
                         // Birthday Field
                         Button(action: {
-                            print("Current birthday value: \(String(describing: birthday))")
-                            // Initialize tempBirthday with current birthday or today
-                            tempBirthday = birthday ?? Date()
+                            focusedField = nil // Dismiss keyboard before showing date picker
+                            let calendar = Calendar.current
+                            let today = calendar.startOfDay(for: Date())
+                            let thirtyYearsAgo = calendar.date(byAdding: .year, value: -30, to: today) ?? today
+                            tempBirthday = birthday ?? thirtyYearsAgo
                             showingBirthdayPicker = true
                         }) {
                             VStack(alignment: .leading, spacing: 0) {
@@ -192,7 +190,7 @@ struct AddContactSheet: View {
                             placeholder: "备注",
                             text: $memo,
                             isMultiline: true,
-                            defaultHeight: 88 // Approximately 3 lines height
+                            defaultHeight: 88
                         )
                         .focused($focusedField, equals: .memo)
                         
@@ -207,6 +205,7 @@ struct AddContactSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("取消") {
+                        focusedField = nil // Dismiss keyboard before dismissing sheet
                         dismiss()
                     }
                     .foregroundColor(.green)
@@ -214,6 +213,7 @@ struct AddContactSheet: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("保存") {
+                        focusedField = nil // Dismiss keyboard before saving
                         if isEditMode {
                             updateContact()
                         } else {
@@ -231,18 +231,23 @@ struct AddContactSheet: View {
             }
             .sheet(isPresented: $showingBirthdayPicker) {
                 NavigationView {
-                    VStack {
+                    VStack(spacing: 0) {
+                        let calendar = Calendar.current
+                        let today = calendar.startOfDay(for: Date())
                         DatePicker(
                             "生日",
                             selection: $tempBirthday,
-                            displayedComponents: .date
+                            in: ...today,
+                            displayedComponents: [.date]
                         )
                         .datePickerStyle(.wheel)
                         .labelsHidden()
                         .frame(maxHeight: 200)
                         .padding(.horizontal)
                         .onChange(of: tempBirthday) { newValue in
-                            print("Temp birthday changed to: \(newValue)")
+                            if newValue > today {
+                                tempBirthday = today
+                            }
                         }
                         
                         Spacer()
@@ -252,7 +257,6 @@ struct AddContactSheet: View {
                     .toolbar {
                         ToolbarItem(placement: .navigationBarLeading) {
                             Button("清除") {
-                                print("Clearing birthday")
                                 birthday = nil
                                 showingBirthdayPicker = false
                             }
@@ -260,7 +264,6 @@ struct AddContactSheet: View {
                         }
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button("完成") {
-                                print("Done button tapped, temp birthday: \(tempBirthday)")
                                 birthday = tempBirthday
                                 showingBirthdayPicker = false
                             }
@@ -269,7 +272,9 @@ struct AddContactSheet: View {
                     }
                 }
                 .presentationDetents([.height(280)])
+                .presentationDragIndicator(.visible)
                 .interactiveDismissDisabled()
+                .background(Color(.systemGroupedBackground))
             }
         }
         .accentColor(.green)
@@ -321,6 +326,7 @@ struct AddContactSheet: View {
             // Update contact
             contact.name = trimmedName
             contact.tel = tel.trimmingCharacters(in: .whitespacesAndNewlines)
+            contact.memo = memo.trimmingCharacters(in: .whitespacesAndNewlines)  // Update memo directly
             print("[DEBUG] updateContact: Updating birthday: \(String(describing: birthday))")
             contact.birthday = birthday
             contact.updatedAt = Date()

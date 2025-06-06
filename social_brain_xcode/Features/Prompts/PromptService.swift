@@ -12,15 +12,12 @@ class PromptService {
     /// Clears all existing prompts from the database
     /// - Parameter context: The managed object context to use
     private func clearAllPrompts(in context: NSManagedObjectContext) {
-        logger.debug("Clearing all existing prompts from database")
-        
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Prompt.fetchRequest()
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
         
         do {
             try context.execute(deleteRequest)
             try context.save()
-            logger.debug("Successfully cleared all prompts from database")
         } catch {
             logger.error("Error clearing prompts: \(error.localizedDescription)")
         }
@@ -29,7 +26,6 @@ class PromptService {
     /// Re-ingests all default prompts, clearing existing ones first
     /// - Parameter context: The managed object context to use
     func reingestDefaultPrompts(in context: NSManagedObjectContext) {
-        logger.debug("Starting re-ingestion of default prompts")
         clearAllPrompts(in: context)
         ingestDefaultPrompts(in: context)
     }
@@ -37,21 +33,15 @@ class PromptService {
     /// Ingests default prompts into Core Data
     /// - Parameter context: The managed object context to use
     func ingestDefaultPrompts(in context: NSManagedObjectContext) {
-        logger.debug("Starting ingestion of default prompts")
-        
         // Track created prompts to avoid duplicates
         var createdPrompts: [(identifier: Int, name: String)] = []
         
         do {
             for (index, promptData) in DefaultPrompts.prompts.enumerated() {
-                logger.debug("\nProcessing prompt \(index + 1): \(promptData.name)")
-                logger.debug("Identifiers to create: \(promptData.identifiers)")
-                
                 // Create a prompt entry for each identifier
                 for identifier in promptData.identifiers {
                     // Check if we already created this identifier for this prompt
                     if createdPrompts.contains(where: { $0.identifier == identifier && $0.name == promptData.name }) {
-                        logger.debug("⚠️ Skipping duplicate identifier \(identifier) for prompt: \(promptData.name)")
                         continue
                     }
                     
@@ -70,32 +60,15 @@ class PromptService {
                     
                     // Track created prompt
                     createdPrompts.append((identifier: identifier, name: promptData.name))
-                    
-                    logger.debug("✅ Created prompt with identifier \(identifier) for: \(promptData.name) (order: \(promptData.order))")
                 }
-                
-                logger.debug("Completed processing prompt: \(promptData.name)")
             }
             
             // Save context
             try context.save()
-            logger.debug("Successfully saved all prompts to Core Data")
             
             // Verify ingestion
             let verifyRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
             let results = try context.fetch(verifyRequest)
-            logger.debug("Verification after ingestion - Found \(results.count) total prompts")
-            for prompt in results {
-                logger.debug("""
-                    Prompt details:
-                    - Name: \(prompt.name ?? "nil")
-                    - Display: \(prompt.display ?? "nil")
-                    - Type: \(prompt.type)
-                    - Order: \(prompt.order)
-                    - Identifier: \(prompt.identifier)
-                    """)
-            }
-            
         } catch {
             logger.error("Error ingesting default prompts: \(error.localizedDescription)")
         }
@@ -105,13 +78,10 @@ class PromptService {
     /// - Parameter context: The managed object context to use
     /// - Returns: Boolean indicating if ingestion is needed
     func needsPromptIngestion(in context: NSManagedObjectContext) -> Bool {
-        logger.debug("Checking if prompt ingestion is needed")
-        
         let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
         
         do {
             let count = try context.count(for: fetchRequest)
-            logger.debug("Found \(count) existing prompts")
             return count == 0
         } catch {
             logger.error("Error checking prompt ingestion status: \(error.localizedDescription)")
@@ -121,14 +91,11 @@ class PromptService {
     
     /// Debug function to print all prompts in the database
     func debugPrintAllPrompts(in context: NSManagedObjectContext) {
-        logger.debug("Debug: Printing all prompts in database")
-        
         let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Prompt.name, ascending: true)]
         
         do {
             let prompts = try context.fetch(fetchRequest)
-            logger.debug("Found \(prompts.count) prompts in database")
             
             for (index, prompt) in prompts.enumerated() {
                 logger.debug("""

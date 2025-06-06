@@ -64,6 +64,11 @@ class PersistenceController: ObservableObject {
     @Published private(set) var isCloudKitEnabled = false
 
     init(inMemory: Bool = false) {
+        // Disable CoreData debug logging
+        UserDefaults.standard.set(false, forKey: "com.apple.CoreData.Logging.stderr")
+        UserDefaults.standard.set(false, forKey: "com.apple.CoreData.SQLDebug")
+        UserDefaults.standard.set(false, forKey: "com.apple.CoreData.SQLiteIntegrityCheck")
+        
         container = NSPersistentCloudKitContainer(name: "social_brain_xcode")
         
         if inMemory {

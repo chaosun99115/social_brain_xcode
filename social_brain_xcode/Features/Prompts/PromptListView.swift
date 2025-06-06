@@ -65,7 +65,6 @@ struct PromptListView: View {
         }
         .onAppear {
             logger.debug("PromptListView appeared with \(prompts.count) prompts for mode \(mode.rawValue)")
-            PromptService.shared.debugPrintAllPrompts(in: viewContext)
         }
     }
 }

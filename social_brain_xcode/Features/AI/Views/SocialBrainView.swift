@@ -1089,23 +1089,21 @@ struct GrowingTextView: UIViewRepresentable {
         textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         
         // Configure input accessory view with proper height and clear background
-        let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 1))
+        let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0))
         accessoryView.backgroundColor = .clear
         textView.inputAccessoryView = accessoryView
         
-        // Disable the system input assistant view and other smart features
+        // Disable the system input assistant view completely
+        textView.inputAssistantItem.leadingBarButtonGroups = []
+        textView.inputAssistantItem.trailingBarButtonGroups = []
         textView.autocorrectionType = .no
         textView.smartDashesType = .no
         textView.smartQuotesType = .no
         textView.smartInsertDeleteType = .no
         
-        // Disable the input assistant bar
-        textView.inputAssistantItem.leadingBarButtonGroups = []
-        textView.inputAssistantItem.trailingBarButtonGroups = []
-        
         // Set proper content insets to avoid overlap with keyboard
-        textView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
-        textView.scrollIndicatorInsets = textView.contentInset
+        textView.contentInset = .zero
+        textView.scrollIndicatorInsets = .zero
         
         return textView
     }

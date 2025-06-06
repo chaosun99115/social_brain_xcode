@@ -8,7 +8,7 @@ struct SocialContactDetailView: View {
     @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var contactManager = ContactManager.shared
     @StateObject private var insightManager = ContactInsightManager.shared
-    @State private var activeTab: TabType = .notes
+    @State private var activeTab: TabType = .basicInfo
     @State private var notes: [Note] = []
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
@@ -22,6 +22,7 @@ struct SocialContactDetailView: View {
     @State private var isUpdatesExpanded = false
     @State private var isReviewsExpanded = false
     @State private var showingEditContactSheet = false
+    @State private var refreshTrigger = false
     
     // Add property to determine if this is a contact view
     private var isContactView: Bool {
@@ -39,13 +40,13 @@ struct SocialContactDetailView: View {
     }
     
     enum TabType: String, CaseIterable {
-        case summary = "关系备忘录"
-        case notes = "关联笔记"
+        case basicInfo = "基本信息"
+        case notes = "相关笔记"
         
         var localizedName: String {
             switch self {
-            case .summary: return "关系备忘录"
-            case .notes: return "关联笔记"
+            case .basicInfo: return "基本信息"
+            case .notes: return "相关笔记"
             }
         }
     }
@@ -56,47 +57,45 @@ struct SocialContactDetailView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Only show tabs if not a contact view
-                if !isContactView {
-                    // Tabs
-                    HStack(spacing: 0) {
-                        ForEach(TabType.allCases, id: \.self) { tab in
-                            Button(action: {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    activeTab = tab
-                                }
-                            }) {
-                                VStack(spacing: 8) {
-                                    Text(tab.localizedName)
-                                        .font(.system(size: 17, weight: .medium))
-                                        .foregroundColor(activeTab == tab ? .primaryText : .secondaryText)
-                                    
-                                    // Active indicator
-                                    Rectangle()
-                                        .fill(activeTab == tab ? Color.primaryText : Color.clear)
-                                        .frame(height: 2)
-                                }
+                // Tabs
+                HStack(spacing: 0) {
+                    ForEach(TabType.allCases, id: \.self) { tab in
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                activeTab = tab
                             }
-                            .frame(maxWidth: .infinity)
+                        }) {
+                            VStack(spacing: 8) {
+                                Text(tab.localizedName)
+                                    .font(.system(size: 17, weight: .medium))
+                                    .foregroundColor(activeTab == tab ? .primaryText : .secondaryText)
+                                
+                                // Active indicator
+                                Rectangle()
+                                    .fill(activeTab == tab ? Color.primaryText : Color.clear)
+                                    .frame(height: 2)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding(.top, 8)
+                .padding(.bottom, 0)
+                
+                // Content based on active tab
+                Group {
+                    switch activeTab {
+                    case .basicInfo:
+                        ScrollView {
+                            basicInfoSectionView
+                        }
+                    case .notes:
+                        ScrollView {
+                            notesSectionView
                         }
                     }
-                    .padding(.top, 8)
-                    .padding(.bottom, 16)
-                    
-                    // Divider under tabs
-                    Divider()
                 }
-                
-                // Content based on active tab or always show notes for contacts
-                ScrollView {
-                    if isContactView {
-                        notesSectionView
-                    } else if activeTab == .summary {
-                        summarySectionView
-                    } else {
-                        notesSectionView
-                    }
-                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
                 // Fixed bottom toolbar that respects safe areas
                 VStack(spacing: 0) {
@@ -117,7 +116,7 @@ struct SocialContactDetailView: View {
                         }
                     }
                     .frame(height: 44)
-                    .padding(.bottom, safeAreaInset) // Only add safe area inset, no extra padding
+                    .padding(.bottom, safeAreaInset)
                 }
                 .background(
                     VisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
@@ -126,7 +125,7 @@ struct SocialContactDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle("相关笔记")
+        .navigationTitle(contact.name ?? "联系人")
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -167,8 +166,8 @@ struct SocialContactDetailView: View {
                 isPresented: $showingEditCircleSheet
             )
         }
-        .sheet(isPresented: $showingEditContactSheet) {
-            AddContactSheet(refreshTrigger: .constant(false), contact: contact)
+        .fullScreenCover(isPresented: $showingEditContactSheet) {
+            EditContactView(contact: contact, refreshTrigger: $refreshTrigger)
         }
         .onAppear {
             loadContactNotes()
@@ -179,6 +178,11 @@ struct SocialContactDetailView: View {
         .onDisappear {
             // Show the tab bar again when leaving this view
             hideTabBar(false)
+        }
+        .onChange(of: refreshTrigger) { _ in
+            // Reload data when contact is updated
+            loadContactNotes()
+            loadContactInsights()
         }
         .edgesIgnoringSafeArea(.bottom)
     }
@@ -235,25 +239,15 @@ struct SocialContactDetailView: View {
         
         // Load notes using ContactManager
         DispatchQueue.main.async {
-            var allNotes = self.contactManager.getNotesForContact(contactId: contactId)
+            let allNotes = self.contactManager.getNotesForContact(contactId: contactId)
             
-            // Sort notes: memo (type=2) first, then others by date descending
-            allNotes.sort { (note1, note2) -> Bool in
-                // If note1 is memo (type=2), it should come first
-                if note1.type == 2 && note2.type != 2 {
-                    return true
-                }
-                // If note2 is memo (type=2), it should come first
-                if note1.type != 2 && note2.type == 2 {
-                    return false
-                }
-                // For non-memo notes, sort by date descending
+            // Sort notes by date descending
+            self.notes = allNotes.sorted { (note1, note2) -> Bool in
                 let date1 = note1.createdAt ?? Date.distantPast
                 let date2 = note2.createdAt ?? Date.distantPast
                 return date1 > date2
             }
             
-            self.notes = allNotes
             self.isLoading = false
         }
     }
@@ -273,151 +267,97 @@ struct SocialContactDetailView: View {
         isLoadingInsights = false
     }
     
-    // MARK: - Summary Section
-    private var summarySectionView: some View {
-        VStack(spacing: 0) {
-            // --- Related Circles Section ---
-            if let contactId = contact.contactId {
-                let relatedCircles = CircleManager.shared.getCirclesForContact(contactId: contactId)
-                if !relatedCircles.isEmpty {
-                    SummarySectionHeader(title: "所属圈子")
-                    HStack(alignment: .center, spacing: 0) {
-                        HStack(spacing: 8) {
-                            ForEach(relatedCircles, id: \ .circleId) { circle in
-                                NavigationLink(destination: CircleDetailView(circle: circle)) {
-                                    Text(circle.name ?? "圈子")
-                                        .font(.system(size: 15, weight: .medium))
-                                        .foregroundColor(Color.green)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Color.green.opacity(0.12))
-                                        .cornerRadius(8)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                        Spacer()
-                        Button(action: {
-                            showingEditCircleSheet = true
-                        }) {
-                            Image(systemName: "square.and.pencil")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(Color.green)
-                                .padding(8)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemBackground))
-                            .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
-                }
-            }
-            if isLoadingInsights {
-                ProgressView().padding()
-            } else {
-                // 最新近况
-                let updates = contactInsights.filter { $0.category?.lowercased() == "update" }
-                if !updates.isEmpty {
-                    SummarySectionHeader(title: "最新近况")
-                    SectionContentWrapper {
-                        VStack(alignment: .leading, spacing: 0) {
-                            let displayUpdates = isUpdatesExpanded ? updates : Array(updates.prefix(3))
-                            ForEach(Array(displayUpdates.enumerated()), id: \.element.insightId) { idx, insight in
-                                ContactDetailInsightRow(
-                                    insight: insight,
-                                    isLast: idx == displayUpdates.count - 1,
-                                    onTap: {
-                                        selectedInsight = insight
-                                        if let insightId = insight.insightId {
-                                            selectedContacts = Set(insightManager.getContactsForInsight(insightId: insightId).compactMap { $0.contactId })
-                                        }
-                                        showingEditSheet = true
-                                    }
-                                )
-                            }
-                            
-                            if updates.count > 3 {
-                                Divider()
-                                    .padding(.leading, 22)
-                                    .padding(.vertical, 8)
-                                
-                                Button(action: {
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        isUpdatesExpanded.toggle()
-                                    }
-                                }) {
-                                    HStack {
-                                        Text(isUpdatesExpanded ? "收起" : "展开更多")
-                                            .font(.system(size: 15))
-                                            .foregroundColor(.primaryAction)
-                                        Image(systemName: isUpdatesExpanded ? "chevron.up" : "chevron.down")
-                                            .font(.system(size: 13))
-                                            .foregroundColor(.primaryAction)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding(.vertical, 12)
-                                }
-                            }
-                        }
-                    }
-                }
+    // MARK: - Basic Info Section
+    private var basicInfoSectionView: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Name Field
+            ContactInfoField(
+                placeholder: "姓名",
+                text: contact.name ?? "",
+                isMultiline: false
+            )
+            .padding(.top, 24)
+            
+            Divider()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            
+            // Telephone Field
+            ContactInfoField(
+                placeholder: "电话",
+                text: contact.tel ?? "",
+                isMultiline: false
+            )
+            
+            Divider()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            
+            // Birthday Field
+            VStack(alignment: .leading, spacing: 0) {
+                Text("生日")
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+                    .padding(.top, 12)
+                    .padding(.leading, 16)
                 
-                // 关系回顾
-                let reviews = contactInsights.filter { $0.category?.lowercased() == "review" }
-                if !reviews.isEmpty {
-                    SummarySectionHeader(title: "关系回顾")
-                    SectionContentWrapper {
-                        VStack(alignment: .leading, spacing: 0) {
-                            let displayReviews = isReviewsExpanded ? reviews : Array(reviews.prefix(3))
-                            ForEach(Array(displayReviews.enumerated()), id: \.element.insightId) { idx, insight in
-                                ContactDetailInsightRow(
-                                    insight: insight,
-                                    isLast: idx == displayReviews.count - 1,
-                                    onTap: {
-                                        selectedInsight = insight
-                                        if let insightId = insight.insightId {
-                                            selectedContacts = Set(insightManager.getContactsForInsight(insightId: insightId).compactMap { $0.contactId })
-                                        }
-                                        showingEditSheet = true
-                                    }
-                                )
-                            }
-                            
-                            if reviews.count > 3 {
-                                Divider()
-                                    .padding(.leading, 22)
-                                    .padding(.vertical, 8)
-                                
-                                Button(action: {
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        isReviewsExpanded.toggle()
-                                    }
-                                }) {
-                                    HStack {
-                                        Text(isReviewsExpanded ? "收起" : "展开更多")
-                                            .font(.system(size: 15))
-                                            .foregroundColor(.primaryAction)
-                                        Image(systemName: isReviewsExpanded ? "chevron.up" : "chevron.down")
-                                            .font(.system(size: 13))
-                                            .foregroundColor(.primaryAction)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding(.vertical, 12)
-                                }
-                            }
-                        }
+                HStack {
+                    if let birthday = contact.birthday {
+                        Text(dateFormatter.string(from: birthday))
+                            .foregroundColor(.primary)
+                            .font(.body)
+                    } else {
+                        Text("")
+                            .foregroundColor(.primary)
+                            .font(.body)
                     }
+                    Spacer()
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(height: 44)
             }
-            Spacer().frame(height: 40)
+            .background(Color(.systemBackground))
+            
+            Divider()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            
+            // Memo Section - New Implementation
+            if let memo = contact.memo, !memo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("备注")
+                        .foregroundColor(.secondary)
+                        .font(.subheadline)
+                        .padding(.top, 12)
+                        .padding(.leading, 16)
+                    
+                    Text(memo)
+                        .font(.body)
+                        .foregroundColor(.primary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .background(Color(.systemBackground))
+                
+                Divider()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+            }
+            
+            Spacer()
         }
-        .padding(.top, 16)
+        .padding(.horizontal, 0)
     }
+    
+    // Add date formatter for birthday display
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter
+    }()
     
     // MARK: - Notes Section
     private var notesSectionView: some View {
@@ -438,10 +378,16 @@ struct SocialContactDetailView: View {
                 }
                 .padding()
             } else if notes.isEmpty {
-                Text("No notes for this contact")
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .padding()
+                VStack(spacing: 12) {
+                    Spacer()
+                    Text("还没有关于\(contact.name ?? "该联系人")的笔记")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ForEach(notes, id: \.noteId) { note in
                     NavigationLink(destination: SocialNoteDetailView(note: note)) {
@@ -811,5 +757,63 @@ struct CheckboxView: View {
                 .font(.system(size: 22))
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// Add new ContactInfoField view for read-only display
+struct ContactInfoField: View {
+    let placeholder: String
+    let text: String
+    let isMultiline: Bool
+    let defaultHeight: CGFloat?
+    
+    // Constants for sizing
+    private let minHeight: CGFloat = 44
+    private let maxHeight: CGFloat = 200
+    private let horizontalPadding: CGFloat = 16
+    private let verticalPadding: CGFloat = 12
+    
+    init(placeholder: String, text: String, isMultiline: Bool, defaultHeight: CGFloat? = nil) {
+        self.placeholder = placeholder
+        self.text = text
+        self.isMultiline = isMultiline
+        self.defaultHeight = defaultHeight
+    }
+    
+    var body: some View {
+        // Only show the field if there's actual content
+        if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            ZStack(alignment: .topLeading) {
+                // Background
+                Color(.systemBackground)
+                    .cornerRadius(0)
+                
+                VStack(alignment: .leading, spacing: 0) {
+                    // Fixed label
+                    Text(placeholder)
+                        .foregroundColor(.secondary)
+                        .font(.subheadline)
+                        .padding(.top, verticalPadding)
+                        .padding(.leading, horizontalPadding)
+                    
+                    // Text display area
+                    if isMultiline {
+                        Text(text)
+                            .font(.body)
+                            .frame(minHeight: defaultHeight ?? minHeight, maxHeight: maxHeight, alignment: .topLeading)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.vertical, 4)
+                            .background(Color.clear)
+                    } else {
+                        Text(text)
+                            .font(.body)
+                            .frame(height: minHeight, alignment: .leading)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.vertical, 4)
+                            .background(Color.clear)
+                    }
+                }
+            }
+        }
     }
 }
