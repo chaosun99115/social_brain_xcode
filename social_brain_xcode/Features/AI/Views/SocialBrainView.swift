@@ -48,6 +48,9 @@ struct SocialBrainView: View {
     // Add new state for input accessory view
     @State private var inputAccessoryHeight: CGFloat = 0
     
+    // Add PromptConfigurationManager
+    private let promptManager = PromptConfigurationManager.shared
+    
     // Add helper method to get provider
     private func getSampleProvider() -> SampleModeProvider? {
         guard appModeManager.isSampleMode,
@@ -57,19 +60,57 @@ struct SocialBrainView: View {
     
     // System prompt generation
     private func generateSystemPrompt() async throws {
+        print("[SocialBrainView] Generating system prompt")
+        print("[SocialBrainView] Current mode - isSampleMode: \(appModeManager.isSampleMode), sampleModeType: \(appModeManager.sampleModeType ?? "nil")")
+        
         // First check if we're in sample mode
-        if let sampleProvider = getSampleProvider() {
-            // Use the new prompt generation system with notes
-            let context = PromptContext(
-                mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
-                question: "",  // Initial prompt doesn't have a specific question
-                contact: contextContact
+        if appModeManager.isSampleMode {
+            print("[SocialBrainView] In sample mode, fetching prompts")
+            // Get prompts based on sample mode
+            let context = try await CoreDataManager.shared.viewContext
+            
+            // Debug: Check CoreData directly for prompts 111 and 121
+            let fetchRequest111: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+            fetchRequest111.predicate = NSPredicate(format: "identifier == %d", 111)
+            let results111 = try context.fetch(fetchRequest111)
+            print("[SocialBrainView] Direct CoreData fetch for identifier 111: \(results111.count) results")
+            
+            let fetchRequest121: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+            fetchRequest121.predicate = NSPredicate(format: "identifier == %d", 121)
+            let results121 = try context.fetch(fetchRequest121)
+            print("[SocialBrainView] Direct CoreData fetch for identifier 121: \(results121.count) results")
+            
+            let prompts = promptManager.getPromptsForMode(
+                .sample,
+                sampleMode: appModeManager.sampleModeType,
+                context: context
             )
-            systemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
+            print("[SocialBrainView] Retrieved \(prompts.count) prompts for sample mode")
+            
+            if let firstPrompt = prompts.first {
+                print("[SocialBrainView] Using first prompt: id=\(firstPrompt.identifier), display=\(firstPrompt.display)")
+                let prompts = promptManager.getSystemAndUserPrompts(from: firstPrompt)
+                systemPrompt = prompts.systemPrompt
+                return
+            } else {
+                print("[SocialBrainView] No prompts found for sample mode")
+            }
+        }
+        
+        // Use regular mode prompts
+        print("[SocialBrainView] Falling back to regular mode prompts")
+        let context = try await CoreDataManager.shared.viewContext
+        let prompts = promptManager.getPromptsForMode(.regular, context: context)
+        print("[SocialBrainView] Retrieved \(prompts.count) prompts for regular mode")
+        
+        if let firstPrompt = prompts.first {
+            print("[SocialBrainView] Using first regular mode prompt: id=\(firstPrompt.identifier), display=\(firstPrompt.display)")
+            let prompts = promptManager.getSystemAndUserPrompts(from: firstPrompt)
+            systemPrompt = prompts.systemPrompt
             return
         }
         
-        // Use existing logic for non-sample mode
+        // Fallback system prompt if no prompts found
         var prompt = "system prompt"
         switch (sourceType, sourceAction) {
         case ("contact", "general"):
@@ -134,29 +175,66 @@ struct SocialBrainView: View {
         }
     }
     
-    // Modify initializeSuggestedQuestions
+    // Modify initializeSuggestedQuestions to use prompt configuration
     private func initializeSuggestedQuestions() {
         print("[SocialBrainView] Initializing suggested questions...")
-        if let sampleProvider = getSampleProvider() {
-            print("[SocialBrainView] Sample provider found: \(type(of: sampleProvider))")
-            print("[SocialBrainView] Using general sample mode questions for mode: \(appModeManager.sampleModeType ?? "nil")")
-            let questions = sampleProvider.suggestedQuestions
-            print("[SocialBrainView] General sample mode questions: \(questions.map { $0.content })")
-            suggestedQuestions = questions
-        } else {
-            print("[SocialBrainView] Using context-aware questions")
-            print("[SocialBrainView] Calling forContext with:")
-            print("- sourceType: \(sourceType)")
-            print("- sourceAction: \(sourceAction)")
-            print("- contact: \(contextContact?.name ?? "nil")")
+        
+        // Try to get prompt-based questions first
+        Task {
+            do {
+                let context = try await CoreDataManager.shared.viewContext
+                let promptMode: PromptDisplayMode = appModeManager.isSampleMode ? .sample : .regular
+                
+                // Get all prompts for the current mode
+                let prompts = promptManager.getPromptsForMode(
+                    promptMode,
+                    sampleMode: appModeManager.sampleModeType,
+                    context: context
+                )
+                
+                if !prompts.isEmpty {
+                    // Create suggested questions from all prompts
+                    let questions = prompts.map { prompt in
+                        let prompts = promptManager.getSystemAndUserPrompts(from: prompt)
+                        return SocialBrainMessage(
+                            content: prompts.userPrompt,
+                            isFromUser: false,
+                            timestamp: Date()
+                        )
+                    }
+                    await MainActor.run {
+                        suggestedQuestions = questions
+                    }
+                    return
+                }
+            } catch {
+                print("[SocialBrainView] Error fetching prompts: \(error)")
+            }
             
-            let questions = SuggestedQuestionsProvider.forContext(
-                sourceType: sourceType,
-                sourceAction: sourceAction,
-                contact: contextContact
-            )
-            print("[SocialBrainView] Received questions: \(questions.map { $0.content })")
-            suggestedQuestions = questions
+            // Fallback to existing logic if no prompts found
+            await MainActor.run {
+                if let sampleProvider = getSampleProvider() {
+                    print("[SocialBrainView] Sample provider found: \(type(of: sampleProvider))")
+                    print("[SocialBrainView] Using general sample mode questions for mode: \(appModeManager.sampleModeType ?? "nil")")
+                    let questions = sampleProvider.suggestedQuestions
+                    print("[SocialBrainView] General sample mode questions: \(questions.map { $0.content })")
+                    suggestedQuestions = questions
+                } else {
+                    print("[SocialBrainView] Using context-aware questions")
+                    print("[SocialBrainView] Calling forContext with:")
+                    print("- sourceType: \(sourceType)")
+                    print("- sourceAction: \(sourceAction)")
+                    print("- contact: \(contextContact?.name ?? "nil")")
+                    
+                    let questions = SuggestedQuestionsProvider.forContext(
+                        sourceType: sourceType,
+                        sourceAction: sourceAction,
+                        contact: contextContact
+                    )
+                    print("[SocialBrainView] Received questions: \(questions.map { $0.content })")
+                    suggestedQuestions = questions
+                }
+            }
         }
     }
     

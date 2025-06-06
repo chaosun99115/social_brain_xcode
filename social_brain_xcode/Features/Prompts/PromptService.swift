@@ -37,38 +37,44 @@ class PromptService {
     /// Ingests default prompts into Core Data
     /// - Parameter context: The managed object context to use
     func ingestDefaultPrompts(in context: NSManagedObjectContext) {
-        logger.debug("Starting default prompts ingestion")
-        logger.debug("Default prompts to be ingested: \(DefaultPrompts.prompts.count)")
+        logger.debug("Starting ingestion of default prompts")
         
-        // Check if prompts already exist
-        let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+        // Track created prompts to avoid duplicates
+        var createdPrompts: [(identifier: Int, name: String)] = []
         
         do {
-            let existingPrompts = try context.fetch(fetchRequest)
-            logger.debug("Found \(existingPrompts.count) existing prompts")
-            
-            if !existingPrompts.isEmpty {
-                logger.debug("Prompts already exist, skipping ingestion")
-                return
-            }
-            
-            // Log default prompts to be ingested
-            logger.debug("Preparing to ingest \(DefaultPrompts.prompts.count) default prompts")
-            
-            // Ingest default prompts
             for (index, promptData) in DefaultPrompts.prompts.enumerated() {
-                let prompt = Prompt(context: context)
-                prompt.id = UUID()
-                prompt.name = promptData.name
-                prompt.display = promptData.display
-                prompt.content = promptData.content
-                prompt.type = promptData.type
-                prompt.createdAt = Date()
-                prompt.updatedAt = Date()
-                prompt.recordStatus = 0
-                prompt.order = 0
-                prompt.intro = promptData.intro
-                logger.debug("Ingested prompt \(index + 1): \(promptData.name) (Type: \(promptData.type)), Intro: \(promptData.intro)")
+                logger.debug("\nProcessing prompt \(index + 1): \(promptData.name)")
+                logger.debug("Identifiers to create: \(promptData.identifiers)")
+                
+                // Create a prompt entry for each identifier
+                for identifier in promptData.identifiers {
+                    // Check if we already created this identifier for this prompt
+                    if createdPrompts.contains(where: { $0.identifier == identifier && $0.name == promptData.name }) {
+                        logger.debug("⚠️ Skipping duplicate identifier \(identifier) for prompt: \(promptData.name)")
+                        continue
+                    }
+                    
+                    let prompt = Prompt(context: context)
+                    prompt.id = UUID()
+                    prompt.name = promptData.name
+                    prompt.display = promptData.display
+                    prompt.content = promptData.content
+                    prompt.type = promptData.type
+                    prompt.createdAt = Date()
+                    prompt.updatedAt = Date()
+                    prompt.recordStatus = 0
+                    prompt.order = Int16(promptData.order)  // Set the order from DefaultPrompts
+                    prompt.intro = promptData.intro
+                    prompt.identifier = Int16(identifier)
+                    
+                    // Track created prompt
+                    createdPrompts.append((identifier: identifier, name: promptData.name))
+                    
+                    logger.debug("✅ Created prompt with identifier \(identifier) for: \(promptData.name) (order: \(promptData.order))")
+                }
+                
+                logger.debug("Completed processing prompt: \(promptData.name)")
             }
             
             // Save context
@@ -76,20 +82,22 @@ class PromptService {
             logger.debug("Successfully saved all prompts to Core Data")
             
             // Verify ingestion
-            let verifyFetch: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-            let ingestedCount = try context.count(for: verifyFetch)
-            logger.debug("Verification: Found \(ingestedCount) prompts in database after ingestion")
-            
-            if ingestedCount != DefaultPrompts.prompts.count {
-                logger.error("""
-                    Mismatch in prompt count:
-                    - Expected: \(DefaultPrompts.prompts.count)
-                    - Actual: \(ingestedCount)
+            let verifyRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+            let results = try context.fetch(verifyRequest)
+            logger.debug("Verification after ingestion - Found \(results.count) total prompts")
+            for prompt in results {
+                logger.debug("""
+                    Prompt details:
+                    - Name: \(prompt.name ?? "nil")
+                    - Display: \(prompt.display ?? "nil")
+                    - Type: \(prompt.type)
+                    - Order: \(prompt.order)
+                    - Identifier: \(prompt.identifier)
                     """)
             }
             
         } catch {
-            logger.error("Error during prompt ingestion: \(error.localizedDescription)")
+            logger.error("Error ingesting default prompts: \(error.localizedDescription)")
         }
     }
     

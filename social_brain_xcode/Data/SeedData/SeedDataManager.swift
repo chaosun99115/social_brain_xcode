@@ -94,39 +94,39 @@ final class SeedDataManager {
     // MARK: - Store Management
     
     func deleteExistingStore(for context: NSManagedObjectContext) throws {
-        // print("\n[SeedDataManager] 🗑️ Deleting existing store...")
+        print("\n[SeedDataManager] 🗑️ Deleting existing seed data...")
         
-        guard let coordinator = context.persistentStoreCoordinator,
-              let store = coordinator.persistentStores.first,
-              let storeURL = store.url else {
-            print("[SeedDataManager] ⚠️ No existing store found")
-            return
+        // Instead of deleting the entire store, only delete specific entities
+        let entityTypes = [
+            "Note",
+            "Contact",
+            "ContactInsight",
+            "NoteContactRelationship",
+            "Circle",
+            "CircleInsight",
+            "CircleContactRelationship",
+            "InsightCircleRelationship"
+        ]
+        
+        for entityType in entityTypes {
+            let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityType)
+            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+            
+            do {
+                try context.execute(deleteRequest)
+                print("[SeedDataManager] ✅ Deleted existing \(entityType) entities")
+            } catch {
+                print("[SeedDataManager] ⚠️ Error deleting \(entityType) entities: \(error)")
+                // Continue with other entities even if one fails
+            }
         }
         
+        // Save the context after batch deletes
         do {
-            // Remove the store from coordinator
-            try coordinator.remove(store)
-            
-            // Delete the store file
-            try FileManager.default.removeItem(at: storeURL)
-            // print("[SeedDataManager] ✅ Store file deleted successfully")
-            
-            // Add a new store to the coordinator
-            let options = [
-                NSMigratePersistentStoresAutomaticallyOption: true,
-                NSInferMappingModelAutomaticallyOption: true
-            ]
-            
-            try coordinator.addPersistentStore(
-                ofType: NSSQLiteStoreType,
-                configurationName: nil,
-                at: storeURL,
-                options: options
-            )
-            // print("[SeedDataManager] ✅ New store added to coordinator")
-            
+            try context.save()
+            print("[SeedDataManager] ✅ Saved context after deleting seed data")
         } catch {
-            print("[SeedDataManager] ❌ Error managing store: \(error)")
+            print("[SeedDataManager] ❌ Error saving context after deletion: \(error)")
             throw error
         }
     }
