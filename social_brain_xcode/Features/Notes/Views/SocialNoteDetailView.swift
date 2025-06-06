@@ -430,13 +430,13 @@ struct EditNoteModalView: View {
                         }) {
                             Text("添加联系人")
                                 .font(.system(size: 17))
-                                .foregroundColor(.blue)
+                                .foregroundColor(.green)
                                 .frame(maxWidth: .infinity)
                         }
                         
                         Text("添加标签")
                             .font(.system(size: 17))
-                            .foregroundColor(.blue)
+                            .foregroundColor(.green)
                             .frame(maxWidth: .infinity)
                             .onTapGesture {
                                 // Add tag action
@@ -449,7 +449,7 @@ struct EditNoteModalView: View {
                                 .font(.system(size: 17))
                                 .foregroundColor(.white)
                                 .frame(width: 80, height: 40)
-                                .background(Color.blue)
+                                .background(Color.green)
                                 .cornerRadius(8)
                         }
                         .frame(maxWidth: .infinity)

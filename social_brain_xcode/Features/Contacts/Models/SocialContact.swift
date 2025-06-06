@@ -155,6 +155,6 @@ enum AvatarColor: String, CaseIterable {
     case blue, green, orange, purple, teal, indigo, pink, red
     
     static func random() -> AvatarColor {
-        return AvatarColor.allCases.randomElement() ?? .blue
+        return AvatarColor.allCases.randomElement() ?? .green
     }
 } 

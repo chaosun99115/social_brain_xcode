@@ -62,14 +62,14 @@ struct SocialNoteModalView: View {
                             Button("取消") {
                                 dismiss()
                             }
-                            .foregroundColor(.blue)
+                            .foregroundColor(.green)
                             
                             Spacer()
                             
                             Button("保存笔记") {
                                 saveNote()
                             }
-                            .foregroundColor(.blue)
+                            .foregroundColor(.green)
                         }
                         .padding(.horizontal)
                         .padding(.top, 4)

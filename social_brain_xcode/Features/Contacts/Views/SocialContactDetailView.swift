@@ -112,7 +112,7 @@ struct SocialContactDetailView: View {
                                 Text("关系备忘录")
                                     .font(.system(size: 16))
                             }
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(.green)
                             .frame(maxWidth: .infinity)
                         }
                     }
@@ -149,7 +149,7 @@ struct SocialContactDetailView: View {
                 }) {
                     Text("编辑")
                         .font(.system(size: 17))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(.green)
                 }
             }
         }
@@ -287,10 +287,10 @@ struct SocialContactDetailView: View {
                                 NavigationLink(destination: CircleDetailView(circle: circle)) {
                                     Text(circle.name ?? "圈子")
                                         .font(.system(size: 15, weight: .medium))
-                                        .foregroundColor(Color.blue)
+                                        .foregroundColor(Color.green)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
-                                        .background(Color.blue.opacity(0.12))
+                                        .background(Color.green.opacity(0.12))
                                         .cornerRadius(8)
                                 }
                                 .buttonStyle(PlainButtonStyle())
@@ -302,7 +302,7 @@ struct SocialContactDetailView: View {
                         }) {
                             Image(systemName: "square.and.pencil")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(Color.blue)
+                                .foregroundColor(Color.green)
                                 .padding(8)
                         }
                     }

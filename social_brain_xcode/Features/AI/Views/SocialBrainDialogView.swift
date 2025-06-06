@@ -342,7 +342,7 @@ struct SocialBrainDialogView: View {
                             Image(systemName: "arrow.up")
                                 .foregroundColor(.white)
                                 .frame(width: 44, height: 44)
-                                .background(Color.blue)
+                                .background(Color.green)
                                 .clipShape(SwiftUI.Circle())
                         }
                         .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

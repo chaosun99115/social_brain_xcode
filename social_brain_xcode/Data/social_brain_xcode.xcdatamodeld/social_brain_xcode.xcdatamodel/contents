@@ -56,10 +56,13 @@
         <relationship name="circles" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsightCircleRelationship" inverseName="insights" inverseEntity="InsightCircleRelationship"/>
     </entity>
     <entity name="Contact" representedClassName="Contact" syncable="YES" codeGenerationType="class">
+        <attribute name="birthday" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="contactId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="memo" optional="YES" attributeType="String"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="recordStatus" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="tel" optional="YES" attributeType="String"/>
         <attribute name="type" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="circles" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CircleContactRelationship" inverseName="contacts" inverseEntity="CircleContactRelationship"/>

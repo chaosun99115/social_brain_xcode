@@ -5,7 +5,7 @@ struct AppTheme {
     /// Defines all semantic colors used throughout the app
     struct Colors {
         // Primary colors
-        static let primaryAction = Color.accentColor
+        static let primaryAction = Color.green
         static let secondaryAction = Color(.systemBlue)
         
         // Content colors
@@ -24,7 +24,7 @@ struct AppTheme {
         static let divider = Color(.separator)
         
         // Semantic colors
-        static let mentionHighlight = Color(.systemBlue)
+        static let mentionHighlight = Color.green
         static let positiveAction = Color(.systemGreen)
         static let warningElement = Color(.systemOrange)
         static let errorElement = Color(.systemRed)

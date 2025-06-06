@@ -29,6 +29,11 @@ struct MainTabView: View {
                 }
                 .tag(2)
         }
+        .tint(.primaryText) // Use system black for selected tab
+        .onAppear {
+            // Set unselected tab color to system gray
+            UITabBar.appearance().unselectedItemTintColor = UIColor.systemGray
+        }
     }
 }
 

@@ -1,6 +1,53 @@
 import SwiftUI
 import CoreData
 
+// Custom input field that mimics Apple's Contacts app style
+struct ContactInputField: View {
+    let placeholder: String
+    @Binding var text: String
+    let isMultiline: Bool
+    
+    // Constants for sizing
+    private let minHeight: CGFloat = 44
+    private let maxHeight: CGFloat = 200
+    private let horizontalPadding: CGFloat = 16
+    private let verticalPadding: CGFloat = 12
+    
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            // Background
+            Color(.systemBackground)
+                .cornerRadius(0)
+            
+            VStack(alignment: .leading, spacing: 0) {
+                // Fixed label
+                Text(placeholder)
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+                    .padding(.top, verticalPadding)
+                    .padding(.leading, horizontalPadding)
+                
+                // Text input area
+                if isMultiline {
+                    TextEditor(text: $text)
+                        .font(.body)
+                        .frame(minHeight: minHeight, maxHeight: maxHeight)
+                        .padding(.horizontal, horizontalPadding - 4) // Compensate for TextEditor's built-in padding
+                        .padding(.vertical, 4)
+                        .background(Color.clear)
+                } else {
+                    TextField("", text: $text)
+                        .font(.body)
+                        .frame(height: minHeight)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.vertical, 4)
+                        .background(Color.clear)
+                }
+            }
+        }
+    }
+}
+
 struct AddContactSheet: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
@@ -53,29 +100,19 @@ struct AddContactSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         // Name Field
-                        TextField("姓名", text: $name)
-                            .padding(14)
-                            .background(Color(.systemBackground))
-                            .font(.body)
-                            .frame(maxWidth: .infinity)
-                            .cornerRadius(0)
-                            .padding(.top, 24)
+                        ContactInputField(
+                            placeholder: "姓名",
+                            text: $name,
+                            isMultiline: false
+                        )
+                        .padding(.top, 24)
                         
                         // Memo Field
-                        ZStack(alignment: .topLeading) {
-                            TextEditor(text: $memo)
-                                .padding(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12))
-                                .background(Color(.systemBackground))
-                                .font(.body)
-                                .frame(maxWidth: .infinity, minHeight: 100, maxHeight: 140)
-                                .cornerRadius(0)
-                            if memo.isEmpty {
-                                Text("备注")
-                                    .foregroundColor(Color(.placeholderText))
-                                    .padding(EdgeInsets(top: 16, leading: 18, bottom: 0, trailing: 0))
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
+                        ContactInputField(
+                            placeholder: "备注",
+                            text: $memo,
+                            isMultiline: true
+                        )
                         
                         Spacer()
                     }
@@ -89,7 +126,7 @@ struct AddContactSheet: View {
                     Button("取消") {
                         dismiss()
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(.green)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -101,7 +138,7 @@ struct AddContactSheet: View {
                         }
                     }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .foregroundColor(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
+                    .foregroundColor(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .green)
                 }
             }
             .alert("错误", isPresented: $showingError) {
@@ -110,7 +147,7 @@ struct AddContactSheet: View {
                 Text(errorMessage)
             }
         }
-        .accentColor(.blue)
+        .accentColor(.green)
     }
     
     private func saveContact() {

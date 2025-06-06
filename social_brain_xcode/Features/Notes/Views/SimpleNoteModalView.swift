@@ -224,14 +224,14 @@ struct SimpleNoteModalView: View {
                                     Button("取消") {
                                         dismiss()
                                     }
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.green)
                                 }
                                 ToolbarItem(placement: .navigationBarTrailing) {
                                     Button("保存") {
                                         saveNote()
                                     }
                                     .disabled(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                    .foregroundColor(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .blue)
+                                    .foregroundColor(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .green)
                                 }
                             }
                         }
@@ -247,7 +247,7 @@ struct SimpleNoteModalView: View {
                                 }) {
                                     Text("@熟人")
                                         .font(.system(size: 17))
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(.green)
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 44) // Standard iOS button height
                                 }
@@ -261,7 +261,7 @@ struct SimpleNoteModalView: View {
                                 }) {
                                     Text("# 圈子")
                                         .font(.system(size: 17))
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(.green)
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 44) // Standard iOS button height
                                 }

@@ -74,7 +74,7 @@ struct MentionTextView: View {
 
 // Add color extension for group mentions
 extension Color {
-    static let groupMentionHighlight = Color.blue.opacity(0.8)
+    static let groupMentionHighlight = Color.green.opacity(0.8)
 }
 
 // Preview provider

@@ -159,7 +159,7 @@ struct SocialNotesView: View {
                                 .font(.system(size: 24, weight: .medium))
                                 .foregroundColor(.white)
                                 .frame(width: 56, height: 56)
-                                .background(Color.accentColor)
+                                .background(Color.green)
                                 .clipShape(SwiftUI.Circle())
                                 .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
                         }
@@ -189,7 +189,11 @@ struct SocialNotesView: View {
                                     .fontWeight(.bold)
                             }
                             .font(.footnote)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.green)
+                            .cornerRadius(8)
                         }
                     }
                 }
@@ -197,7 +201,8 @@ struct SocialNotesView: View {
                     Button(action: {
                         showingConfigurationSheet = true
                     }) {
-                        Image(systemName: "gear")
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 20))
                             .foregroundColor(.primaryText)
                     }
                 }

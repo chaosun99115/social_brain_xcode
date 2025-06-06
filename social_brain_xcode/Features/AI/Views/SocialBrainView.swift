@@ -461,7 +461,11 @@ struct SocialBrainView: View {
                                     .fontWeight(.bold)
                             }
                             .font(.footnote)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.green)
+                            .cornerRadius(8)
                         }
                     }
                 }

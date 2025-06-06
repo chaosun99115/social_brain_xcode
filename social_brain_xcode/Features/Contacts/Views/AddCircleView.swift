@@ -106,9 +106,9 @@ struct AddCircleView: View {
                     }) {
                         HStack(spacing: 6) {
                             Image(systemName: "plus")
-                                .foregroundColor(Color.blue)
+                                .foregroundColor(Color.green)
                             Text("添加熟人")
-                                .foregroundColor(Color.blue)
+                                .foregroundColor(Color.green)
                                 .font(.system(size: 17, weight: .regular))
                         }
                     }

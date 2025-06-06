@@ -200,7 +200,7 @@ struct SocialContactView: View {
                                 .font(.system(size: 22, weight: .bold, design: .default))
                                 .foregroundColor(.white)
                                 .frame(width: 56, height: 56)
-                                .background(Color.primaryAction)
+                                .background(Color.green)
                                 .clipShape(SwiftUI.Circle())
                                 .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
                         }
@@ -239,7 +239,11 @@ struct SocialContactView: View {
                                     .fontWeight(.bold)
                             }
                             .font(.footnote)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.green)
+                            .cornerRadius(8)
                         }
                     }
                 }
@@ -247,7 +251,8 @@ struct SocialContactView: View {
                     Button(action: {
                         showingConfigurationSheet = true
                     }) {
-                        Image(systemName: "gear")
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 20))
                             .foregroundColor(.primaryText)
                     }
                 }
@@ -640,7 +645,7 @@ struct TabButton: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(isSelected ? .primaryAction : .secondaryText)
+                .foregroundColor(isSelected ? .primaryText : .secondaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(
@@ -648,7 +653,7 @@ struct TabButton: View {
                         Spacer()
                         if isSelected {
                             Rectangle()
-                                .fill(Color.primaryAction)
+                                .fill(Color.primaryText)
                                 .frame(height: 2)
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
