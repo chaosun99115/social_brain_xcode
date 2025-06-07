@@ -70,24 +70,18 @@ struct SocialBrainView: View {
         print("[SocialBrainView] Generating system prompt")
         print("[SocialBrainView] Current mode - isSampleMode: \(appModeManager.isSampleMode), sampleModeType: \(appModeManager.sampleModeType ?? "nil")")
         
-        // Get the appropriate prompt identifier based on the mode
-        let promptIdentifier: Int
-        if appModeManager.isSampleMode {
-            if let modeType = appModeManager.sampleModeType {
-                switch modeType {
-                case "changedJob":
-                    promptIdentifier = 111
-                case "indieDev":
-                    promptIdentifier = 121
-                default:
-                    promptIdentifier = 1
-                }
-            } else {
-                promptIdentifier = 1
-            }
-        } else {
-            promptIdentifier = 1
+        // Get prompt identifiers from SourceTypePromptMapping
+        let availableIdentifiers = SourceTypePromptMapping.getPromptIdentifiers(
+            for: sourceType,
+            sampleMode: appModeManager.sampleModeType
+        )
+        
+        guard let promptIdentifier = availableIdentifiers.first else {
+            print("[SocialBrainView] Error: No available prompt identifiers for sourceType: \(sourceType), sampleMode: \(appModeManager.sampleModeType ?? "nil")")
+            throw PromptError.promptNotFound
         }
+        
+        print("[SocialBrainView] Using prompt ID: \(promptIdentifier) for sourceType: \(sourceType), mode: \(appModeManager.sampleModeType ?? "none")")
         
         systemPrompt = try await promptGenerator.generateSystemPrompt(
             sourceType: sourceType,
@@ -95,6 +89,7 @@ struct SocialBrainView: View {
             sourceId: sourceId,
             sampleMode: appModeManager.sampleModeType,
             contact: contextContact,
+            promptDisplay: nil,
             promptIdentifier: promptIdentifier
         )
     }
@@ -414,7 +409,7 @@ struct SocialBrainView: View {
     
     private func handleSuggestedQuestion(_ question: String, promptIdentifier: Int? = nil) {
         inputText = question
-        // Generate system prompt only when a question is asked
+        // Pass the prompt identifier when generating system prompt
         Task {
             do {
                 systemPrompt = try await promptGenerator.generateSystemPrompt(
@@ -423,8 +418,8 @@ struct SocialBrainView: View {
                     sourceId: sourceId,
                     sampleMode: appModeManager.sampleModeType,
                     contact: contextContact,
-                    promptIdentifier: promptIdentifier ?? 0,
-                    promptDisplay: question
+                    promptDisplay: question,
+                    promptIdentifier: promptIdentifier ?? 0
                 )
                 sendMessage()
             } catch {
@@ -478,8 +473,8 @@ struct SocialBrainView: View {
                         sourceId: sourceId,
                         sampleMode: appModeManager.sampleModeType,
                         contact: contextContact,
-                        promptIdentifier: 0,  // Use 0 for custom questions
-                        promptDisplay: userQuestion  // Use the custom question as display
+                        promptDisplay: userQuestion,
+                        promptIdentifier: 0
                     )
                 }
                 

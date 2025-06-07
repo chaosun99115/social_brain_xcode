@@ -364,6 +364,7 @@ enum DefaultPrompts {
             order: 7,
             content: """
             note explore system prompt
+            你是用户的社交洞察伙伴，也是一个经验丰富的社交顾问，你的任务是帮助用户从社交互动的笔记中提取特定人物的关系备忘录。
             """
         )
     ]

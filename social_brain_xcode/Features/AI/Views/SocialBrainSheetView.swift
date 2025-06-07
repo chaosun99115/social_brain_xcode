@@ -78,31 +78,21 @@ struct SocialBrainSheetView: View {
     
     // System prompt generation
     private func generateSystemPrompt() async throws {
-        print("[SocialBrainSheetView] generateSystemPrompt started")
-        print("[SocialBrainSheetView] Context - sourceType: \(sourceType), sourceAction: \(sourceAction), sourceId: \(sourceId)")
+        print("[SocialBrainView] Generating system prompt")
+        print("[SocialBrainView] Current mode - isSampleMode: \(appModeManager.isSampleMode), sampleModeType: \(appModeManager.sampleModeType ?? "nil")")
         
-        // Always try to load the contact first if we're in contact context
-        if sourceType == "contact" {
-            print("[SocialBrainSheetView] Attempting to load contact for ID: \(sourceId)")
-            let context = try await CoreDataManager.shared.viewContext
-            let contactFetchRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
-            contactFetchRequest.predicate = NSPredicate(format: "contactId == %@", sourceId as CVarArg)
-            
-            if let contact = try context.fetch(contactFetchRequest).first {
-                print("[SocialBrainSheetView] Found contact: \(contact.name ?? "unnamed")")
-                print("[SocialBrainSheetView] Setting contextContact")
-                contextContact = contact
-                print("[SocialBrainSheetView] contextContact after setting: \(contextContact?.name ?? "nil")")
-            } else {
-                print("[SocialBrainSheetView] No contact found for ID: \(sourceId)")
-            }
+        // Get prompt identifiers from SourceTypePromptMapping
+        let availableIdentifiers = SourceTypePromptMapping.getPromptIdentifiers(
+            for: sourceType,
+            sampleMode: appModeManager.sampleModeType
+        )
+        
+        guard let promptIdentifier = availableIdentifiers.first else {
+            print("[SocialBrainView] Error: No available prompt identifiers for sourceType: \(sourceType), sampleMode: \(appModeManager.sampleModeType ?? "nil")")
+            throw PromptError.promptNotFound
         }
         
-        // Use SourceTypePromptMapping to select the correct prompt identifier
-        let promptIdentifier = SourceTypePromptMapping
-            .getPromptIdentifiers(for: sourceType, sampleMode: appModeManager.sampleModeType)
-            .first ?? 0
-        print("[SocialBrainSheetView] Using promptIdentifier from mapping: \(promptIdentifier)")
+        print("[SocialBrainView] Using prompt ID: \(promptIdentifier) for sourceType: \(sourceType), mode: \(appModeManager.sampleModeType ?? "none")")
         
         systemPrompt = try await promptGenerator.generateSystemPrompt(
             sourceType: sourceType,
@@ -110,6 +100,7 @@ struct SocialBrainSheetView: View {
             sourceId: sourceId,
             sampleMode: appModeManager.sampleModeType,
             contact: contextContact,
+            promptDisplay: nil,
             promptIdentifier: promptIdentifier
         )
     }
@@ -427,8 +418,8 @@ struct SocialBrainSheetView: View {
                     sourceId: sourceId,
                     sampleMode: appModeManager.sampleModeType,
                     contact: contextContact,
-                    promptIdentifier: promptIdentifier ?? 0,
-                    promptDisplay: question
+                    promptDisplay: question,  // Reordered parameters
+                    promptIdentifier: promptIdentifier ?? 0
                 )
                 sendMessage()
             } catch {
@@ -474,16 +465,18 @@ struct SocialBrainSheetView: View {
                     throw AIChatServiceError.unauthorized
                 }
                 
-                // For custom questions (not from suggested questions), use identifier 0
-                systemPrompt = try await promptGenerator.generateSystemPrompt(
-                    sourceType: sourceType,
-                    sourceAction: sourceAction,
-                    sourceId: sourceId,
-                    sampleMode: appModeManager.sampleModeType,
-                    contact: contextContact,
-                    promptIdentifier: 0,  // Use 0 for custom questions
-                    promptDisplay: userQuestion  // Use the custom question as display
-                )
+                // Generate system prompt only when sending a message
+                if systemPrompt.isEmpty {
+                    systemPrompt = try await promptGenerator.generateSystemPrompt(
+                        sourceType: sourceType,
+                        sourceAction: sourceAction,
+                        sourceId: sourceId,
+                        sampleMode: appModeManager.sampleModeType,
+                        contact: contextContact,
+                        promptDisplay: userQuestion,  // Reordered parameters
+                        promptIdentifier: 0  // Use 0 for custom questions
+                    )
+                }
                 
                 // Regenerate system prompt with the new question and notes
                 if let sampleProvider = getSampleProvider() {

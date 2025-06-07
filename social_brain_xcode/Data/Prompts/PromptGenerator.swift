@@ -12,6 +12,7 @@ class PromptGenerator {
     private let sampleFlow = SampleFlow()
     private let contactFlow = ContactFlow()
     private let chatFlow = ChatFlow()
+    private let noteFlow = NoteFlow()
     
     private init() {
         // Remove initialization log
@@ -29,8 +30,11 @@ class PromptGenerator {
             logger.debug("[PromptGenerator] Using ContactFlow for prompt ID: \(promptIdentifier)")
             return contactFlow
         case 0: 
-            logger.debug("[PromptGenerator] search - prompt ID: \(promptIdentifier)  chatFlow")
+            logger.debug("[PromptGenerator] Using ChatFlow for prompt ID: \(promptIdentifier)")
             return chatFlow
+        case 6: 
+            logger.debug("[PromptGenerator] Using NoteFlow for prompt ID: \(promptIdentifier)")
+            return noteFlow
         default: // General prompts
             logger.debug("[PromptGenerator] Using ChatFlow for prompt ID: \(promptIdentifier)")
             return chatFlow
@@ -41,11 +45,11 @@ class PromptGenerator {
     /// - Parameters:
     ///   - sourceType: The type of source (e.g., "contact")
     ///   - sourceAction: The action being performed (e.g., "general", "insights")
-    ///   - sourceId: The ID of the source (e.g., contact ID)
-    ///   - sampleMode: Optional sample mode type
+    ///   - sourceId: The unique identifier of the source
+    ///   - sampleMode: Optional sample mode for testing
     ///   - contact: Optional contact for context
-    ///   - promptIdentifier: The identifier of the prompt (0 for custom questions)
-    ///   - promptDisplay: The display text of the prompt (custom question for custom prompts)
+    ///   - promptDisplay: Optional display text for the prompt
+    ///   - promptIdentifier: The identifier of the prompt to use
     /// - Returns: The generated system prompt
     func generateSystemPrompt(
         sourceType: String,
@@ -53,9 +57,10 @@ class PromptGenerator {
         sourceId: String,
         sampleMode: String?,
         contact: Contact?,
-        promptIdentifier: Int = 0,
-        promptDisplay: String? = nil
+        promptDisplay: String?,
+        promptIdentifier: Int
     ) async throws -> String {
+        // Log input parameters
         logger.debug("""
             ╔════════════════════════════════════════════════════════════╗
             ║                PromptGenerator Input Parameters             ║
@@ -64,7 +69,7 @@ class PromptGenerator {
             ║ Source Action: \(sourceAction.padding(toLength: 38, withPad: " ", startingAt: 0)) ║
             ║ Source ID: \(sourceId.padding(toLength: 42, withPad: " ", startingAt: 0)) ║
             ║ Sample Mode: \(sampleMode?.padding(toLength: 40, withPad: " ", startingAt: 0) ?? "none".padding(toLength: 40, withPad: " ", startingAt: 0)) ║
-            ║ Prompt ID: \(String(promptIdentifier).padding(toLength: 42, withPad: " ", startingAt: 0)) ║
+            ║ Prompt ID: \(promptIdentifier.description.padding(toLength: 42, withPad: " ", startingAt: 0)) ║
             ║ Contact: \(contact?.name?.padding(toLength: 43, withPad: " ", startingAt: 0) ?? "none".padding(toLength: 43, withPad: " ", startingAt: 0)) ║
             ║ Display: \(promptDisplay?.padding(toLength: 43, withPad: " ", startingAt: 0) ?? "none".padding(toLength: 43, withPad: " ", startingAt: 0)) ║
             ╚════════════════════════════════════════════════════════════╝
@@ -107,7 +112,24 @@ class PromptGenerator {
                     promptDisplay: promptDisplay,
                     promptIdentifier: promptIdentifier
                 )
+            case let note as NoteFlow:
+                prompt = try await note.generateSystemPrompt(
+                    sourceType: sourceType,
+                    sourceAction: sourceAction,
+                    sourceId: sourceId,
+                    sampleMode: sampleMode,
+                    contact: contact,
+                    promptDisplay: promptDisplay,
+                    promptIdentifier: promptIdentifier
+                )
             default:
+                logger.error("""
+                    ╔════════════════════════════════════════════════════════════╗
+                    ║              PromptGenerator Error                         ║
+                    ╠════════════════════════════════════════════════════════════╣
+                    ║ Error: Unknown flow type for prompt ID: \(promptIdentifier) ║
+                    ╚════════════════════════════════════════════════════════════╝
+                    """)
                 throw PromptError.promptNotFound
             }
             
