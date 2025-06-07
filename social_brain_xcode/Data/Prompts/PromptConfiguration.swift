@@ -48,19 +48,19 @@ struct SourceTypePromptMapping {
     /// Maps source type and sample mode to prompt identifiers
     static let sourceTypeToPromptIdentifiers: [String: [String: [Int]]] = [
         "general": [
-            "changedJob": [1, 2, 4],
-            "indieDev": [1, 2, 3],
-            "regular": [1, 2]
+            "changedJob": [1, 2, 4],  // Changed job specific prompts
+            "indieDev": [1, 2, 3],    // Indie dev specific prompts
+            "regular": [1, 2]         // Keep original identifiers for regular mode
         ],
         "contact": [
             "changedJob": [5],
             "indieDev": [5],
-            "regular": [5]
+            "regular": [5]            // Keep original identifier
         ],
         "note": [
             "changedJob": [6],
             "indieDev": [6],
-            "regular": [6]
+            "regular": [6]            // Keep original identifier
         ]
     ]
     
@@ -74,6 +74,16 @@ struct SourceTypePromptMapping {
     static func isPromptInSourceType(_ identifier: Int, sourceType: String, sampleMode: String?) -> Bool {
         let mode = sampleMode ?? "regular"
         return sourceTypeToPromptIdentifiers[sourceType]?[mode]?.contains(identifier) ?? false
+    }
+    
+    /// Get the sample mode for a specific prompt identifier
+    static func getSampleMode(for identifier: Int, sourceType: String) -> String? {
+        for (mode, identifiers) in sourceTypeToPromptIdentifiers[sourceType] ?? [:] {
+            if identifiers.contains(identifier) {
+                return mode
+            }
+        }
+        return nil
     }
 }
 

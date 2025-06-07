@@ -299,6 +299,8 @@ struct AddContactSheet: View {
             contact.birthday = birthday
             contact.createdAt = Date()
             contact.updatedAt = Date()
+            contact.type = 1  // Set type to 1 for regular contacts
+            contact.recordStatus = 1  // Set record status to active
             
             try viewContext.save()
             print("[DEBUG] saveContact: Successfully saved new contact with ID: \(String(describing: contact.contactId))")
@@ -331,6 +333,8 @@ struct AddContactSheet: View {
             print("[DEBUG] updateContact: Updating birthday: \(String(describing: birthday))")
             contact.birthday = birthday
             contact.updatedAt = Date()
+            contact.type = 1  // Ensure type is set to 1 for regular contacts
+            contact.recordStatus = 1  // Ensure record status is active
             
             try viewContext.save()
             print("[DEBUG] updateContact: Successfully updated contact with ID: \(String(describing: contact.contactId))")

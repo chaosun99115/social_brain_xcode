@@ -58,6 +58,10 @@ struct SocialBrainView: View {
     // Add PromptGenerator
     private let promptGenerator = PromptGenerator.shared
     
+    // Add state to track message source
+    @State private var isCustomQuestion: Bool = false
+    @State private var currentPromptIdentifier: Int = 0
+    
     // Add helper method to get provider
     private func getSampleProvider() -> SampleModeProvider? {
         guard appModeManager.isSampleMode,
@@ -65,49 +69,8 @@ struct SocialBrainView: View {
         return SampleModeProviderFactory.getProvider(for: modeType)
     }
     
-    // System prompt generation
-    private func generateSystemPrompt() async throws {
-        print("[SocialBrainView] Generating system prompt")
-        print("[SocialBrainView] Current mode - isSampleMode: \(appModeManager.isSampleMode), sampleModeType: \(appModeManager.sampleModeType ?? "nil")")
-        
-        // Get prompt identifiers from SourceTypePromptMapping
-        let availableIdentifiers = SourceTypePromptMapping.getPromptIdentifiers(
-            for: sourceType,
-            sampleMode: appModeManager.sampleModeType
-        )
-        
-        guard let promptIdentifier = availableIdentifiers.first else {
-            print("[SocialBrainView] Error: No available prompt identifiers for sourceType: \(sourceType), sampleMode: \(appModeManager.sampleModeType ?? "nil")")
-            throw PromptError.promptNotFound
-        }
-        
-        print("[SocialBrainView] Using prompt ID: \(promptIdentifier) for sourceType: \(sourceType), mode: \(appModeManager.sampleModeType ?? "none")")
-        
-        systemPrompt = try await promptGenerator.generateSystemPrompt(
-            sourceType: sourceType,
-            sourceAction: sourceAction,
-            sourceId: sourceId,
-            sampleMode: appModeManager.sampleModeType,
-            contact: contextContact,
-            promptDisplay: nil,
-            promptIdentifier: promptIdentifier
-        )
-    }
-    
-    // Initial message based on context
-    private func generateInitialMessage() -> String {
-        return promptGenerator.generateInitialMessage(
-            sourceType: sourceType,
-            sourceAction: sourceAction,
-            contact: contextContact
-        )
-    }
-    
     // Modify initializeSuggestedQuestions to only use SourceTypePromptMapping
     private func initializeSuggestedQuestions() {
-        // Use trace level for initialization logs
-        logger.trace("[SocialBrainView] Initializing suggested questions")
-        
         Task {
             do {
                 let context = try await CoreDataManager.shared.viewContext
@@ -134,7 +97,7 @@ struct SocialBrainView: View {
                     suggestedQuestions = questions
                 }
             } catch {
-                print("[SocialBrainView] Error fetching prompts: \(error)")
+                logger.error("Error fetching prompts: \(error.localizedDescription)")
                 // Set empty questions on error
                 await MainActor.run {
                     suggestedQuestions = []
@@ -151,6 +114,14 @@ struct SocialBrainView: View {
     // Extract notes from text
     private func extractNotes(from text: String) -> String? {
         return promptGenerator.extractNotes(from: text)
+    }
+    
+    // Add helper function to get prompt identifier
+    private func getPromptIdentifier(for sourceType: String, sampleMode: String?) -> Int {
+        // Get available identifiers for this source type and sample mode
+        let identifiers = SourceTypePromptMapping.getPromptIdentifiers(for: sourceType, sampleMode: sampleMode)
+        // Return the first identifier (there should always be at least one for each source type)
+        return identifiers.first ?? 0  // Fallback to 0 only if something is misconfigured
     }
     
     var body: some View {
@@ -306,7 +277,7 @@ struct SocialBrainView: View {
                                     .padding(.leading, 16)
                             }
                         }
-                        Button(action: sendMessage) {
+                        Button(action: handleCustomQuestion) {
                             Image(systemName: "arrow.up")
                                 .foregroundColor(.white)
                                 .frame(width: 44, height: 44)
@@ -372,10 +343,7 @@ struct SocialBrainView: View {
             Text(errorMessage ?? "An unknown error occurred")
         }
         .onAppear {
-            // Use trace level for initialization logs
-            logger.trace("[SocialBrainView] Initializing view")
-            
-            // Initialize suggested questions only
+            // Only initialize suggested questions
             initializeSuggestedQuestions()
             
             // Setup keyboard observers for keyboard dismissal
@@ -407,56 +375,45 @@ struct SocialBrainView: View {
         }
     }
     
+    private func handleCustomQuestion() {
+        isCustomQuestion = true
+        currentPromptIdentifier = 0  // Set to 0 for ChatFlow
+        sendMessage()
+    }
+    
     private func handleSuggestedQuestion(_ question: String, promptIdentifier: Int? = nil) {
-        inputText = question
-        // Pass the prompt identifier when generating system prompt
-        Task {
-            do {
-                systemPrompt = try await promptGenerator.generateSystemPrompt(
-                    sourceType: sourceType,
-                    sourceAction: sourceAction,
-                    sourceId: sourceId,
-                    sampleMode: appModeManager.sampleModeType,
-                    contact: contextContact,
-                    promptDisplay: question,
-                    promptIdentifier: promptIdentifier ?? 0
-                )
-                sendMessage()
-            } catch {
-                print("[SocialBrainView] Error generating system prompt: \(error)")
-                errorMessage = error.localizedDescription
-                showError = true
-            }
+        isCustomQuestion = false
+        guard let identifier = promptIdentifier else {
+            print("[SocialBrainView] Error: No prompt identifier provided for suggested question")
+            return
         }
+        currentPromptIdentifier = identifier
+        inputText = question
+        sendMessage()
     }
     
     private func sendMessage() {
         let trimmedText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
-        let limitedText = String(trimmedText.prefix(1000)) // Limit length here
+        let limitedText = String(trimmedText.prefix(1000))
         
-        // Extract just the question part without notes
+        // Extract user question and notes
         let userQuestion = extractUserQuestion(from: limitedText)
-        // Extract notes if present
         let extractedNotes = extractNotes(from: limitedText)
         
-        // If not in conversation mode, switch to it
         if !isConversationActive {
             isConversationActive = true
         }
         
-        // Add user message with only the question part
+        // Add user message
         let userMessage = SocialBrainMessage(
-            content: userQuestion, // Use the extracted question only
+            content: userQuestion,
             isFromUser: true,
             timestamp: Date()
         )
         messages.append(userMessage)
         
-        // Clear input
         inputText = ""
-        
-        // Show loading state
         isLoading = true
         
         Task {
@@ -465,54 +422,49 @@ struct SocialBrainView: View {
                     throw AIChatServiceError.unauthorized
                 }
                 
-                // Generate system prompt only when sending a message
-                if systemPrompt.isEmpty {
-                    systemPrompt = try await promptGenerator.generateSystemPrompt(
-                        sourceType: sourceType,
-                        sourceAction: sourceAction,
-                        sourceId: sourceId,
-                        sampleMode: appModeManager.sampleModeType,
-                        contact: contextContact,
-                        promptDisplay: userQuestion,
-                        promptIdentifier: 0
-                    )
-                }
+                // Use appropriate prompt identifier based on message source
+                let promptPair = try await promptGenerator.generatePrompts(
+                    sourceType: sourceType,
+                    sourceAction: isCustomQuestion ? "chat" : "question",
+                    sourceId: sourceId,
+                    sampleMode: appModeManager.sampleModeType,
+                    contact: contextContact,
+                    promptDisplay: userQuestion,
+                    promptIdentifier: isCustomQuestion ? 0 : currentPromptIdentifier
+                )
                 
-                // Regenerate system prompt with the new question and notes
-                if let sampleProvider = getSampleProvider() {
-                    // For sample mode - modify the question to include notes if present
-                    var contextQuestion = userQuestion
-                    if let notes = extractedNotes {
-                        // If the question is empty or a default, just use the notes
-                        if userQuestion == "请分析这些笔记" {
-                            contextQuestion = notes
-                        } else {
-                            // Otherwise append the notes to the question
-                            contextQuestion = userQuestion + "\n\n相关笔记如下:\n" + notes
-                        }
-                    }
-                    
-                    let context = PromptContext(
-                        mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
-                        question: contextQuestion,  // Include the notes in the question
-                        contact: contextContact
-                    )
-                    systemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
-                } else {
-                    // For non-sample mode, update system prompt if notes are present
-                    if let notes = extractedNotes {
-                        // Update systemPrompt to include notes but not duplicate them
-                        try await updateSystemPromptWithNotes(notes)
-                    }
-                }
-                
-                // Prepare messages with system prompt
+                // Prepare messages with both prompts
                 var chatMessages = aiServiceManager.convertToChatMessages(messages)
-                chatMessages.insert(AIChatMessage(role: .system, content: systemPrompt), at: 0)
                 
-                print("[SocialBrainView] Sending request to LLM with messages:")
-                for message in chatMessages {
-                    print("[SocialBrainView] Role: \(message.role), Content: \(message.content)")
+                // Add system prompt
+                chatMessages.insert(AIChatMessage(role: .system, content: promptPair.systemPrompt), at: 0)
+                
+                // If we have a user prompt, use it to modify the user's message
+                if let userPrompt = promptPair.userPrompt {
+                    let enhancedUserMessage = AIChatMessage(
+                        role: .user,
+                        content: "\(userPrompt)\n\nUser Question: \(userQuestion)"
+                    )
+                    // Replace the last user message with the enhanced version
+                    if let lastIndex = chatMessages.lastIndex(where: { $0.role == .user }) {
+                        chatMessages[lastIndex] = enhancedUserMessage
+                    }
+                }
+                
+                // Handle notes if present
+                if let notes = extractedNotes {
+                    if let sampleProvider = getSampleProvider() {
+                        let context = PromptContext(
+                            mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
+                            question: userQuestion,
+                            contact: contextContact
+                        )
+                        let updatedSystemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
+                        chatMessages[0] = AIChatMessage(role: .system, content: updatedSystemPrompt)
+                    } else {
+                        let updatedSystemPrompt = promptGenerator.updateSystemPromptWithNotes(promptPair.systemPrompt, notes: notes)
+                        chatMessages[0] = AIChatMessage(role: .system, content: updatedSystemPrompt)
+                    }
                 }
                 
                 // Check if we should use streaming (Doubao or DeepSeek)
@@ -588,7 +540,7 @@ struct SocialBrainView: View {
                 await MainActor.run {
                     isLoading = false
                     isStreaming = false
-                    print("[SocialBrainView] Error caught: \(error) (\(type(of: error)))")
+                    print("[SocialBrainView] Error caught: \(error)")
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     showError = true
                 }

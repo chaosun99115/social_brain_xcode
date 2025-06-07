@@ -167,7 +167,8 @@ struct SocialContactDetailView: View {
             SocialBrainSheetView(
                 sourceType: socialBrainContext.sourceType,
                 sourceAction: socialBrainContext.sourceAction,
-                sourceId: socialBrainContext.sourceId
+                sourceId: socialBrainContext.sourceId,
+                initialContact: contact
             )
             .environmentObject(appModeManager)
         }

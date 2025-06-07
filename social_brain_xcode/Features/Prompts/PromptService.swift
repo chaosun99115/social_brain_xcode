@@ -33,49 +33,15 @@ class PromptService {
     /// Ingests default prompts into Core Data
     /// - Parameter context: The managed object context to use
     func ingestDefaultPrompts(in context: NSManagedObjectContext) {
-        logger.debug("""
-            ╔════════════════════════════════════════════════════════════╗
-            ║              Starting Prompt Ingestion                      ║
-            ╚════════════════════════════════════════════════════════════╝
-            """)
-        
         // Track created prompts to avoid duplicates
         var createdPrompts: [(identifier: Int, name: String)] = []
         
         do {
-            // Log total number of prompts to be ingested
-            logger.debug("""
-                ╔════════════════════════════════════════════════════════════╗
-                ║              Default Prompts Overview                      ║
-                ╠════════════════════════════════════════════════════════════╣
-                ║ Total Prompts to Ingest: \(DefaultPrompts.prompts.count)    ║
-                ╚════════════════════════════════════════════════════════════╝
-                """)
-            
-            for (index, promptData) in DefaultPrompts.prompts.enumerated() {
-                logger.debug("""
-                    ╔════════════════════════════════════════════════════════════╗
-                    ║              Processing Prompt \(index + 1)                  ║
-                    ╠════════════════════════════════════════════════════════════╣
-                    ║ Name: \(promptData.name.padding(toLength: 45, withPad: " ", startingAt: 0)) ║
-                    ║ Identifiers: \(promptData.identifiers)                      ║
-                    ║ Type: \(promptData.type)                                   ║
-                    ║ Order: \(promptData.order)                                 ║
-                    ╚════════════════════════════════════════════════════════════╝
-                    """)
-                
+            for (_, promptData) in DefaultPrompts.prompts.enumerated() {
                 // Create a prompt entry for each identifier
                 for identifier in promptData.identifiers {
                     // Check if we already created this identifier for this prompt
                     if createdPrompts.contains(where: { $0.identifier == identifier && $0.name == promptData.name }) {
-                        logger.debug("""
-                            ╔════════════════════════════════════════════════════════════╗
-                            ║              Skipping Duplicate Prompt                     ║
-                            ╠════════════════════════════════════════════════════════════╣
-                            ║ ID: \(identifier)                                          ║
-                            ║ Name: \(promptData.name)                                   ║
-                            ╚════════════════════════════════════════════════════════════╝
-                            """)
                         continue
                     }
                     
@@ -94,17 +60,6 @@ class PromptService {
                     
                     // Track created prompt
                     createdPrompts.append((identifier: identifier, name: promptData.name))
-                    
-                    logger.debug("""
-                        ╔════════════════════════════════════════════════════════════╗
-                        ║              Created Prompt                                ║
-                        ╠════════════════════════════════════════════════════════════╣
-                        ║ ID: \(identifier)                                          ║
-                        ║ Name: \(promptData.name.padding(toLength: 45, withPad: " ", startingAt: 0)) ║
-                        ║ Content Length: \(promptData.content.count)                ║
-                        ║ Display Length: \(promptData.display.count)                ║
-                        ╚════════════════════════════════════════════════════════════╝
-                        """)
                 }
             }
             
@@ -115,46 +70,18 @@ class PromptService {
             let verifyRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
             let results = try context.fetch(verifyRequest)
             
-            // Log verification results
-            logger.debug("""
-                ╔════════════════════════════════════════════════════════════╗
-                ║              Ingestion Verification                        ║
-                ╠════════════════════════════════════════════════════════════╣
-                ║ Total Prompts Created: \(createdPrompts.count)             ║
-                ║ Total Prompts in DB: \(results.count)                      ║
-                ║ Created Prompt IDs: \(createdPrompts.map { $0.identifier }.sorted()) ║
-                ╚════════════════════════════════════════════════════════════╝
-                """)
-            
-            // Verify each prompt was created correctly
-            for createdPrompt in createdPrompts {
-                let promptExists = results.contains { $0.identifier == Int16(createdPrompt.identifier) }
-                if !promptExists {
-                    logger.error("""
-                        ╔════════════════════════════════════════════════════════════╗
-                        ║              Missing Prompt After Ingestion                ║
-                        ╠════════════════════════════════════════════════════════════╣
-                        ║ ID: \(createdPrompt.identifier)                            ║
-                        ║ Name: \(createdPrompt.name)                               ║
-                        ╚════════════════════════════════════════════════════════════╝
-                        """)
-                }
+            // Only log if there's a mismatch
+            if results.count != createdPrompts.count {
+                logger.error("""
+                    Prompt ingestion verification failed:
+                    - Expected prompts: \(createdPrompts.count)
+                    - Actual prompts in DB: \(results.count)
+                    - Created prompt IDs: \(createdPrompts.map { $0.identifier }.sorted())
+                    """)
             }
             
-            logger.debug("""
-                ╔════════════════════════════════════════════════════════════╗
-                ║              Prompt Ingestion Complete                      ║
-                ╚════════════════════════════════════════════════════════════╝
-                """)
-            
         } catch {
-            logger.error("""
-                ╔════════════════════════════════════════════════════════════╗
-                ║              Ingestion Error                               ║
-                ╠════════════════════════════════════════════════════════════╣
-                ║ Error: \(error.localizedDescription.padding(toLength: 40, withPad: " ", startingAt: 0)) ║
-                ╚════════════════════════════════════════════════════════════╝
-                """)
+            logger.error("Error during prompt ingestion: \(error.localizedDescription)")
         }
     }
     

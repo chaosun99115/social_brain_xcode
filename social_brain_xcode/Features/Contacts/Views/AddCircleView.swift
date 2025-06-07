@@ -212,9 +212,9 @@ struct AddCircleView: View {
         // Filter contacts based on app mode
         let filteredContacts: [Contact]
         if appModeManager.isSampleMode {
-            filteredContacts = fetchedContacts.filter { $0.type == 0 }
+            filteredContacts = fetchedContacts.filter { $0.type == 0 }  // Show type=0 contacts in sample mode
         } else {
-            filteredContacts = fetchedContacts
+            filteredContacts = fetchedContacts.filter { $0.type == 1 }  // Show type=1 contacts in regular mode
         }
         
         // Update contacts on main thread

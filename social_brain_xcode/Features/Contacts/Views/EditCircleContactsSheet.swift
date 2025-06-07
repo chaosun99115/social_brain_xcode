@@ -83,29 +83,45 @@ struct EditCircleContactsSheet: View {
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 16)
                 
-                ScrollView {
+                if allContacts.isEmpty {
                     VStack(spacing: 0) {
-                        ForEach(allContacts, id: \.contactId) { contact in
-                            HStack {
-                                Text(contact.name ?? "")
-                                    .foregroundColor(.primary)
-                                    .padding(.vertical, 12)
-                                    .padding(.horizontal, 16)
-                                Spacer()
-                                CheckboxView(isChecked: selectedContactIds.contains(contact.contactId ?? UUID())) {
-                                    toggleContact(contact)
+                        Spacer()
+                        Text("您还没有添加熟人")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                        Spacer()
+                        Divider()
+                            .padding(.leading, 16)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            ForEach(allContacts, id: \.contactId) { contact in
+                                HStack {
+                                    Text(contact.name ?? "")
+                                        .foregroundColor(.primary)
+                                        .padding(.vertical, 12)
+                                        .padding(.horizontal, 16)
+                                    Spacer()
+                                    CheckboxView(isChecked: selectedContactIds.contains(contact.contactId ?? UUID())) {
+                                        toggleContact(contact)
+                                    }
+                                    .padding(.trailing, 16)
                                 }
-                                .padding(.trailing, 16)
+                                .background(Color.white)
+                                Divider()
+                                    .padding(.leading, 16)
                             }
-                            .background(Color.white)
-                            Divider()
-                                .padding(.leading, 16)
                         }
                     }
+                    .background(Color.white)
+                    .cornerRadius(0)
+                    .frame(height: min(CGFloat(allContacts.count) * 44, UIScreen.main.bounds.height * 0.6)) // Each item is 44pt high, max 60% of screen height
                 }
-                .background(Color.white)
-                .cornerRadius(0)
-                .frame(height: min(CGFloat(allContacts.count) * 44, UIScreen.main.bounds.height * 0.6)) // Each item is 44pt high, max 60% of screen height
                 
                 Spacer()
             }
@@ -199,10 +215,17 @@ struct ContactMultiPickerSheet: View {
         NavigationView {
             List {
                 if displayedContacts.isEmpty {
-                    Text("No contacts available")
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .listRowBackground(Color.white)
+                    VStack {
+                        Spacer()
+                        Text("您还没有添加熟人")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .listRowBackground(Color.white)
                 } else {
                     ForEach(displayedContacts, id: \.contactId) { contact in
                         HStack {

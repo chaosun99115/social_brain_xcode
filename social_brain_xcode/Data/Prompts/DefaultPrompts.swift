@@ -4,7 +4,7 @@ import Foundation
 enum DefaultPrompts {
     /// Returns an array of default prompts to be ingested
     static let prompts: [(identifiers: [Int], name: String, intro: String, display: String, content: String, type: Int16, order: Int)] = [
-        // 整理社交话题库
+        // QuestionFlow - Review - 1
         (
             // 0*: sample mode, 1: regular mode
             identifiers: [1], // This prompt can be used for both sample and regular mode
@@ -86,7 +86,7 @@ enum DefaultPrompts {
             ========    
             """
         ),
-        // 拓展社交网络
+        // QuestionFlow - Follow Up - 2
         (
             identifiers: [2], // This prompt can be used for both sample and regular mode
             name: "拓展社交网络",
@@ -177,7 +177,7 @@ enum DefaultPrompts {
             请根据以上要求，分析用户的社交笔记并生成个性化的联络建议。
             """
         ),
-        // 一对一面聊
+        // QuestionFlow - 1 on 1 - 3
         (
             identifiers: [3], // This prompt can be used for both sample and regular mode
             name: "一对一面聊",
@@ -235,7 +235,7 @@ enum DefaultPrompts {
             
             """
         ),
-        // 陌生人社交
+        // QuestionFlow - networking - 4
         (
             identifiers: [4], // This prompt can be used for both sample and regular mode
             name: "陌生人社交",
@@ -284,7 +284,7 @@ enum DefaultPrompts {
             最后提醒用户在社交之后记录互动笔记，并给出3-5个具体应记录的要点建议。            
             """
         ),
-        // 社交备忘录
+        // ContactFlow - 5
         (
             identifiers: [5], // This prompt can be used for both sample and regular mode
             name: "社交备忘录",
@@ -342,19 +342,7 @@ enum DefaultPrompts {
             
             """
         ),
-        // test
-        (
-            identifiers: [0], // This prompt can be used for both sample and regular mode
-            name: "test",
-            intro: "test",
-            display: "test",
-            type: Int16(0),
-            order: 6,
-            content: """
-            test system prompt
-            """
-        ),
-        // 笔记探索
+        // NoteFlow - 6
         (
             identifiers: [6], // This prompt can be used for both sample and regular mode
             name: "笔记探索",
@@ -365,6 +353,18 @@ enum DefaultPrompts {
             content: """
             note explore system prompt
             你是用户的社交洞察伙伴，也是一个经验丰富的社交顾问，你的任务是帮助用户从社交互动的笔记中提取特定人物的关系备忘录。
+            """
+        ),        
+        // ChatFlow - 0
+        (
+            identifiers: [0], // This prompt can be used for both sample and regular mode
+            name: "test",
+            intro: "test",
+            display: "test",
+            type: Int16(0),
+            order: 6,
+            content: """
+            test system prompt
             """
         )
     ]
