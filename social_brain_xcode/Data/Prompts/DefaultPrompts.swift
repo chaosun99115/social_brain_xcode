@@ -341,6 +341,30 @@ enum DefaultPrompts {
             对于决策偏好主要判断对方是关注与人还是事。关注人就会比较多关注感受，那么以后的沟通可以更注重具体感受。关注事就会比较多关注结果，那么以后的沟通可以更注重实用信息。你要据此判断，但不要直接使用原话，而是用你自己的话来分析和描述。
             
             """
+        ),
+        // test
+        (
+            identifiers: [0], // This prompt can be used for both sample and regular mode
+            name: "test",
+            intro: "test",
+            display: "test",
+            type: Int16(0),
+            order: 6,
+            content: """
+            test system prompt
+            """
+        ),
+        // 笔记探索
+        (
+            identifiers: [6], // This prompt can be used for both sample and regular mode
+            name: "笔记探索",
+            intro: "笔记探索",
+            display: "笔记探索",
+            type: Int16(0),
+            order: 7,
+            content: """
+            note explore system prompt
+            """
         )
     ]
 } 

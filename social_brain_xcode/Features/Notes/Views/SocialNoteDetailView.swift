@@ -9,6 +9,7 @@ struct SocialNoteDetailView: View {
     @State private var shouldScrollToTop = false
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
+    @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var insightManager = ContactInsightManager.shared
     @State private var contactInsights: [ContactInsight] = []
     @State private var isLoadingInsights = true
@@ -229,11 +230,12 @@ struct SocialNoteDetailView: View {
             shouldScrollToTop = false
         }
         .sheet(isPresented: $showingSocialBrain) {
-            SocialBrainView(
+            SocialBrainSheetView(
                 sourceType: "note",
                 sourceAction: "insights",
                 sourceId: note.noteId?.uuidString ?? ""
             )
+            .environmentObject(appModeManager)
         }
     }
     

@@ -1,12 +1,16 @@
 import SwiftUI
 import CoreData
 import MarkdownUI
+import os
 
 struct SocialBrainView: View {
     // Context parameters
     let sourceType: String
     let sourceAction: String
     let sourceId: String
+    
+    // Add logger
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.socialbrain", category: "SocialBrainView")
     
     // Context data
     @State private var contextContact: Contact?
@@ -104,11 +108,11 @@ struct SocialBrainView: View {
         )
     }
     
-    // Modify initializeSuggestedQuestions to store prompt identifiers
+    // Modify initializeSuggestedQuestions to only use SourceTypePromptMapping
     private func initializeSuggestedQuestions() {
-        print("[SocialBrainView] Initializing suggested questions...")
+        // Use trace level for initialization logs
+        logger.trace("[SocialBrainView] Initializing suggested questions")
         
-        // Try to get prompt-based questions first
         Task {
             do {
                 let context = try await CoreDataManager.shared.viewContext
@@ -117,50 +121,28 @@ struct SocialBrainView: View {
                 let prompts = promptManager.getPromptsForSourceType(
                     sourceType,
                     sampleMode: appModeManager.sampleModeType,
-                    context: context
+                    context: context,
+                    contact: contextContact  // Pass the contact for dynamic text replacement
                 )
                 
-                if !prompts.isEmpty {
-                    // Create suggested questions from all prompts, storing the identifier
-                    let questions = prompts.map { prompt in
-                        return SocialBrainMessage(
-                            content: prompt.display,
-                            isFromUser: false,
-                            timestamp: Date(),
-                            promptIdentifier: prompt.identifier  // Store the identifier
-                        )
-                    }
-                    await MainActor.run {
-                        suggestedQuestions = questions
-                    }
-                    return
+                // Create suggested questions from all prompts, storing the identifier
+                let questions = prompts.map { prompt in
+                    return SocialBrainMessage(
+                        content: prompt.display,
+                        isFromUser: false,
+                        timestamp: Date(),
+                        promptIdentifier: prompt.identifier
+                    )
+                }
+                
+                await MainActor.run {
+                    suggestedQuestions = questions
                 }
             } catch {
                 print("[SocialBrainView] Error fetching prompts: \(error)")
-            }
-            
-            // Fallback to existing logic if no prompts found
-            await MainActor.run {
-                if let sampleProvider = getSampleProvider() {
-                    print("[SocialBrainView] Sample provider found: \(type(of: sampleProvider))")
-                    print("[SocialBrainView] Using general sample mode questions for mode: \(appModeManager.sampleModeType ?? "nil")")
-                    let questions = sampleProvider.suggestedQuestions
-                    print("[SocialBrainView] General sample mode questions: \(questions.map { $0.content })")
-                    suggestedQuestions = questions
-                } else {
-                    print("[SocialBrainView] Using context-aware questions")
-                    print("[SocialBrainView] Calling forContext with:")
-                    print("- sourceType: \(sourceType)")
-                    print("- sourceAction: \(sourceAction)")
-                    print("- contact: \(contextContact?.name ?? "nil")")
-                    
-                    let questions = SuggestedQuestionsProvider.forContext(
-                        sourceType: sourceType,
-                        sourceAction: sourceAction,
-                        contact: contextContact
-                    )
-                    print("[SocialBrainView] Received questions: \(questions.map { $0.content })")
-                    suggestedQuestions = questions
+                // Set empty questions on error
+                await MainActor.run {
+                    suggestedQuestions = []
                 }
             }
         }
@@ -395,24 +377,11 @@ struct SocialBrainView: View {
             Text(errorMessage ?? "An unknown error occurred")
         }
         .onAppear {
-            print("[SocialBrainView] View appeared with context:")
-            print("[SocialBrainView] - sourceType: \(sourceType)")
-            print("[SocialBrainView] - sourceAction: \(sourceAction)")
-            print("[SocialBrainView] - sourceId: \(sourceId)")
+            // Use trace level for initialization logs
+            logger.trace("[SocialBrainView] Initializing view")
             
-            // Initialize suggested questions
+            // Initialize suggested questions only
             initializeSuggestedQuestions()
-            
-            // Generate system prompt
-            Task {
-                do {
-                    try await generateSystemPrompt()
-                } catch {
-                    print("[SocialBrainView] Error generating system prompt: \(error)")
-                    errorMessage = error.localizedDescription
-                    showError = true
-                }
-            }
             
             // Setup keyboard observers for keyboard dismissal
             setupKeyboardObservers()
@@ -445,7 +414,7 @@ struct SocialBrainView: View {
     
     private func handleSuggestedQuestion(_ question: String, promptIdentifier: Int? = nil) {
         inputText = question
-        // Pass the prompt identifier when generating system prompt
+        // Generate system prompt only when a question is asked
         Task {
             do {
                 systemPrompt = try await promptGenerator.generateSystemPrompt(
@@ -499,6 +468,19 @@ struct SocialBrainView: View {
             do {
                 guard let chatService = aiServiceManager.getChatService() else {
                     throw AIChatServiceError.unauthorized
+                }
+                
+                // Generate system prompt only when sending a message
+                if systemPrompt.isEmpty {
+                    systemPrompt = try await promptGenerator.generateSystemPrompt(
+                        sourceType: sourceType,
+                        sourceAction: sourceAction,
+                        sourceId: sourceId,
+                        sampleMode: appModeManager.sampleModeType,
+                        contact: contextContact,
+                        promptIdentifier: 0,  // Use 0 for custom questions
+                        promptDisplay: userQuestion  // Use the custom question as display
+                    )
                 }
                 
                 // Regenerate system prompt with the new question and notes

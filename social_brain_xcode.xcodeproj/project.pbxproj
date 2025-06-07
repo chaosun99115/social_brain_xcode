@@ -11,6 +11,7 @@
 		AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */; };
 		AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A42DF346E1000F4F17 /* EditContactView.swift */; };
 		AF4501C52DF38503000F4F17 /* PromptGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501C42DF38503000F4F17 /* PromptGenerator.swift */; };
+		AF4501C72DF38DDE000F4F17 /* PromptFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501C62DF38DDE000F4F17 /* PromptFlow.swift */; };
 		AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */; };
 		AF56DC272DCBE13D00F56D6E /* SeedDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC232DCBE13D00F56D6E /* SeedDataManager.swift */; };
 		AF56DC282DCBE13D00F56D6E /* SeedDataExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */; };
@@ -80,6 +81,7 @@
 		AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditCircleContactsSheet.swift; sourceTree = "<group>"; };
 		AF4501A42DF346E1000F4F17 /* EditContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditContactView.swift; sourceTree = "<group>"; };
 		AF4501C42DF38503000F4F17 /* PromptGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptGenerator.swift; sourceTree = "<group>"; };
+		AF4501C62DF38DDE000F4F17 /* PromptFlow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptFlow.swift; sourceTree = "<group>"; };
 		AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DoubaoChatService.swift; sourceTree = "<group>"; };
 		AF56DC232DCBE13D00F56D6E /* SeedDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeedDataManager.swift; sourceTree = "<group>"; };
 		AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeedDataExample.swift; sourceTree = "<group>"; };
@@ -468,6 +470,7 @@
 				AFAE473E2DF1DEC500DD10E0 /* DefaultPrompts.swift */,
 				AFAE47482DF2012200DD10E0 /* PromptConfiguration.swift */,
 				AF4501C42DF38503000F4F17 /* PromptGenerator.swift */,
+				AF4501C62DF38DDE000F4F17 /* PromptFlow.swift */,
 			);
 			path = Prompts;
 			sourceTree = "<group>";
@@ -595,6 +598,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFAE47242DE79A7900DD10E0 /* SharedComponents.swift in Sources */,
+				AF4501C72DF38DDE000F4F17 /* PromptFlow.swift in Sources */,
 				AFDDDCA42DDCDDBC00425764 /* SampleModeConfig.swift in Sources */,
 				AFDDDC9B2DD393DF00425764 /* CircleManager.swift in Sources */,
 				AFAE473F2DF1DEC500DD10E0 /* DefaultPrompts.swift in Sources */,

@@ -43,28 +43,6 @@ struct PromptAdapter: PromptDisplayable {
     private var _customDisplay: String?
 }
 
-/// Configuration for sample mode prompt mapping
-struct SampleModePromptMapping {
-    /// Maps sample mode identifiers to their prompt identifiers
-    static let modeToPromptIdentifiers: [String: [Int]] = [
-        // Changed Job scenario prompts
-        "changedJob": [111],  // Prompts for job change scenario
-        // Indie Dev scenario prompts
-        "indieDev": [121],      // Prompts for indie developer scenario
-        // Add more mappings as needed
-    ]
-    
-    /// Get prompt identifiers for a specific sample mode
-    static func getPromptIdentifiers(for mode: String) -> [Int] {
-        return modeToPromptIdentifiers[mode] ?? []
-    }
-    
-    /// Check if a prompt identifier belongs to a specific sample mode
-    static func isPromptInMode(_ identifier: Int, mode: String) -> Bool {
-        return modeToPromptIdentifiers[mode]?.contains(identifier) ?? false
-    }
-}
-
 /// Configuration for source type and sample mode mapping
 struct SourceTypePromptMapping {
     /// Maps source type and sample mode to prompt identifiers
@@ -80,9 +58,9 @@ struct SourceTypePromptMapping {
             "regular": [5]
         ],
         "note": [
-            "changedJob": [1],
-            "indieDev": [1],
-            "regular": [2]
+            "changedJob": [6],
+            "indieDev": [6],
+            "regular": [6]
         ]
     ]
     
@@ -200,6 +178,7 @@ class PromptConfigurationManager {
         let availableIdentifiers = SourceTypePromptMapping.getPromptIdentifiers(for: sourceType, sampleMode: sampleMode)
         
         guard !availableIdentifiers.isEmpty else {
+            print("[PromptConfigurationManager] Error: No available identifiers for sourceType: \(sourceType), sampleMode: \(sampleMode ?? "nil")")
             return []
         }
         
@@ -269,6 +248,7 @@ class PromptConfigurationManager {
             // Always return PromptAdapter instances
             return results.map { PromptAdapter(prompt: $0) }
         } catch {
+            print("[PromptConfigurationManager] Error fetching prompts for identifier \(identifier): \(error)")
             return []
         }
     }

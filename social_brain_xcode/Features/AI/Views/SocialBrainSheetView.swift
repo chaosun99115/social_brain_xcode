@@ -98,24 +98,11 @@ struct SocialBrainSheetView: View {
             }
         }
         
-        // Get the appropriate prompt identifier based on the mode
-        let promptIdentifier: Int
-        if appModeManager.isSampleMode {
-            if let modeType = appModeManager.sampleModeType {
-                switch modeType {
-                case "changedJob":
-                    promptIdentifier = 111
-                case "indieDev":
-                    promptIdentifier = 121
-                default:
-                    promptIdentifier = 1
-                }
-            } else {
-                promptIdentifier = 1
-            }
-        } else {
-            promptIdentifier = 1
-        }
+        // Use SourceTypePromptMapping to select the correct prompt identifier
+        let promptIdentifier = SourceTypePromptMapping
+            .getPromptIdentifiers(for: sourceType, sampleMode: appModeManager.sampleModeType)
+            .first ?? 0
+        print("[SocialBrainSheetView] Using promptIdentifier from mapping: \(promptIdentifier)")
         
         systemPrompt = try await promptGenerator.generateSystemPrompt(
             sourceType: sourceType,
@@ -136,12 +123,11 @@ struct SocialBrainSheetView: View {
         )
     }
     
-    // Modify initializeSuggestedQuestions to store prompt identifiers
+    // Modify initializeSuggestedQuestions to only use SourceTypePromptMapping
     private func initializeSuggestedQuestions() {
         print("[SocialBrainSheetView] initializeSuggestedQuestions started")
         print("[SocialBrainSheetView] Current contextContact: \(contextContact?.name ?? "nil")")
         
-        // Try to get prompt-based questions first
         Task {
             do {
                 let context = try await CoreDataManager.shared.viewContext
@@ -154,49 +140,25 @@ struct SocialBrainSheetView: View {
                     contact: contextContact  // Pass the contact for dynamic text replacement
                 )
                 
-                if !prompts.isEmpty {
-                    // Create suggested questions from all prompts, storing the identifier
-                    let questions = prompts.map { prompt in
-                        return SocialBrainMessage(
-                            content: prompt.display,
-                            isFromUser: false,
-                            timestamp: Date(),
-                            promptIdentifier: prompt.identifier  // Store the identifier
-                        )
-                    }
-                    await MainActor.run {
-                        suggestedQuestions = questions
-                    }
-                    return
+                // Create suggested questions from all prompts, storing the identifier
+                let questions = prompts.map { prompt in
+                    return SocialBrainMessage(
+                        content: prompt.display,
+                        isFromUser: false,
+                        timestamp: Date(),
+                        promptIdentifier: prompt.identifier
+                    )
+                }
+                
+                await MainActor.run {
+                    suggestedQuestions = questions
                 }
             } catch {
                 print("[SocialBrainSheetView] Error fetching prompts: \(error)")
-            }
-            
-            // Fallback to existing logic if no prompts found
-            if let sampleProvider = getSampleProvider() {
-                print("[SocialBrainSheetView] Sample provider found: \(type(of: sampleProvider))")
-                let context = PromptContext(
-                    mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
-                    question: "",
-                    contact: contextContact
-                )
-                suggestedQuestions = sampleProvider.getSuggestedQuestions(for: context)
-                print("[SocialBrainSheetView] Questions for context: \(suggestedQuestions.map { $0.content })")
-            } else {
-                print("[SocialBrainSheetView] Using context-aware questions")
-                print("[SocialBrainSheetView] Calling forContext with:")
-                print("- sourceType: \(sourceType)")
-                print("- sourceAction: \(sourceAction)")
-                print("- contact: \(contextContact?.name ?? "nil")")
-                
-                let questions = SuggestedQuestionsProvider.forContext(
-                    sourceType: sourceType,
-                    sourceAction: sourceAction,
-                    contact: contextContact
-                )
-                print("[SocialBrainSheetView] Received questions: \(questions.map { $0.content })")
-                suggestedQuestions = questions
+                // Set empty questions on error
+                await MainActor.run {
+                    suggestedQuestions = []
+                }
             }
         }
     }
@@ -511,6 +473,17 @@ struct SocialBrainSheetView: View {
                 guard let chatService = aiServiceManager.getChatService() else {
                     throw AIChatServiceError.unauthorized
                 }
+                
+                // For custom questions (not from suggested questions), use identifier 0
+                systemPrompt = try await promptGenerator.generateSystemPrompt(
+                    sourceType: sourceType,
+                    sourceAction: sourceAction,
+                    sourceId: sourceId,
+                    sampleMode: appModeManager.sampleModeType,
+                    contact: contextContact,
+                    promptIdentifier: 0,  // Use 0 for custom questions
+                    promptDisplay: userQuestion  // Use the custom question as display
+                )
                 
                 // Regenerate system prompt with the new question and notes
                 if let sampleProvider = getSampleProvider() {

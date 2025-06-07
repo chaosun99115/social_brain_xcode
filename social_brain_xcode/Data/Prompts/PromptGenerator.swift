@@ -1,12 +1,41 @@
 import Foundation
 import CoreData
+import os.log
 
 /// A class responsible for generating system and user prompts for the Social Brain feature
 class PromptGenerator {
     static let shared = PromptGenerator()
     private let promptManager = PromptConfigurationManager.shared
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.socialbrain", category: "PromptGenerator")
     
-    private init() {}
+    // Flow instances
+    private let sampleFlow = SampleFlow()
+    private let contactFlow = ContactFlow()
+    private let chatFlow = ChatFlow()
+    
+    private init() {
+        // Remove initialization log
+    }
+    
+    /// Gets the appropriate flow based on the prompt identifier
+    /// - Parameter promptIdentifier: The identifier of the prompt
+    /// - Returns: The appropriate flow instance
+    private func getFlow(for promptIdentifier: Int) -> Any {
+        switch promptIdentifier {
+        case 1, 2: // Sample mode prompts
+            logger.debug("[PromptGenerator] Using SampleFlow for prompt ID: \(promptIdentifier)")
+            return sampleFlow
+        case 5: // Contact-specific prompts
+            logger.debug("[PromptGenerator] Using ContactFlow for prompt ID: \(promptIdentifier)")
+            return contactFlow
+        case 0: 
+            logger.debug("[PromptGenerator] search - prompt ID: \(promptIdentifier)  chatFlow")
+            return chatFlow
+        default: // General prompts
+            logger.debug("[PromptGenerator] Using ChatFlow for prompt ID: \(promptIdentifier)")
+            return chatFlow
+        }
+    }
     
     /// Generates a system prompt based on the given context
     /// - Parameters:
@@ -17,7 +46,7 @@ class PromptGenerator {
     ///   - contact: Optional contact for context
     ///   - promptIdentifier: The identifier of the prompt (0 for custom questions)
     ///   - promptDisplay: The display text of the prompt (custom question for custom prompts)
-    /// - Returns: A tuple containing the system prompt and any error that occurred
+    /// - Returns: The generated system prompt
     func generateSystemPrompt(
         sourceType: String,
         sourceAction: String,
@@ -27,77 +56,77 @@ class PromptGenerator {
         promptIdentifier: Int = 0,
         promptDisplay: String? = nil
     ) async throws -> String {
-        // Log only metadata and identifiers
-        print("[PromptGenerator] Generating prompt - Type: \(sourceType), Action: \(sourceAction), ID: \(sourceId), PromptID: \(promptIdentifier)")
-        if let contactName = contact?.name {
-            print("[PromptGenerator] Contact: \(contactName)")
-        }
-        if let mode = sampleMode {
-            print("[PromptGenerator] Sample Mode: \(mode)")
-        }
-        if let display = promptDisplay {
-            print("[PromptGenerator] Prompt Display: \(display)")
-        }
+        logger.debug("""
+            ╔════════════════════════════════════════════════════════════╗
+            ║                PromptGenerator Input Parameters             ║
+            ╠════════════════════════════════════════════════════════════╣
+            ║ Source Type: \(sourceType.padding(toLength: 40, withPad: " ", startingAt: 0)) ║
+            ║ Source Action: \(sourceAction.padding(toLength: 38, withPad: " ", startingAt: 0)) ║
+            ║ Source ID: \(sourceId.padding(toLength: 42, withPad: " ", startingAt: 0)) ║
+            ║ Sample Mode: \(sampleMode?.padding(toLength: 40, withPad: " ", startingAt: 0) ?? "none".padding(toLength: 40, withPad: " ", startingAt: 0)) ║
+            ║ Prompt ID: \(String(promptIdentifier).padding(toLength: 42, withPad: " ", startingAt: 0)) ║
+            ║ Contact: \(contact?.name?.padding(toLength: 43, withPad: " ", startingAt: 0) ?? "none".padding(toLength: 43, withPad: " ", startingAt: 0)) ║
+            ║ Display: \(promptDisplay?.padding(toLength: 43, withPad: " ", startingAt: 0) ?? "none".padding(toLength: 43, withPad: " ", startingAt: 0)) ║
+            ╚════════════════════════════════════════════════════════════╝
+            """)
         
-        // First try to get prompts from configuration if we have a valid identifier
-        if promptIdentifier > 0 {
-            let context = try await CoreDataManager.shared.viewContext
-            let prompts = promptManager.getPromptsForSourceType(
-                sourceType,
-                sampleMode: sampleMode,
-                context: context,
-                contact: contact
-            )
-            
-            if let firstPrompt = prompts.first(where: { $0.identifier == promptIdentifier }) {
-                print("[PromptGenerator] Using configured prompt with ID: \(firstPrompt.identifier)")
-                let prompts = promptManager.getSystemAndUserPrompts(from: firstPrompt)
-                return prompts.systemPrompt
-            }
-        }
+        // Get the appropriate flow based on the prompt identifier
+        let flow = getFlow(for: promptIdentifier)
         
-        // Fallback to dynamic prompt generation
-        var prompt = "system prompt"
-        
-        // Add prompt context if available
-        if let display = promptDisplay {
-            prompt += "\nUser Question: \(display)\n"
-        }
-        
-        switch (sourceType, sourceAction) {
-        case ("contact", "general"):
-            if let contact = contact {
-                prompt += "Contact is \(contact.name ?? "failed to load contact name"). "
-                
-                // Add contact-specific context
-                prompt += "You are analyzing a specific contact with ID: \(sourceId). "
-                prompt += "Focus on providing insights about this contact's relationship with the user, "
-                prompt += "suggesting conversation topics, and identifying opportunities for deeper connection."
-                
-                // Add notes context if available
-                if let sampleProvider = getSampleProvider(for: sampleMode) {
-                    let context = PromptContext(
-                        mode: SampleMode(rawValue: sampleMode ?? "") ?? .none,
-                        question: "",
-                        contact: contact
-                    )
-                    let notesContext = try await sampleProvider.fetchRelevantNotes(for: context)
-                    if !notesContext.isEmpty {
-                        prompt += notesContext
-                    }
-                }
-            } else {
-                prompt += "contact + general (ID: \(sourceId)). "
-                prompt += "Focus on general relationship management, communication strategies, and maintaining healthy connections."
+        do {
+            // Generate the prompt using the selected flow
+            let prompt: String
+            switch flow {
+            case let sample as SampleFlow:
+                prompt = try await sample.generateSystemPrompt(
+                    sourceType: sourceType,
+                    sourceAction: sourceAction,
+                    sourceId: sourceId,
+                    sampleMode: sampleMode,
+                    contact: contact,
+                    promptDisplay: promptDisplay,
+                    promptIdentifier: promptIdentifier
+                )
+            case let contactFlow as ContactFlow:
+                prompt = try await contactFlow.generateSystemPrompt(
+                    sourceType: sourceType,
+                    sourceAction: sourceAction,
+                    sourceId: sourceId,
+                    sampleMode: sampleMode,
+                    contact: contact,
+                    promptDisplay: promptDisplay,
+                    promptIdentifier: promptIdentifier
+                )
+            case let chat as ChatFlow:
+                prompt = try await chat.generateSystemPrompt(
+                    sourceType: sourceType,
+                    sourceAction: sourceAction,
+                    sourceId: sourceId,
+                    sampleMode: sampleMode,
+                    contact: contact,
+                    promptDisplay: promptDisplay,
+                    promptIdentifier: promptIdentifier
+                )
+            default:
+                throw PromptError.promptNotFound
             }
             
-        default:
-            prompt += "You are providing general social relationship advice."
+            logger.debug("""
+                ╔════════════════════════════════════════════════════════════╗
+                ║              PromptGenerator Success                        ║
+                ╚════════════════════════════════════════════════════════════╝
+                """)
+            return prompt
+        } catch {
+            logger.error("""
+                ╔════════════════════════════════════════════════════════════╗
+                ║              PromptGenerator Error                         ║
+                ╠════════════════════════════════════════════════════════════╣
+                ║ Error: \(error.localizedDescription.padding(toLength: 40, withPad: " ", startingAt: 0)) ║
+                ╚════════════════════════════════════════════════════════════╝
+                """)
+            throw error
         }
-        
-        // Only log that we generated a prompt, not its content
-        print("[PromptGenerator] Generated system prompt (content hidden)")
-        return prompt
     }
     
     /// Updates an existing system prompt with additional notes
@@ -106,20 +135,28 @@ class PromptGenerator {
     ///   - notes: The notes to add to the prompt
     /// - Returns: The updated system prompt
     func updateSystemPromptWithNotes(_ currentPrompt: String, notes: String) -> String {
-        print("[PromptGenerator] Updating system prompt with notes")
+        logger.debug("""
+            ╔════════════════════════════════════════════════════════════╗
+            ║              Updating System Prompt with Notes              ║
+            ╚════════════════════════════════════════════════════════════╝
+            """)
         
         // First check if the system prompt already contains these notes
         if !currentPrompt.contains(notes) {
+            logger.debug("[PromptGenerator] Adding new notes to prompt")
             // If not, append them or update accordingly
             if !currentPrompt.contains("相关笔记如下:") {
                 return currentPrompt + "\n\n相关笔记如下:\n" + notes
             } else {
                 // If it already has notes section but different notes, replace it
+                logger.debug("[PromptGenerator] Replacing existing notes section")
                 let components = currentPrompt.components(separatedBy: "相关笔记如下:")
                 if components.count > 1 {
                     return components[0] + "相关笔记如下:\n" + notes
                 }
             }
+        } else {
+            logger.debug("[PromptGenerator] Notes already present in prompt, no update needed")
         }
         
         return currentPrompt
@@ -136,31 +173,64 @@ class PromptGenerator {
         sourceAction: String,
         contact: Contact?
     ) -> String {
-        switch (sourceType, sourceAction) {
-        case ("contact", "general"):
-            if let contact = contact {
-                return "关于 \(contact.name ?? "这个联系人")，你想问什么"
-            }
-            return "关于这个联系人，你想问什么"
-        case ("contact", "insights"):
-            return "Please analyze this contact and provide insights about our relationship."
+        logger.debug("""
+            ╔════════════════════════════════════════════════════════════╗
+            ║              Generating Initial Message                     ║
+            ╠════════════════════════════════════════════════════════════╣
+            ║ Source Type: \(sourceType.padding(toLength: 40, withPad: " ", startingAt: 0)) ║
+            ║ Source Action: \(sourceAction.padding(toLength: 38, withPad: " ", startingAt: 0)) ║
+            ║ Contact: \(contact?.name?.padding(toLength: 43, withPad: " ", startingAt: 0) ?? "none".padding(toLength: 43, withPad: " ", startingAt: 0)) ║
+            ╚════════════════════════════════════════════════════════════╝
+            """)
+        
+        // Determine which flow to use based on the source type
+        let message: String
+        switch sourceType {
+        case "contact":
+            logger.debug("[PromptGenerator] Using ContactFlow for initial message")
+            message = contactFlow.generateInitialMessage(
+                sourceType: sourceType,
+                sourceAction: sourceAction,
+                contact: contact
+            )
+        case "sample":
+            logger.debug("[PromptGenerator] Using SampleFlow for initial message")
+            message = sampleFlow.generateInitialMessage(
+                sourceType: sourceType,
+                sourceAction: sourceAction,
+                contact: contact
+            )
         default:
-            return "How can you help me with my social relationships?"
+            logger.debug("[PromptGenerator] Using ChatFlow for initial message")
+            message = chatFlow.generateInitialMessage(
+                sourceType: sourceType,
+                sourceAction: sourceAction,
+                contact: contact
+            )
         }
+        
+        logger.debug("[PromptGenerator] Generated initial message: \(message)")
+        return message
     }
     
     /// Extracts the user's question from text that may contain notes
     /// - Parameter text: The input text that may contain both question and notes
     /// - Returns: The extracted question
     func extractUserQuestion(from text: String) -> String {
+        logger.debug("[PromptGenerator] Extracting user question from text")
+        
         let noteMarkers = ["相关笔记如下:", "笔记如下", "Notes:"]
         
         for marker in noteMarkers {
             if let range = text.range(of: marker) {
                 let questionPart = String(text[..<range.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-                return questionPart.isEmpty ? "请分析这些笔记" : questionPart
+                let question = questionPart.isEmpty ? "请分析这些笔记" : questionPart
+                logger.debug("[PromptGenerator] Extracted question: \(question)")
+                return question
             }
         }
+        
+        logger.debug("[PromptGenerator] No notes found, using full text as question")
         return text
     }
     
@@ -168,20 +238,19 @@ class PromptGenerator {
     /// - Parameter text: The input text that may contain both question and notes
     /// - Returns: The extracted notes, if any
     func extractNotes(from text: String) -> String? {
+        logger.debug("[PromptGenerator] Extracting notes from text")
+        
         let noteMarkers = ["相关笔记如下:", "笔记如下", "Notes:"]
         
         for marker in noteMarkers {
             if let range = text.range(of: marker) {
-                return String(text[range.lowerBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let notes = String(text[range.lowerBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                logger.debug("[PromptGenerator] Found notes with marker: \(marker)")
+                return notes
             }
         }
+        
+        logger.debug("[PromptGenerator] No notes found in text")
         return nil
-    }
-    
-    // MARK: - Private Helpers
-    
-    private func getSampleProvider(for sampleMode: String?) -> SampleModeProvider? {
-        guard let modeType = sampleMode else { return nil }
-        return SampleModeProviderFactory.getProvider(for: modeType)
     }
 } 
