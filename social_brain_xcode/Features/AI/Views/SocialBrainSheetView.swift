@@ -90,44 +90,6 @@ struct SocialBrainSheetView: View {
         return SampleModeProviderFactory.getProvider(for: modeType)
     }
     
-    // System prompt generation
-    private func generateSystemPrompt(
-        sourceType: String,
-        sourceAction: String,
-        sourceId: String,
-        promptIdentifier: Int
-    ) async throws -> String {
-        // For ChatFlow (promptIdentifier 0), use the input text as promptDisplay
-        // For other flows, use the prompt's display text
-        let promptDisplay: String?
-        if promptIdentifier == 0 {
-            promptDisplay = inputText.isEmpty ? nil : inputText
-        } else {
-            let context = try await CoreDataManager.shared.viewContext
-            let prompts = promptManager.getPromptsForSourceType(
-                sourceType,
-                sampleMode: appModeManager.sampleModeType,
-                context: context,
-                contact: contextContact
-            )
-            
-            guard let prompt = prompts.first(where: { $0.identifier == promptIdentifier }) else {
-                throw PromptError.promptNotFound
-            }
-            promptDisplay = prompt.display
-        }
-        
-        return try await promptGenerator.generateSystemPrompt(
-            sourceType: sourceType,
-            sourceAction: sourceAction,
-            sourceId: sourceId,
-            sampleMode: appModeManager.sampleModeType,
-            contact: contextContact,
-            promptDisplay: promptDisplay,
-            promptIdentifier: promptIdentifier
-        )
-    }
-    
     // Modify initializeSuggestedQuestions to only use SourceTypePromptMapping
     private func initializeSuggestedQuestions() {
         print("[SocialBrainSheetView] initializeSuggestedQuestions started")
@@ -136,6 +98,19 @@ struct SocialBrainSheetView: View {
         Task {
             do {
                 let context = try await CoreDataManager.shared.viewContext
+                
+                // ARCHITECTURE FLOW:
+                // initializeSuggestedQuestions() 
+                //     ↓ (gets multiple prompts from database)
+                // promptManager.getPromptsForSourceType()
+                //     ↓ (creates multiple suggested questions)
+                // suggestedQuestions array
+                //     ↓ (user selects a question)
+                // handleSuggestedQuestion() 
+                //     ↓ (uses stored promptIdentifier)
+                // promptGenerator.generatePrompts()
+                //     ↓ (routes to appropriate flow)
+                // PromptFlow.swift (with centralized update logic)
                 
                 // Get prompts based on source type and sample mode, passing the contact for dynamic text replacement
                 let prompts = promptManager.getPromptsForSourceType(
@@ -166,16 +141,6 @@ struct SocialBrainSheetView: View {
                 }
             }
         }
-    }
-    
-    // Improve the extraction function to be more robust
-    private func extractUserQuestion(from text: String) -> String {
-        return promptGenerator.extractUserQuestion(from: text)
-    }
-    
-    // Extract notes from text
-    private func extractNotes(from text: String) -> String? {
-        return promptGenerator.extractNotes(from: text)
     }
     
     // Add helper function to get prompt identifier
@@ -410,20 +375,10 @@ struct SocialBrainSheetView: View {
                 contextContact = contact
             }
             
-            // Generate system prompt first to load the contact
+            // Initialize suggested questions after contact is loaded
             Task {
-                do {
-                    // Get the appropriate prompt identifier based on source type and sample mode
-                    let promptIdentifier = getPromptIdentifier(for: sourceType, sampleMode: appModeManager.sampleModeType)
-                    try await generateSystemPrompt(sourceType: sourceType, sourceAction: sourceAction, sourceId: sourceId, promptIdentifier: promptIdentifier)
-                    // Initialize suggested questions after contact is loaded
-                    await MainActor.run {
-                        initializeSuggestedQuestions()
-                    }
-                } catch {
-                    print("[SocialBrainSheetView] Error generating system prompt: \(error)")
-                    errorMessage = error.localizedDescription
-                    showError = true
+                await MainActor.run {
+                    initializeSuggestedQuestions()
                 }
             }
             
@@ -461,9 +416,8 @@ struct SocialBrainSheetView: View {
         guard !trimmedText.isEmpty else { return }
         let limitedText = String(trimmedText.prefix(1000))
         
-        // Extract user question and notes
-        let userQuestion = extractUserQuestion(from: limitedText)
-        let extractedNotes = extractNotes(from: limitedText)
+        // Use the full input text as user question - extraction is handled by the flows
+        let userQuestion = limitedText
         
         if !isConversationActive {
             isConversationActive = true
@@ -515,21 +469,8 @@ struct SocialBrainSheetView: View {
                     }
                 }
                 
-                // Handle notes if present
-                if let notes = extractedNotes {
-                    if let sampleProvider = getSampleProvider() {
-                        let context = PromptContext(
-                            mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
-                            question: userQuestion,
-                            contact: contextContact
-                        )
-                        let updatedSystemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
-                        chatMessages[0] = AIChatMessage(role: .system, content: updatedSystemPrompt)
-                    } else {
-                        let updatedSystemPrompt = promptGenerator.updateSystemPromptWithNotes(promptPair.systemPrompt, notes: notes)
-                        chatMessages[0] = AIChatMessage(role: .system, content: updatedSystemPrompt)
-                    }
-                }
+                // System prompt updates are now handled automatically by the flows
+                // No additional processing needed here
                 
                 // Check if we should use streaming (Doubao or DeepSeek)
                 if let doubaoService = chatService as? DoubaoChatService {

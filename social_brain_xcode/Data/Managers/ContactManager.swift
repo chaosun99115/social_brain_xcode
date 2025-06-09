@@ -69,6 +69,19 @@ class ContactManager: ObservableObject {
         return fetchContact(withName: name) != nil
     }
     
+    func fetchContacts(byType type: Int16) -> [Contact] {
+        let request: NSFetchRequest<Contact> = Contact.fetchRequest()
+        request.predicate = NSPredicate(format: "type == %d", type)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Contact.updatedAt, ascending: false)]
+        
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Error fetching contacts by type: \(error)")
+            return []
+        }
+    }
+    
     // MARK: - Update
     func updateContact(contactId: UUID, name: String, type: Int16? = nil) -> Bool {
         guard let contact = fetchContact(withId: contactId) else { return false }

@@ -44,6 +44,19 @@ class CircleManager: ObservableObject {
         }
     }
     
+    func fetchCircles(byType type: Int16) -> [Circle] {
+        let request: NSFetchRequest<Circle> = Circle.fetchRequest()
+        request.predicate = NSPredicate(format: "type == %d", type)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Circle.updatedAt, ascending: false)]
+        
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Error fetching circles by type: \(error)")
+            return []
+        }
+    }
+    
     func fetchCircle(withId circleId: UUID) -> Circle? {
         let request: NSFetchRequest<Circle> = Circle.fetchRequest()
         request.predicate = NSPredicate(format: "circleId == %@", circleId as CVarArg)

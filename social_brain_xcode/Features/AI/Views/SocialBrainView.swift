@@ -75,6 +75,19 @@ struct SocialBrainView: View {
             do {
                 let context = try await CoreDataManager.shared.viewContext
                 
+                // ARCHITECTURE FLOW:
+                // initializeSuggestedQuestions() 
+                //     ↓ (gets multiple prompts from database)
+                // promptManager.getPromptsForSourceType()
+                //     ↓ (creates multiple suggested questions)
+                // suggestedQuestions array
+                //     ↓ (user selects a question)
+                // handleSuggestedQuestion() 
+                //     ↓ (uses stored promptIdentifier)
+                // promptGenerator.generatePrompts()
+                //     ↓ (routes to appropriate flow)
+                // PromptFlow.swift (with centralized update logic)
+                
                 // Get prompts based on source type and sample mode
                 let prompts = promptManager.getPromptsForSourceType(
                     sourceType,
@@ -104,16 +117,6 @@ struct SocialBrainView: View {
                 }
             }
         }
-    }
-    
-    // Improve the extraction function to be more robust
-    private func extractUserQuestion(from text: String) -> String {
-        return promptGenerator.extractUserQuestion(from: text)
-    }
-    
-    // Extract notes from text
-    private func extractNotes(from text: String) -> String? {
-        return promptGenerator.extractNotes(from: text)
     }
     
     // Add helper function to get prompt identifier
@@ -397,9 +400,8 @@ struct SocialBrainView: View {
         guard !trimmedText.isEmpty else { return }
         let limitedText = String(trimmedText.prefix(1000))
         
-        // Extract user question and notes
-        let userQuestion = extractUserQuestion(from: limitedText)
-        let extractedNotes = extractNotes(from: limitedText)
+        // Use the full input text as user question - extraction is handled by the flows
+        let userQuestion = limitedText
         
         if !isConversationActive {
             isConversationActive = true
@@ -451,21 +453,8 @@ struct SocialBrainView: View {
                     }
                 }
                 
-                // Handle notes if present
-                if let notes = extractedNotes {
-                    if let sampleProvider = getSampleProvider() {
-                        let context = PromptContext(
-                            mode: SampleMode(rawValue: appModeManager.sampleModeType ?? "") ?? .none,
-                            question: userQuestion,
-                            contact: contextContact
-                        )
-                        let updatedSystemPrompt = try await sampleProvider.generateSystemPromptWithNotes(for: context)
-                        chatMessages[0] = AIChatMessage(role: .system, content: updatedSystemPrompt)
-                    } else {
-                        let updatedSystemPrompt = promptGenerator.updateSystemPromptWithNotes(promptPair.systemPrompt, notes: notes)
-                        chatMessages[0] = AIChatMessage(role: .system, content: updatedSystemPrompt)
-                    }
-                }
+                // System prompt updates are now handled automatically by the flows
+                // No additional processing needed here
                 
                 // Check if we should use streaming (Doubao or DeepSeek)
                 if let doubaoService = chatService as? DoubaoChatService {
@@ -624,11 +613,6 @@ struct SocialBrainView: View {
     
     private func cleanupKeyboardObservers() {
         NotificationCenter.default.removeObserver(self)
-    }
-    
-    // Helper function to update system prompt with notes for non-sample mode
-    private func updateSystemPromptWithNotes(_ notes: String) async throws {
-        systemPrompt = promptGenerator.updateSystemPromptWithNotes(systemPrompt, notes: notes)
     }
 }
 

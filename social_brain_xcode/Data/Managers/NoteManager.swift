@@ -95,6 +95,35 @@ class NoteManager: ObservableObject {
         }
     }
     
+    // MARK: - Fetch by Type and SubType
+    func fetchNotes(type: Int16, subType: Int16) -> [Note] {
+        let request: NSFetchRequest<Note> = Note.fetchRequest()
+        request.predicate = NSPredicate(format: "type == %d AND subType == %d", type, subType)
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false),
+            NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)
+        ]
+        
+        do {
+            let notes = try context.fetch(request)
+            return notes
+        } catch {
+            print("Error fetching notes by type and subtype: \(error)")
+            return []
+        }
+    }
+    
+    func fetchNotesAsync(type: Int16, subType: Int16) async throws -> [Note] {
+        let request: NSFetchRequest<Note> = Note.fetchRequest()
+        request.predicate = NSPredicate(format: "type == %d AND subType == %d", type, subType)
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false),
+            NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)
+        ]
+        
+        return try context.fetch(request)
+    }
+    
     // MARK: - Update
     func updateNote(noteId: UUID, text: String) -> Bool {
         guard let note = fetchNote(withId: noteId) else { return false }
