@@ -48,8 +48,8 @@ struct SourceTypePromptMapping {
     /// Maps source type and sample mode to prompt identifiers
     static let sourceTypeToPromptIdentifiers: [String: [String: [Int]]] = [
         "general": [
-            "changedJob": [1, 2, 3],  // Changed job specific prompts
-            "indieDev": [1, 2, 4],    // Indie dev specific prompts
+            "changedJob": [1, 2],  // Changed job specific prompts
+            "indieDev": [1, 2],    // Indie dev specific prompts
             "regular": [1, 2]         // Keep original identifiers for regular mode
         ],
         "contact": [

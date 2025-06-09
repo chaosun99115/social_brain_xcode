@@ -438,7 +438,8 @@ struct SocialBrainView: View {
                 // Prepare messages with both prompts
                 var chatMessages = aiServiceManager.convertToChatMessages(messages)
                 
-                // Add system prompt
+                // Always add system prompt to maintain conversation context
+                // The system prompt provides essential instructions and context for the AI
                 chatMessages.insert(AIChatMessage(role: .system, content: promptPair.systemPrompt), at: 0)
                 
                 // If we have a user prompt, use it to modify the user's message
@@ -895,9 +896,11 @@ struct GrowingTextView: UIViewRepresentable {
         textView.textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
         textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         
-        // Configure input accessory view with proper height and clear background
+        // Improved input accessory view configuration to avoid hardware keyboard issues
         let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0))
         accessoryView.backgroundColor = .clear
+        accessoryView.isUserInteractionEnabled = false
+        accessoryView.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
         textView.inputAccessoryView = accessoryView
         
         // Disable the system input assistant view completely
@@ -911,6 +914,11 @@ struct GrowingTextView: UIViewRepresentable {
         // Set proper content insets to avoid overlap with keyboard
         textView.contentInset = .zero
         textView.scrollIndicatorInsets = .zero
+        
+        // Add proper keyboard handling to avoid hardware keyboard detection issues
+        textView.keyboardType = .default
+        textView.returnKeyType = .default
+        textView.enablesReturnKeyAutomatically = true
         
         return textView
     }
@@ -941,6 +949,20 @@ struct GrowingTextView: UIViewRepresentable {
             let size = textView.sizeThatFits(CGSize(width: textView.frame.width, height: .greatestFiniteMagnitude))
             parent.height = min(size.height, parent.maxHeight)
             textView.isScrollEnabled = parent.height >= parent.maxHeight
+        }
+        
+        // Add proper keyboard handling to prevent hardware keyboard detection issues
+        func textViewShouldBeginEditing(_ textView: UITextView) -> Bool {
+            // Ensure proper keyboard configuration before editing begins
+            DispatchQueue.main.async {
+                if textView.inputAccessoryView == nil {
+                    let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0))
+                    accessoryView.backgroundColor = .clear
+                    accessoryView.isUserInteractionEnabled = false
+                    textView.inputAccessoryView = accessoryView
+                }
+            }
+            return true
         }
     }
 }

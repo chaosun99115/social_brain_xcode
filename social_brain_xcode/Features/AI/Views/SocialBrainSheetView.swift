@@ -39,6 +39,9 @@ struct SocialBrainSheetView: View {
     @State private var keyboardHeight: CGFloat = 0
     @State private var isKeyboardVisible = false
     
+    // Add new state for input accessory view
+    @State private var inputAccessoryHeight: CGFloat = 0
+    
     @State private var currentStreamingMessage: String = ""
     @State private var isStreaming = false
     
@@ -310,7 +313,7 @@ struct SocialBrainSheetView: View {
                     // Input bar
                     HStack {
                         ZStack(alignment: .topLeading) {
-                            GrowingTextView(text: $inputText, height: $textEditorHeight, maxHeight: maxTextEditorHeight)
+                            SheetGrowingTextView(text: $inputText, height: $textEditorHeight, maxHeight: maxTextEditorHeight)
                                 .frame(height: textEditorHeight)
                                 .background(Color(.systemGray6))
                                 .cornerRadius(12)
@@ -335,7 +338,7 @@ struct SocialBrainSheetView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 6)
-                    .padding(.bottom, isKeyboardVisible ? keyboardHeight + 12 : 12)
+                    .padding(.bottom, isKeyboardVisible ? inputAccessoryHeight + 12 : 12)
                     .animation(.easeInOut(duration: 0.25), value: isKeyboardVisible)
                 }
                 .background(Color.primaryBackground)
@@ -382,8 +385,11 @@ struct SocialBrainSheetView: View {
                 }
             }
             
-            // Setup keyboard observers for keyboard dismissal
+            // Setup keyboard observers for keyboard dismissal with error handling
             setupKeyboardObservers()
+            
+            // Configure keyboard for sheet modal to prevent hardware keyboard issues
+            configureKeyboardForSheetModal()
         }
         .onDisappear {
             // Cleanup keyboard observers
@@ -454,7 +460,8 @@ struct SocialBrainSheetView: View {
                 // Prepare messages with both prompts
                 var chatMessages = aiServiceManager.convertToChatMessages(messages)
                 
-                // Add system prompt
+                // Always add system prompt to maintain conversation context
+                // The system prompt provides essential instructions and context for the AI
                 chatMessages.insert(AIChatMessage(role: .system, content: promptPair.systemPrompt), at: 0)
                 
                 // If we have a user prompt, use it to modify the user's message
@@ -590,9 +597,36 @@ struct SocialBrainSheetView: View {
             object: nil,
             queue: .main
         ) { notification in
-            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                keyboardHeight = keyboardFrame.height
-                isKeyboardVisible = true
+            // Add error handling for hardware keyboard detection issues
+            do {
+                if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+                   let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
+                    
+                    // Get the keyboard height without input accessory
+                    let keyboardHeight = keyboardFrame.height
+                    
+                    // Calculate input accessory height if present with error handling
+                    if let window = UIApplication.shared.windows.first {
+                        if let inputAccessoryView = window.inputAccessoryView {
+                            self.inputAccessoryHeight = inputAccessoryView.frame.height
+                        } else {
+                            self.inputAccessoryHeight = 0
+                        }
+                    } else {
+                        self.inputAccessoryHeight = 0
+                    }
+                    
+                    withAnimation(.easeInOut(duration: duration)) {
+                        // Use the raw keyboard height without input accessory adjustment
+                        self.keyboardHeight = keyboardHeight
+                        self.isKeyboardVisible = true
+                    }
+                }
+            } catch {
+                // Fallback handling for keyboard detection issues
+                print("[SocialBrainSheetView] Keyboard detection error: \(error.localizedDescription)")
+                self.isKeyboardVisible = true
+                self.inputAccessoryHeight = 0
             }
         }
         
@@ -600,14 +634,121 @@ struct SocialBrainSheetView: View {
             forName: UIResponder.keyboardWillHideNotification,
             object: nil,
             queue: .main
-        ) { _ in
-            keyboardHeight = 0
-            isKeyboardVisible = false
+        ) { notification in
+            if let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
+                withAnimation(.easeInOut(duration: duration)) {
+                    self.keyboardHeight = 0
+                    self.isKeyboardVisible = false
+                    self.inputAccessoryHeight = 0
+                }
+            }
         }
     }
     
     private func cleanupKeyboardObservers() {
         NotificationCenter.default.removeObserver(self)
+    }
+    
+    private func configureKeyboardForSheetModal() {
+        // Configure keyboard for sheet modal to prevent hardware keyboard detection issues
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // Ensure proper keyboard configuration for sheet modal
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                
+                // Configure keyboard appearance for sheet modal
+                window.overrideUserInterfaceStyle = .unspecified
+                
+                print("[SocialBrainSheetView] Keyboard configured for sheet modal")
+            }
+        }
+    }
+}
+
+// Custom GrowingTextView optimized for sheet modals
+struct SheetGrowingTextView: UIViewRepresentable {
+    @Binding var text: String
+    @Binding var height: CGFloat
+    let maxHeight: CGFloat
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.isScrollEnabled = false
+        textView.font = UIFont.systemFont(ofSize: 17)
+        textView.backgroundColor = UIColor.systemGray6
+        textView.delegate = context.coordinator
+        textView.textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
+        textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        
+        // Sheet-specific input accessory view configuration
+        let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0))
+        accessoryView.backgroundColor = .clear
+        accessoryView.isUserInteractionEnabled = false
+        accessoryView.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
+        textView.inputAccessoryView = accessoryView
+        
+        // Disable the system input assistant view completely
+        textView.inputAssistantItem.leadingBarButtonGroups = []
+        textView.inputAssistantItem.trailingBarButtonGroups = []
+        textView.autocorrectionType = .no
+        textView.smartDashesType = .no
+        textView.smartQuotesType = .no
+        textView.smartInsertDeleteType = .no
+        
+        // Set proper content insets to avoid overlap with keyboard
+        textView.contentInset = .zero
+        textView.scrollIndicatorInsets = .zero
+        
+        // Add proper keyboard handling for sheet modals
+        textView.keyboardType = .default
+        textView.returnKeyType = .default
+        textView.enablesReturnKeyAutomatically = true
+        
+        return textView
+    }
+
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        if uiView.text != text {
+            uiView.text = text
+        }
+        // Update height
+        let size = uiView.sizeThatFits(CGSize(width: uiView.frame.width, height: .greatestFiniteMagnitude))
+        height = min(size.height, maxHeight)
+        uiView.isScrollEnabled = height >= maxHeight
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, UITextViewDelegate {
+        var parent: SheetGrowingTextView
+
+        init(_ parent: SheetGrowingTextView) {
+            self.parent = parent
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            parent.text = textView.text
+            let size = textView.sizeThatFits(CGSize(width: textView.frame.width, height: .greatestFiniteMagnitude))
+            parent.height = min(size.height, parent.maxHeight)
+            textView.isScrollEnabled = parent.height >= parent.maxHeight
+        }
+        
+        // Sheet-specific keyboard handling
+        func textViewShouldBeginEditing(_ textView: UITextView) -> Bool {
+            // Ensure proper keyboard configuration for sheet modal
+            DispatchQueue.main.async {
+                if textView.inputAccessoryView == nil {
+                    let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0))
+                    accessoryView.backgroundColor = .clear
+                    accessoryView.isUserInteractionEnabled = false
+                    accessoryView.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
+                    textView.inputAccessoryView = accessoryView
+                }
+            }
+            return true
+        }
     }
 }
 

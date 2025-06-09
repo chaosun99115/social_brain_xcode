@@ -426,59 +426,119 @@ class AddSourceInfoFunction: PromptUpdateFunction {
         print("[AddSourceInfoFunction] Source type: \(sourceType)")
         print("[AddSourceInfoFunction] Source ID: \(sourceId)")
         
-        let sourceInfo = extractSourceInfo(userInput: userInput, sampleMode: sampleMode, sourceType: sourceType, sourceId: sourceId)
-        print("[AddSourceInfoFunction] Extracted source info length: \(sourceInfo.count)")
+        var sourceInfo = ""
         
-        // Check if source info already exists and replace it
-        if prompt.contains("来源信息:") {
-            print("[AddSourceInfoFunction] Replacing existing source section")
-            let pattern = "来源信息:.*?(?=\n\n====|$)"
-            if let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) {
-                let range = NSRange(prompt.startIndex..<prompt.endIndex, in: prompt)
-                let result = regex.stringByReplacingMatches(in: prompt, options: [], range: range, withTemplate: sourceInfo)
-                print("[AddSourceInfoFunction] Source section replaced")
-                return result
-            }
+        // Add specific entity information based on sourceType
+        if let entityInfo = extractSpecificEntityInfo(sourceType: sourceType, sourceId: sourceId) {
+            sourceInfo += entityInfo
         }
+        
+        print("[AddSourceInfoFunction] Extracted source info length: \(sourceInfo.count)")
         
         print("[AddSourceInfoFunction] Adding new source section")
         return prompt + sourceInfo
     }
     
-    private func extractSourceInfo(userInput: String, sampleMode: String?, sourceType: String, sourceId: String) -> String {
-        var sourceInfo = """
-        
-        来源信息:
-        类型: \(sourceType)
-        ID: \(sourceId)
-        样本模式: \(sampleMode ?? "无")
-        """
-        
-        // Enhanced source info based on context
-        if let mode = sampleMode {
-            switch mode {
-            case "changedJob":
-                sourceInfo += "\n场景: 职业转换相关咨询"
-            case "indieDev":
-                sourceInfo += "\n场景: 独立开发者相关咨询"
-            default:
-                sourceInfo += "\n场景: 通用社交咨询"
-            }
+    private func extractSpecificEntityInfo(sourceType: String, sourceId: String) -> String? {
+        guard let sourceUUID = UUID(uuidString: sourceId) else {
+            print("[AddSourceInfoFunction] Invalid UUID format for sourceId: \(sourceId)")
+            return nil
         }
         
-        // Add source type specific information
         switch sourceType {
         case "contact":
-            sourceInfo += "\n上下文: 联系人特定分析"
+            return extractContactInfo(contactId: sourceUUID)
         case "note":
-            sourceInfo += "\n上下文: 笔记内容分析"
-        case "general":
-            sourceInfo += "\n上下文: 通用社交建议"
+            return extractNoteInfo(noteId: sourceUUID)
         default:
-            sourceInfo += "\n上下文: 未知来源类型"
+            return nil
+        }
+    }
+    
+    private func extractContactInfo(contactId: UUID) -> String? {
+        print("[AddSourceInfoFunction] Fetching contact with ID: \(contactId)")
+        
+        guard let contact = ContactManager.shared.fetchContact(withId: contactId) else {
+            print("[AddSourceInfoFunction] Contact not found with ID: \(contactId)")
+            return nil
         }
         
-        return sourceInfo
+        print("[AddSourceInfoFunction] Found contact: \(contact.name ?? "unnamed")")
+        
+        var contactInfo = "\n\n====指定熟人如下===="
+        
+        // Add contact name
+        if let name = contact.name, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            contactInfo += "\n姓名: \(name)"
+        } else {
+            contactInfo += "\n姓名: (尚未设置)"
+        }
+        
+        // Add telephone information
+        if let tel = contact.tel, !tel.isEmpty {
+            contactInfo += "\n电话: \(tel)"
+        } else {
+            contactInfo += "\n电话: (尚未设置)"
+        }
+        
+        // Add birthday information
+        if let birthday = contact.birthday {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateStyle = .medium
+            let birthdayStr = dateFormatter.string(from: birthday)
+            contactInfo += "\n生日: \(birthdayStr)"
+        } else {
+            contactInfo += "\n生日: (尚未设置)"
+        }
+        
+        // Add memo information
+        if let memo = contact.memo, !memo.isEmpty {
+            contactInfo += "\n备注: \(memo)"
+        } else {
+            contactInfo += "\n备注: (尚未设置)"
+        }
+        
+        // Add creation date
+        if let createdAt = contact.createdAt {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateStyle = .medium
+            let createdStr = dateFormatter.string(from: createdAt)
+            contactInfo += "\n创建时间: \(createdStr)"
+        }
+        
+        print("[AddSourceInfoFunction] Contact info length: \(contactInfo.count)")
+        return contactInfo
+    }
+    
+    private func extractNoteInfo(noteId: UUID) -> String? {
+        print("[AddSourceInfoFunction] Fetching note with ID: \(noteId)")
+        
+        guard let note = NoteManager.shared.fetchNote(withId: noteId) else {
+            print("[AddSourceInfoFunction] Note not found with ID: \(noteId)")
+            return nil
+        }
+        
+        print("[AddSourceInfoFunction] Found note with content length: \(note.content?.count ?? 0)")
+        
+        var noteInfo = "\n\n====指定笔记如下===="
+        
+        // Add note content
+        if let content = note.content, !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            noteInfo += "\n内容: \(content)"
+        } else {
+            noteInfo += "\n内容: (空)"
+        }
+        
+        // Add creation date
+        if let createdAt = note.createdAt {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateStyle = .medium
+            let createdStr = dateFormatter.string(from: createdAt)
+            noteInfo += "\n创建时间: \(createdStr)"
+        }
+        
+        print("[AddSourceInfoFunction] Note info length: \(noteInfo.count)")
+        return noteInfo
     }
 }
 
@@ -528,9 +588,9 @@ class PromptUpdateManager {
         case "QuestionFlow":
             return [0, 1, 2, 3] // notes, topics, contact
         case "ChatFlow":
-            return [1, 2, 4] // topics, contact, source
+            return [0, 1, 2, 3] // topics, contact, source
         case "NoteFlow":
-            return [0, 1, 4] // notes, topics, source
+            return [4] // notes, topics, source
         case "ContactFlow":
             return [0, 1, 2, 3, 4] // notes, topics, contact, circle, source
         default:
