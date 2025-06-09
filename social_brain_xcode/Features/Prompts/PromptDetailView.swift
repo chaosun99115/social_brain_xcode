@@ -87,7 +87,7 @@ struct PromptDetailView: View {
                 }
                 // Display (editable, always shown)
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("显示文案")
+                    Text("包含问题")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     TextField("请输入显示文案", text: $display)

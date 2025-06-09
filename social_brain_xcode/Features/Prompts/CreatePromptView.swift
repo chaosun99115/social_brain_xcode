@@ -89,7 +89,7 @@ struct CreatePromptView: View {
         newPrompt.name = name
         newPrompt.display = display
         newPrompt.content = content
-        newPrompt.identifier = 1
+        newPrompt.identifier = 999
         newPrompt.type = 1
         
         do {

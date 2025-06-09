@@ -8,9 +8,9 @@ enum DefaultPrompts {
         (
             // 0*: sample mode, 1: regular mode
             identifiers: [1], // This prompt can be used for both sample and regular mode
-            name: "整理社交话题库",
-            intro: "回顾最近的社交互动，整理涉及到的话题",
-            display: "回顾一下我最近聊过的社交话题",
+            name: "收集互动话题",
+            intro: "回顾最近的社交互动，整理互动话题",
+            display: "回顾一下最近聊过的互动话题",
             // 0: hidden, 1: open
             type: Int16(0),
             order: 1,
@@ -113,8 +113,8 @@ enum DefaultPrompts {
         // QuestionFlow - Follow Up - 2
         (
             identifiers: [2], // This prompt can be used for both sample and regular mode
-            name: "拓展社交网络",
-            intro: "跟进最新的社交线索，激活过往的社交连接",
+            name: "跟进人际事务",
+            intro: "跟进人际事务，不在繁忙的日程中错过联络时机",
             display: "最近有哪些适合联络的人？",
             // 0: hidden, 1: open
             type: Int16(0),

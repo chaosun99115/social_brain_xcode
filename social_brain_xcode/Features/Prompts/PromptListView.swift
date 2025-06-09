@@ -8,11 +8,11 @@ enum PromptMode: String, CaseIterable {
     case changedJob = "换工作"
     case indieDev = "独立开发"
     
-    var promptIdentifier: Int {
+    var promptIdentifiers: [Int] {
         switch self {
-        case .regular: return 1
-        case .changedJob: return 111
-        case .indieDev: return 121
+        case .regular: return [1, 2, 999]
+        case .changedJob: return [1, 2, 999]
+        case .indieDev: return [1, 2, 999]
         }
     }
 }
@@ -32,7 +32,7 @@ struct PromptListView: View {
                 NSSortDescriptor(keyPath: \Prompt.order, ascending: true),
                 NSSortDescriptor(keyPath: \Prompt.updatedAt, ascending: false)
             ],
-            predicate: NSPredicate(format: "identifier == %d", mode.promptIdentifier),
+            predicate: NSPredicate(format: "identifier IN %@", mode.promptIdentifiers),
             animation: .default
         )
     }
@@ -44,8 +44,8 @@ struct PromptListView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(prompt.name ?? "")
                             .font(.body)
-                        if let updatedAt = prompt.updatedAt {
-                            Text("更新于: \(updatedAt.formatted(.relative(presentation: .named)))")
+                        if let display = prompt.display, !display.isEmpty {
+                            Text(display)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
