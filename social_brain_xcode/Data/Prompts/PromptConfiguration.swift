@@ -193,7 +193,6 @@ class PromptConfigurationManager {
         let availableIdentifiers = SourceTypePromptMapping.getPromptIdentifiers(for: sourceType, sampleMode: sampleMode)
         
         guard !availableIdentifiers.isEmpty else {
-            print("[PromptConfigurationManager] Error: No available identifiers for sourceType: \(sourceType), sampleMode: \(sampleMode ?? "nil")")
             return []
         }
         
@@ -263,7 +262,6 @@ class PromptConfigurationManager {
             // Always return PromptAdapter instances
             return results.map { PromptAdapter(prompt: $0) }
         } catch {
-            print("[PromptConfigurationManager] Error fetching prompts for identifier \(identifier): \(error)")
             return []
         }
     }
@@ -297,7 +295,6 @@ class PromptConfigurationManager {
         // Check if all configured modes have prompt mappings
         for mode in configuredModes {
             if SourceTypePromptMapping.getPromptIdentifiers(for: "general", sampleMode: mode).isEmpty {
-                print("Warning: Sample mode '\(mode)' has no prompt mappings")
                 return false
             }
         }
@@ -306,7 +303,6 @@ class PromptConfigurationManager {
         if let generalMappings = SourceTypePromptMapping.sourceTypeToPromptIdentifiers["general"] {
             for mode in generalMappings.keys {
                 if !configuredModes.contains(mode) {
-                    print("Warning: Prompt mapping exists for undefined sample mode '\(mode)'")
                     return false
                 }
             }

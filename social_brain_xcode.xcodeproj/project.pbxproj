@@ -69,6 +69,9 @@
 		AFE504D02DF8D40C006B110F /* README_zh.md in Resources */ = {isa = PBXBuildFile; fileRef = AFE504CD2DF8D40B006B110F /* README_zh.md */; };
 		AFE504D12DF8D40C006B110F /* README_en.md in Resources */ = {isa = PBXBuildFile; fileRef = AFE504CE2DF8D40B006B110F /* README_en.md */; };
 		AFE504D22DF8D40C006B110F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AFE504CF2DF8D40B006B110F /* README.md */; };
+		AFE504D52DF8D670006B110F /* app-privacy_en.html in Resources */ = {isa = PBXBuildFile; fileRef = AFE504D32DF8D670006B110F /* app-privacy_en.html */; };
+		AFE504D62DF8D670006B110F /* app-privacy_zh.html in Resources */ = {isa = PBXBuildFile; fileRef = AFE504D42DF8D670006B110F /* app-privacy_zh.html */; };
+		AFE504D82DF8D880006B110F /* support.html in Resources */ = {isa = PBXBuildFile; fileRef = AFE504D72DF8D87F006B110F /* support.html */; };
 		AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */; };
 		AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBA2DA075730001DD70 /* Assets.xcassets */; };
 		AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBD2DA075730001DD70 /* Preview Assets.xcassets */; };
@@ -145,6 +148,9 @@
 		AFE504CD2DF8D40B006B110F /* README_zh.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README_zh.md; sourceTree = "<group>"; };
 		AFE504CE2DF8D40B006B110F /* README_en.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README_en.md; sourceTree = "<group>"; };
 		AFE504CF2DF8D40B006B110F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AFE504D32DF8D670006B110F /* app-privacy_en.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "app-privacy_en.html"; sourceTree = "<group>"; };
+		AFE504D42DF8D670006B110F /* app-privacy_zh.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "app-privacy_zh.html"; sourceTree = "<group>"; };
+		AFE504D72DF8D87F006B110F /* support.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = support.html; sourceTree = "<group>"; };
 		AFF98BB32DA075720001DD70 /* social_brain_xcode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = social_brain_xcode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = social_brain_xcodeApp.swift; sourceTree = "<group>"; };
 		AFF98BBA2DA075730001DD70 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -493,10 +499,13 @@
 		AFE504CA2DF8CCB0006B110F /* Web */ = {
 			isa = PBXGroup;
 			children = (
+				AFE504D32DF8D670006B110F /* app-privacy_en.html */,
+				AFE504D42DF8D670006B110F /* app-privacy_zh.html */,
 				AFE504CB2DF8CCB0006B110F /* app-privacy.html */,
 				AFE504CE2DF8D40B006B110F /* README_en.md */,
 				AFE504CD2DF8D40B006B110F /* README_zh.md */,
 				AFE504CF2DF8D40B006B110F /* README.md */,
+				AFE504D72DF8D87F006B110F /* support.html */,
 			);
 			name = Web;
 			path = social_brain_xcode/Resources/Web;
@@ -608,8 +617,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFE504D52DF8D670006B110F /* app-privacy_en.html in Resources */,
 				AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */,
 				AFAE47262DE79D3E00DD10E0 /* Configuration.storekit in Resources */,
+				AFE504D62DF8D670006B110F /* app-privacy_zh.html in Resources */,
 				AFE504D22DF8D40C006B110F /* README.md in Resources */,
 				AFE504D02DF8D40C006B110F /* README_zh.md in Resources */,
 				AFE504D12DF8D40C006B110F /* README_en.md in Resources */,
@@ -618,6 +629,7 @@
 				AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */,
 				AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */,
 				AF56DC292DCBE13D00F56D6E /* seed_data.json in Resources */,
+				AFE504D82DF8D880006B110F /* support.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

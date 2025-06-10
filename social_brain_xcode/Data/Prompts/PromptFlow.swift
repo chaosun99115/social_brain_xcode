@@ -342,12 +342,6 @@ class AddCircleFunction: PromptUpdateFunction {
 /// Add source information to system prompt
 class AddSourceInfoFunction: PromptUpdateFunction {
     func update(_ prompt: String, userInput: String, sampleMode: String?, sourceType: String, sourceId: String, contact: Contact?) async throws -> String {
-        print("[AddSourceInfoFunction] Starting update")
-        print("[AddSourceInfoFunction] Input length: \(userInput.count)")
-        print("[AddSourceInfoFunction] Sample mode: \(sampleMode ?? "nil")")
-        print("[AddSourceInfoFunction] Source type: \(sourceType)")
-        print("[AddSourceInfoFunction] Source ID: \(sourceId)")
-        
         var sourceInfo = ""
         
         // Add specific entity information based on sourceType
@@ -355,15 +349,11 @@ class AddSourceInfoFunction: PromptUpdateFunction {
             sourceInfo += entityInfo
         }
         
-        print("[AddSourceInfoFunction] Extracted source info length: \(sourceInfo.count)")
-        
-        print("[AddSourceInfoFunction] Adding new source section")
         return prompt + sourceInfo
     }
     
     private func extractSpecificEntityInfo(sourceType: String, sourceId: String) -> String? {
         guard let sourceUUID = UUID(uuidString: sourceId) else {
-            print("[AddSourceInfoFunction] Invalid UUID format for sourceId: \(sourceId)")
             return nil
         }
         
@@ -378,14 +368,9 @@ class AddSourceInfoFunction: PromptUpdateFunction {
     }
     
     private func extractContactInfo(contactId: UUID) -> String? {
-        print("[AddSourceInfoFunction] Fetching contact with ID: \(contactId)")
-        
         guard let contact = ContactManager.shared.fetchContact(withId: contactId) else {
-            print("[AddSourceInfoFunction] Contact not found with ID: \(contactId)")
             return nil
         }
-        
-        print("[AddSourceInfoFunction] Found contact: \(contact.name ?? "unnamed")")
         
         var contactInfo = "\n\n====指定熟人如下===="
         
@@ -428,19 +413,13 @@ class AddSourceInfoFunction: PromptUpdateFunction {
             contactInfo += "\n创建时间: \(createdStr)"
         }
         
-        print("[AddSourceInfoFunction] Contact info length: \(contactInfo.count)")
         return contactInfo
     }
     
     private func extractNoteInfo(noteId: UUID) -> String? {
-        print("[AddSourceInfoFunction] Fetching note with ID: \(noteId)")
-        
         guard let note = NoteManager.shared.fetchNote(withId: noteId) else {
-            print("[AddSourceInfoFunction] Note not found with ID: \(noteId)")
             return nil
         }
-        
-        print("[AddSourceInfoFunction] Found note with content length: \(note.content?.count ?? 0)")
         
         var noteInfo = "\n\n====指定笔记如下===="
         
@@ -459,7 +438,6 @@ class AddSourceInfoFunction: PromptUpdateFunction {
             noteInfo += "\n创建时间: \(createdStr)"
         }
         
-        print("[AddSourceInfoFunction] Note info length: \(noteInfo.count)")
         return noteInfo
     }
 }
@@ -605,20 +583,10 @@ class ContactFlow: PromptFlowProtocol {
         promptDisplay: String?,
         promptIdentifier: Int
     ) async throws -> PromptPair {
-        print("[ContactFlow] Generating prompts for:")
-        print("- Source Type: \(sourceType)")
-        print("- Source Action: \(sourceAction)")
-        print("- Source ID: \(sourceId)")
-        print("- Sample Mode: \(sampleMode ?? "none")")
-        print("- Prompt ID: \(promptIdentifier)")
-        print("- Contact: \(contact?.name ?? "none")")
-        
         guard let contact = contact else {
-            print("[ContactFlow] Error: Contact is required but was nil")
             throw PromptError.contactRequired
         }
         
-        print("[ContactFlow] Fetching prompts for contact: \(contact.name ?? "unnamed")")
         let context = try await CoreDataManager.shared.viewContext
         let prompts = promptManager.getPromptsForSourceType(
             sourceType,
@@ -629,7 +597,6 @@ class ContactFlow: PromptFlowProtocol {
         
         // Contact-specific prompts use identifier 5
         if let prompt = prompts.first(where: { $0.identifier == 5 }) {
-            print("[ContactFlow] Found configured prompt with ID: \(prompt.identifier)")
             let prompts = promptManager.getSystemAndUserPrompts(from: prompt)
             var systemPrompt = prompts.systemPrompt
             
@@ -650,19 +617,9 @@ class ContactFlow: PromptFlowProtocol {
                 systemPrompt: systemPrompt,
                 userPrompt: prompts.userPrompt
             )
-            print("[ContactFlow] Returning PromptPair:")
-            print("--------------------------------")
-            print("System Prompt: \(promptPair.systemPrompt)")
-            if let userPrompt = promptPair.userPrompt {
-                print("User Prompt: \(userPrompt)")
-            } else {
-                print("User Prompt: nil")
-            }
-            print("--------------------------------")
             return promptPair
         }
         
-        print("[ContactFlow] No configured prompt found, using dynamic generation")
         // Fallback to dynamic generation if no configured prompt found
         var systemPrompt = "You are analyzing a specific contact with ID: \(sourceId). "
         systemPrompt += "Focus on providing insights about this contact's relationship with the user, "
@@ -673,11 +630,6 @@ class ContactFlow: PromptFlowProtocol {
         }
         
         let promptPair = PromptPair(systemPrompt: systemPrompt, userPrompt: nil)
-        print("[ContactFlow] Returning PromptPair (dynamic):")
-        print("--------------------------------")
-        print("System Prompt: \(promptPair.systemPrompt)")
-        print("User Prompt: nil")
-        print("--------------------------------")
         return promptPair
     }
 }
@@ -696,8 +648,6 @@ class ChatFlow: PromptFlowProtocol {
         promptDisplay: String?,
         promptIdentifier: Int
     ) async throws -> PromptPair {
-        print("[ChatFlow] Generating prompt - ID: \(promptIdentifier), Type: \(sourceType), Action: \(sourceAction)")
-        
         let context = try await CoreDataManager.shared.viewContext
         
         // Fetch prompt entity directly using identifier
@@ -709,12 +659,8 @@ class ChatFlow: PromptFlowProtocol {
         
         if let prompt = prompts.first {
             guard let content = prompt.content else {
-                print("[ChatFlow] Error: Prompt \(promptIdentifier) found but content is nil")
                 throw PromptError.promptNotFound
             }
-            
-            print("[ChatFlow] Found prompt with ID: \(promptIdentifier)")
-            print("Content: \(content)")
             
             var systemPrompt = content
             
@@ -733,15 +679,9 @@ class ChatFlow: PromptFlowProtocol {
             }
             
             let promptPair = PromptPair(systemPrompt: systemPrompt, userPrompt: nil)
-            print("[ChatFlow] Returning PromptPair:")
-            print("--------------------------------")
-            print("System Prompt: \(promptPair.systemPrompt)")
-            print("User Prompt: nil")
-            print("--------------------------------")
             return promptPair
         }
         
-        print("[ChatFlow] Error: No prompt found with identifier: \(promptIdentifier)")
         throw PromptError.promptNotFound
     }
 }
@@ -771,7 +711,6 @@ class NoteFlow: PromptFlowProtocol {
         
         if let prompt = prompts.first {
             guard let content = prompt.content else {
-                print("[NoteFlow] Error - Prompt found but content is nil")
                 throw PromptError.promptNotFound
             }
             
@@ -795,20 +734,9 @@ class NoteFlow: PromptFlowProtocol {
                 userPrompt: promptDisplay
             )
             
-            print("[NoteFlow] Returning PromptPair:")
-            print("--------------------------------")
-            print("System Prompt: \(promptPair.systemPrompt)")
-            if let userPrompt = promptPair.userPrompt {
-                print("User Prompt: \(userPrompt)")
-            } else {
-                print("User Prompt: nil")
-            }
-            print("--------------------------------")
-            
             return promptPair
         }
         
-        print("[NoteFlow] Error - No prompt found with identifier: \(promptIdentifier)")
         throw PromptError.promptNotFound
     }
 }

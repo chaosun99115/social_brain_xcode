@@ -1,7 +1,7 @@
 # Social Brain Privacy Policy
 
-**Effective Date:** December 2024  
-**Last Updated:** December 2024
+**Effective Date:** June 2025  
+**Last Updated:** June 2025
 
 ## 1. Introduction
 
@@ -123,4 +123,4 @@ We believe in **privacy by design**. By not collecting any user data:
 
 ---
 
-*This Privacy Policy was last updated on December 2024.* 
+*This Privacy Policy was last updated on June 2025.* 
