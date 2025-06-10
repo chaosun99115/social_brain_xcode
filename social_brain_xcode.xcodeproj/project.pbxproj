@@ -65,6 +65,7 @@
 		AFDDDCA42DDCDDBC00425764 /* SampleModeConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDCA32DDCDDBC00425764 /* SampleModeConfig.swift */; };
 		AFE504C72DF7824E006B110F /* DataDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE504C62DF7824E006B110F /* DataDisplayView.swift */; };
 		AFE504C92DF8BFD8006B110F /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE504C82DF8BFD8006B110F /* AboutView.swift */; };
+		AFE504CC2DF8CCB1006B110F /* app-privacy.html in Resources */ = {isa = PBXBuildFile; fileRef = AFE504CB2DF8CCB0006B110F /* app-privacy.html */; };
 		AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */; };
 		AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBA2DA075730001DD70 /* Assets.xcassets */; };
 		AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBD2DA075730001DD70 /* Preview Assets.xcassets */; };
@@ -137,6 +138,7 @@
 		AFDDDCA32DDCDDBC00425764 /* SampleModeConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SampleModeConfig.swift; sourceTree = "<group>"; };
 		AFE504C62DF7824E006B110F /* DataDisplayView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataDisplayView.swift; sourceTree = "<group>"; };
 		AFE504C82DF8BFD8006B110F /* AboutView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		AFE504CB2DF8CCB0006B110F /* app-privacy.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "app-privacy.html"; sourceTree = "<group>"; };
 		AFF98BB32DA075720001DD70 /* social_brain_xcode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = social_brain_xcode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = social_brain_xcodeApp.swift; sourceTree = "<group>"; };
 		AFF98BBA2DA075730001DD70 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -191,6 +193,7 @@
 		AFA2761D2DB03BAF00C29B81 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				AFE504CA2DF8CCB0006B110F /* Web */,
 				AFAE47392DF1DEB000DD10E0 /* Prompts */,
 				AFAE471A2DE799ED00DD10E0 /* StoreKit */,
 				AFAE47442DF200E300DD10E0 /* Settings */,
@@ -481,6 +484,15 @@
 			path = Prompts;
 			sourceTree = "<group>";
 		};
+		AFE504CA2DF8CCB0006B110F /* Web */ = {
+			isa = PBXGroup;
+			children = (
+				AFE504CB2DF8CCB0006B110F /* app-privacy.html */,
+			);
+			name = Web;
+			path = social_brain_xcode/Resources/Web;
+			sourceTree = SOURCE_ROOT;
+		};
 		AFF98BAA2DA075720001DD70 = {
 			isa = PBXGroup;
 			children = (
@@ -589,6 +601,7 @@
 			files = (
 				AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */,
 				AFAE47262DE79D3E00DD10E0 /* Configuration.storekit in Resources */,
+				AFE504CC2DF8CCB1006B110F /* app-privacy.html in Resources */,
 				AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */,
 				AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */,
 				AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */,
