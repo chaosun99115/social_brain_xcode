@@ -75,6 +75,7 @@ class TextEditorState: ObservableObject {
 struct CircleSelectionView: View {
     let onSelect: (Circle) -> Void
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var circleManager = CircleManager.shared
     @State private var circles: [Circle] = []
     @State private var searchText = ""
@@ -120,7 +121,24 @@ struct CircleSelectionView: View {
             }
         }
         .task {
-            circles = circleManager.fetchCircles()
+            // Filter circles based on app mode
+            if appModeManager.isSampleMode {
+                // In sample mode, only show type=0 circles
+                circles = circleManager.fetchCircles(byType: 0)
+            } else {
+                // In regular mode, only show type!=0 circles
+                let allCircles = circleManager.fetchCircles()
+                circles = allCircles.filter { $0.type != 0 }
+            }
+        }
+        .onChange(of: appModeManager.isSampleMode) { _ in
+            // Refresh circles when sample mode changes
+            if appModeManager.isSampleMode {
+                circles = circleManager.fetchCircles(byType: 0)
+            } else {
+                let allCircles = circleManager.fetchCircles()
+                circles = allCircles.filter { $0.type != 0 }
+            }
         }
     }
 }
@@ -207,7 +225,7 @@ struct SimpleNoteModalView: View {
                                     
                                     // Placeholder text with matching font size
                                     if textState.text.isEmpty {
-                                        Text("记录社交笔记")
+                                        Text(subType == .topicCollection ? "记录话题想法" : "记录社交笔记")
                                             .font(.system(size: 17, weight: .regular))
                                             .foregroundColor(.secondary)
                                             .padding(.horizontal, 16)
@@ -300,11 +318,13 @@ struct SimpleNoteModalView: View {
             ContactSelectionView { contact in
                 insertContactMention(contact)
             }
+            .environmentObject(appModeManager)
         }
         .sheet(isPresented: $showingCircleSelection) {
             CircleSelectionView { circle in
                 insertCircleMention(circle)
             }
+            .environmentObject(appModeManager)
         }
         .overlay {
             if showingMentionConfirmation {
@@ -499,6 +519,26 @@ struct TextViewWrapper: UIViewRepresentable {
         textView.autocorrectionType = .yes
         textView.returnKeyType = .default
         textView.text = state.text
+        
+        // Configure input accessory view to prevent constraint conflicts
+        let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0))
+        accessoryView.backgroundColor = .clear
+        accessoryView.isUserInteractionEnabled = false
+        accessoryView.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
+        textView.inputAccessoryView = accessoryView
+        
+        // Disable the system input assistant view completely to prevent constraint conflicts
+        textView.inputAssistantItem.leadingBarButtonGroups = []
+        textView.inputAssistantItem.trailingBarButtonGroups = []
+        textView.autocorrectionType = .no
+        textView.smartDashesType = .no
+        textView.smartQuotesType = .no
+        textView.smartInsertDeleteType = .no
+        
+        // Set proper content insets to avoid overlap with keyboard
+        textView.contentInset = .zero
+        textView.scrollIndicatorInsets = .zero
+        
         // Store reference
         state.textView = textView
         

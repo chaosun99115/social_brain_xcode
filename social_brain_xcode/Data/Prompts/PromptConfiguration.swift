@@ -48,8 +48,8 @@ struct SourceTypePromptMapping {
     /// Maps source type and sample mode to prompt identifiers
     static let sourceTypeToPromptIdentifiers: [String: [String: [Int]]] = [
         "general": [
-            "changedJob": [1, 2, 999],  // Changed job specific prompts
-            "indieDev": [1, 2, 999],    // Indie dev specific prompts
+            "changedJob": [1, 2, 9, 7,  999],  // Changed job specific prompts
+            "indieDev": [1, 2, 9, 8, 999],    // Indie dev specific prompts
             "regular": [1, 2, 999]         // Keep original identifiers for regular mode
         ],
         "contact": [
@@ -107,11 +107,11 @@ class PromptConfigurationManager {
             let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
             let existingCount = try context.count(for: fetchRequest)
             
-            // Get all identifiers from the source type mapping
-            let allIdentifiers = Set(SourceTypePromptMapping.sourceTypeToPromptIdentifiers.values.flatMap { $0.values.flatMap { $0 } })
+            // Get all identifiers from DefaultPrompts, not just from source type mapping
+            let allDefaultIdentifiers = Set(DefaultPrompts.prompts.flatMap { $0.identifiers })
             
             // Detailed verification for each prompt identifier
-            for identifier in allIdentifiers {
+            for identifier in allDefaultIdentifiers {
                 let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
                 fetchRequest.predicate = NSPredicate(format: "identifier == %d", identifier)
                 
@@ -121,12 +121,17 @@ class PromptConfigurationManager {
                     // Find the prompt in DefaultPrompts
                     if let prompt = DefaultPrompts.prompts.first(where: { $0.identifiers.contains(identifier) }) {
                         let newPrompt = Prompt(context: context)
+                        newPrompt.id = UUID()
                         newPrompt.identifier = Int16(identifier)
                         newPrompt.name = prompt.name
                         newPrompt.intro = prompt.intro
                         newPrompt.display = prompt.display
                         newPrompt.content = prompt.content
                         newPrompt.type = prompt.type
+                        newPrompt.order = Int16(prompt.order)
+                        newPrompt.createdAt = Date()
+                        newPrompt.updatedAt = Date()
+                        newPrompt.recordStatus = 0
                         
                         // Save immediately after creating each prompt
                         do {

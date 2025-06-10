@@ -1,6 +1,5 @@
 import SwiftUI
 import CoreData
-import os.log
 
 /// Represents the available prompt display modes
 enum PromptMode: String, CaseIterable {
@@ -11,15 +10,14 @@ enum PromptMode: String, CaseIterable {
     var promptIdentifiers: [Int] {
         switch self {
         case .regular: return [1, 2, 999]
-        case .changedJob: return [1, 2, 999]
-        case .indieDev: return [1, 2, 999]
+        case .changedJob: return [1, 2, 7, 9, 999]
+        case .indieDev: return [1, 2, 8, 9, 999]
         }
     }
 }
 
 struct PromptListView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.socialbrain", category: "PromptListView")
     
     let mode: PromptMode
     @FetchRequest private var prompts: FetchedResults<Prompt>
@@ -64,7 +62,7 @@ struct PromptListView: View {
             }
         }
         .onAppear {
-            logger.debug("PromptListView appeared with \(prompts.count) prompts for mode \(mode.rawValue)")
+            // No debug logging needed
         }
     }
 }

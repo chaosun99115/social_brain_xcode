@@ -134,9 +134,9 @@ struct ConfigurationSheetView: View {
                     .disabled(isAuthenticating)
                     
                     // Social Knowledge Base
-                    NavigationLink(destination: PromptListView()) {
+                    NavigationLink(destination: getPromptListViewMode()) {
                         HStack {
-                            Text("社交经验库")
+                            Text("人际互动经验库")
                             Spacer()
                         }
                     }
@@ -145,7 +145,7 @@ struct ConfigurationSheetView: View {
                 // About Section
                 Section(header: Text("关于")) {
                     NavigationLink(destination: AboutView()) {
-                        Label("关于社交大脑", systemImage: "info.circle")
+                        Text("关于社交大脑")
                     }
                 }
                 
@@ -166,6 +166,7 @@ struct ConfigurationSheetView: View {
                     Button("完成") {
                         dismiss()
                     }
+                    .foregroundColor(.green)
                 }
             }
             .confirmationDialog(
@@ -291,6 +292,21 @@ struct ConfigurationSheetView: View {
         // Implementation preserved for future development
         // See documentation comments above for details
     }
+    
+    private func getPromptListViewMode() -> some View {
+        if appModeManager.isSampleMode {
+            switch appModeManager.sampleModeType {
+            case "changedJob":
+                return AnyView(PromptListView(mode: .changedJob))
+            case "indieDev":
+                return AnyView(PromptListView(mode: .indieDev))
+            default:
+                return AnyView(PromptListView(mode: .regular))
+            }
+        } else {
+            return AnyView(PromptListView(mode: .regular))
+        }
+    }
 }
 
 // MARK: - Sync Status View
@@ -381,71 +397,7 @@ struct ProUpgradeView: View {
     }
 }
 
-// Placeholder views for navigation destinations
-struct AboutView: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("关于社交大脑")
-                    .font(.title)
-                    .padding(.bottom)
-                
-                Text("社交大脑是一款帮助用户提升社交互动质量、培养长期人际关系的个人关系管理应用。")
-                    .padding(.bottom)
-                
-                Text("版本 1.0.0")
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-        }
-        .navigationTitle("关于")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct PrivacyPolicyView: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("隐私政策")
-                    .font(.title)
-                    .padding(.bottom)
-                
-                Text("我们重视您的隐私。本应用收集的所有数据都存储在您的设备上，我们不会未经您的同意分享任何个人信息。")
-                    .padding(.bottom)
-                
-                Text("数据安全")
-                    .font(.headline)
-                Text("所有数据都经过加密存储，确保您的信息安全。")
-            }
-            .padding()
-        }
-        .navigationTitle("隐私政策")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct TermsOfServiceView: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("使用条款")
-                    .font(.title)
-                    .padding(.bottom)
-                
-                Text("使用本应用即表示您同意遵守以下条款：")
-                    .padding(.bottom)
-                
-                Text("1. 您同意负责任地使用本应用")
-                Text("2. 您同意不会滥用本应用的功能")
-                Text("3. 您同意遵守所有适用的法律法规")
-            }
-            .padding()
-        }
-        .navigationTitle("使用条款")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
+// AboutView, PrivacyPolicyView, and TermsOfServiceView are now in AboutView.swift
 
 // Replace the #Preview macro with PreviewProvider
 struct ConfigurationSheetView_Previews: PreviewProvider {

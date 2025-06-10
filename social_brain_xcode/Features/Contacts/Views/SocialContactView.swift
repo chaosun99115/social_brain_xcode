@@ -251,8 +251,8 @@ struct SocialContactView: View {
                     Button(action: {
                         showingConfigurationSheet = true
                     }) {
-                        Image(systemName: "ellipsis")
-                            .font(.system(size: 20))
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 16))
                             .foregroundColor(.primaryText)
                     }
                 }
@@ -295,9 +295,15 @@ struct SocialContactView: View {
         .onAppear {
             isViewActive = true
             updateLayout()
+            
+            // Setup sample mode change observer
+            setupSampleModeObserver()
         }
         .onDisappear {
             isViewActive = false
+            
+            // Cleanup sample mode observer
+            cleanupSampleModeObserver()
         }
         .onChange(of: isViewActive) { newValue in
             if newValue {
@@ -367,6 +373,24 @@ struct SocialContactView: View {
             // Force layout update for the entire window
             UIApplication.shared.windows.first?.layoutIfNeeded()
         }
+    }
+    
+    private func setupSampleModeObserver() {
+        NotificationCenter.default.addObserver(
+            forName: .sampleModeChanged,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Refresh contacts and circles when sample mode changes
+            Task {
+                await self.loadContacts()
+                await self.loadCircles()
+            }
+        }
+    }
+    
+    private func cleanupSampleModeObserver() {
+        NotificationCenter.default.removeObserver(self, name: .sampleModeChanged, object: nil)
     }
 }
 

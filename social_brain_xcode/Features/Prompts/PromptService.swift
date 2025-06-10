@@ -67,8 +67,8 @@ class PromptService {
             try context.save()
             
             // Verify ingestion
-            let verifyRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-            let results = try context.fetch(verifyRequest)
+            let verifyRequest2: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+            let results = try context.fetch(verifyRequest2)
             
             // Only log if there's a mismatch
             if results.count != createdPrompts.count {

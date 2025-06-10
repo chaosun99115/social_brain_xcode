@@ -93,6 +93,7 @@ struct CircleDetailView: View {
                     contacts.append(contact)
                 }
             }
+            .environmentObject(appModeManager)
         }
         .sheet(isPresented: $showingSocialBrain) {
             SocialBrainSheetView(
@@ -106,6 +107,7 @@ struct CircleDetailView: View {
             EditCircleContactsSheet(circle: circle, isPresented: $showingEditCircleSheet) { updatedContacts in
                 self.contacts = updatedContacts
             }
+            .environmentObject(appModeManager)
         }
         .task {
             await loadCircleData()
@@ -230,6 +232,7 @@ struct AddContactToCircleView: View {
     
     @StateObject private var contactManager = ContactManager.shared
     @StateObject private var circleManager = CircleManager.shared
+    @EnvironmentObject var appModeManager: AppModeManager
     @State private var contacts: [Contact] = []
     @State private var searchText = ""
     @Environment(\.dismiss) private var dismiss
@@ -268,7 +271,15 @@ struct AddContactToCircleView: View {
             }
         }
         .task {
-            contacts = contactManager.fetchContacts()
+            // Filter contacts based on app mode
+            let fetchedContacts = contactManager.fetchContacts()
+            if appModeManager.isSampleMode {
+                // In sample mode, only show type=0 contacts
+                contacts = fetchedContacts.filter { $0.type == 0 }
+            } else {
+                // In regular mode, only show type!=0 contacts
+                contacts = fetchedContacts.filter { $0.type != 0 }
+            }
         }
     }
     

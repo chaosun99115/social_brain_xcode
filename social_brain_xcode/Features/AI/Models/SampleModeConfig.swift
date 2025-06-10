@@ -14,13 +14,13 @@ struct SampleModeConfig {
     static let availableModes: [ModeDefinition] = [
         ModeDefinition(
             id: "changedJob",
-            title: "构建我的社交网络（跳槽加入新公司）",
+            title: "建立人际关系（场景：跳槽新公司）",
             description: "",
             scenario: .changedJob
         ),
         ModeDefinition(
             id: "indie",
-            title: "拓展我的社交网络（经营独立项目）",
+            title: "拓展人际关系（场景：经营独立项目）",
             description: "",
             scenario: .indie
         )

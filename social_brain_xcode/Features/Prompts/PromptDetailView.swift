@@ -3,42 +3,6 @@ import CoreData
 import os.log
 import UIKit
 
-// MARK: - Logging Extension
-private extension Logger {
-    func logPromptDetail(_ prompt: Prompt, action: String) {
-        let name = prompt.name ?? "unnamed"
-        let display = prompt.display ?? "nil"
-        let type = prompt.type  // type is Int16
-        let identifier = prompt.identifier ?? 0
-        let contentLength = prompt.content?.count ?? 0
-        
-        switch action {
-        case "dismiss":
-            debug("Navigating back from prompt: \(name) (ID: \(identifier))")
-        case "appear":
-            debug("""
-                PromptDetailView appeared:
-                - ID: \(identifier)
-                - Name: \(name)
-                - Display: \(display)
-                - Type: \(type)
-                - Content Length: \(contentLength)
-                """)
-        case "update":
-            debug("""
-                Updating prompt:
-                - ID: \(identifier)
-                - Name: \(name)
-                - Display: \(display)
-                - Type: \(type)
-                - Content Length: \(contentLength)
-                """)
-        default:
-            debug("Unknown action: \(action) for prompt: \(name) (ID: \(identifier))")
-        }
-    }
-}
-
 // MARK: - Keyboard Dismiss Helper
 private extension UIApplication {
     func endEditing() {
@@ -51,7 +15,6 @@ struct PromptDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let prompt: Prompt
     @State private var isContentExpanded = false
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.socialbrain", category: "PromptDetailView")
     
     // Editable state variables
     @State private var name: String = ""
@@ -147,15 +110,13 @@ struct PromptDetailView: View {
         .background(Color.clear)
         .dismissKeyboardOnTap()
         .onAppear {
-            logger.logPromptDetail(prompt, action: "appear")
-            // Initialize state variables with prompt values
             name = prompt.name ?? ""
             display = prompt.display ?? ""
             content = prompt.content ?? ""
             intro = prompt.intro ?? ""
         }
         .onDisappear {
-            logger.logPromptDetail(prompt, action: "dismiss")
+            // Removed logger.logPromptDetail
         }
     }
     
@@ -168,11 +129,11 @@ struct PromptDetailView: View {
         
         do {
             try viewContext.save()
-            logger.logPromptDetail(prompt, action: "update")
+            // Removed logger.logPromptDetail
             updateError = nil
             showUpdateAlert = true
         } catch {
-            logger.error("Failed to update prompt: \(error.localizedDescription)")
+            // Keep error logging for actual errors
             updateError = "更新失败：\(error.localizedDescription)"
             showUpdateAlert = true
         }

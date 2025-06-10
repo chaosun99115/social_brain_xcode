@@ -29,14 +29,15 @@ class PersistenceController: ObservableObject {
         
         // Create sample social contacts
         for i in 0..<5 {
-            let contact = NSEntityDescription.insertNewObject(forEntityName: "Contact", into: viewContext) as! Contact
+            let contact = Contact(context: viewContext)
+            contact.contactId = UUID()
             contact.name = "Contact \(i)"
             contact.createdAt = Date()
             contact.updatedAt = Date()
             contact.recordStatus = 0
             
             // Create sample social notes for each contact
-            let note = NSEntityDescription.insertNewObject(forEntityName: "Note", into: viewContext) as! Note
+            let note = Note(context: viewContext)
             note.noteId = UUID()
             note.content = "Sample note for \(contact.name ?? "")"
             note.createdAt = Date()
@@ -44,7 +45,7 @@ class PersistenceController: ObservableObject {
             note.recordStatus = 0
             
             // Create relationship between note and contact
-            let relationship = NSEntityDescription.insertNewObject(forEntityName: "NoteContactRelationship", into: viewContext) as! NoteContactRelationship
+            let relationship = NoteContactRelationship(context: viewContext)
             relationship.relationshipId = UUID()
             relationship.createdAt = Date()
             relationship.notes = note

@@ -29,7 +29,7 @@ struct SocialNotesList: View {
                 .font(.headline)
                 .foregroundColor(.secondaryText)
             
-            MentionTextView(text: note.content)
+            MentionTextView(text: note.content, preserveEmptyLines: false)
                 .font(.body)
                 .foregroundColor(.primaryText)
                 .lineSpacing(4)

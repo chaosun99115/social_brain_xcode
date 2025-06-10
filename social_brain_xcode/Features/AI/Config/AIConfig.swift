@@ -56,7 +56,6 @@ enum AIConfig {
     static func configure() {
         switch currentServiceType {
         case .deepSeek:
-            print("[AIConfig] Using DeepSeek API Key")
             AIServiceManager.shared.configure(with: deepSeekAPIKey, serviceType: .deepSeek)
         case .kimi:
             print("[AIConfig] Using KIMI API Key")

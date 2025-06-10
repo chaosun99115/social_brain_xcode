@@ -64,6 +64,7 @@
 		AFDDDCA22DD531F900425764 /* SampleModePrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDCA12DD531F800425764 /* SampleModePrompts.swift */; };
 		AFDDDCA42DDCDDBC00425764 /* SampleModeConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDDDCA32DDCDDBC00425764 /* SampleModeConfig.swift */; };
 		AFE504C72DF7824E006B110F /* DataDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE504C62DF7824E006B110F /* DataDisplayView.swift */; };
+		AFE504C92DF8BFD8006B110F /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE504C82DF8BFD8006B110F /* AboutView.swift */; };
 		AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */; };
 		AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBA2DA075730001DD70 /* Assets.xcassets */; };
 		AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AFF98BBD2DA075730001DD70 /* Preview Assets.xcassets */; };
@@ -135,6 +136,7 @@
 		AFDDDCA12DD531F800425764 /* SampleModePrompts.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SampleModePrompts.swift; sourceTree = "<group>"; };
 		AFDDDCA32DDCDDBC00425764 /* SampleModeConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SampleModeConfig.swift; sourceTree = "<group>"; };
 		AFE504C62DF7824E006B110F /* DataDisplayView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataDisplayView.swift; sourceTree = "<group>"; };
+		AFE504C82DF8BFD8006B110F /* AboutView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		AFF98BB32DA075720001DD70 /* social_brain_xcode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = social_brain_xcode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = social_brain_xcodeApp.swift; sourceTree = "<group>"; };
 		AFF98BBA2DA075730001DD70 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -364,6 +366,7 @@
 		AFAE46F62DE75D7900DD10E0 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				AFE504C82DF8BFD8006B110F /* AboutView.swift */,
 				AFE504C62DF7824E006B110F /* DataDisplayView.swift */,
 				AFAE47232DE79A7900DD10E0 /* SharedComponents.swift */,
 				AFAE46F72DE75D7900DD10E0 /* ConfigurationSheetView.swift */,
@@ -652,6 +655,7 @@
 				AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */,
 				AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */,
 				AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */,
+				AFE504C92DF8BFD8006B110F /* AboutView.swift in Sources */,
 				AFA2761C2DB0362C00C29B81 /* MentionTextView.swift in Sources */,
 				AFA2761A2DB0349C00C29B81 /* SocialNotesList.swift in Sources */,
 				AF8398952DB98E9600382EA6 /* SimpleNoteModalView.swift in Sources */,

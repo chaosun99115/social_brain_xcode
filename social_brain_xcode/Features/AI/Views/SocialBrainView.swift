@@ -246,7 +246,7 @@ struct SocialBrainView: View {
                                     Image(systemName: "square.and.pencil")
                                         .font(.system(size: 18))
                                     
-                                    Text("新建笔记")
+                                    Text("收集话题")
                                         .font(.system(size: 14, weight: .medium))
                                 }
                                 .padding(.vertical, 8)
@@ -333,7 +333,8 @@ struct SocialBrainView: View {
                     Button(action: {
                         showingConfigurationSheet = true
                     }) {
-                        Image(systemName: "ellipsis")
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 16))
                             .foregroundColor(.primary)
                     }
                 }
@@ -351,10 +352,16 @@ struct SocialBrainView: View {
             
             // Setup keyboard observers for keyboard dismissal
             setupKeyboardObservers()
+            
+            // Setup sample mode change observer
+            setupSampleModeObserver()
         }
         .onDisappear {
             // Cleanup keyboard observers
             cleanupKeyboardObservers()
+            
+            // Cleanup sample mode observer
+            cleanupSampleModeObserver()
         }
         .onChange(of: isLoading) { loading in
             if loading {
@@ -369,9 +376,12 @@ struct SocialBrainView: View {
             ConfigurationSheetView()
         }
         .sheet(isPresented: $showingNoteModal) {
-            SimpleNoteModalView(initialText: "") { newNoteText in
+            SimpleNoteModalView(
+                initialText: "",
+                subType: .topicCollection,
+                modalTitle: "收集话题"
+            ) { newNoteText in
                 // Handle the new note creation
-                print("[SocialBrainView] New note created: \(newNoteText)")
             }
             .environmentObject(NoteManager.shared)
             .environmentObject(appModeManager)
@@ -387,7 +397,6 @@ struct SocialBrainView: View {
     private func handleSuggestedQuestion(_ question: String, promptIdentifier: Int? = nil) {
         isCustomQuestion = false
         guard let identifier = promptIdentifier else {
-            print("[SocialBrainView] Error: No prompt identifier provided for suggested question")
             return
         }
         currentPromptIdentifier = identifier
@@ -459,7 +468,6 @@ struct SocialBrainView: View {
                 
                 // Check if we should use streaming (Doubao or DeepSeek)
                 if let doubaoService = chatService as? DoubaoChatService {
-                    print("[SocialBrainView] Using Doubao streaming mode")
                     isStreaming = true
                     currentStreamingMessage = ""
                     // Create a temporary message for streaming
@@ -472,7 +480,6 @@ struct SocialBrainView: View {
                     var isFirstChunk = true
                     try await doubaoService.sendStreamingMessage(limitedText, context: chatMessages) { chunk in
                         Task { @MainActor in
-                            // No logging chunks
                             currentStreamingMessage += chunk
                             if let lastIndex = messages.indices.last {
                                 messages[lastIndex].content = currentStreamingMessage
@@ -486,7 +493,6 @@ struct SocialBrainView: View {
                     isStreaming = false
                     isLoading = false
                 } else if let deepSeekService = chatService as? DeepSeekChatService {
-                    print("[SocialBrainView] Using DeepSeek streaming mode")
                     isStreaming = true
                     currentStreamingMessage = ""
                     let streamingMessage = SocialBrainMessage(
@@ -498,7 +504,6 @@ struct SocialBrainView: View {
                     var isFirstChunk = true
                     try await deepSeekService.sendStreamingMessage(limitedText, context: chatMessages) { chunk in
                         Task { @MainActor in
-                            // No logging chunks
                             currentStreamingMessage += chunk
                             if let lastIndex = messages.indices.last {
                                 messages[lastIndex].content = currentStreamingMessage
@@ -512,14 +517,7 @@ struct SocialBrainView: View {
                     isStreaming = false
                     isLoading = false
                 } else {
-                    print("[SocialBrainView] Using non-streaming mode")
                     let response = try await chatService.sendMessage(limitedText, context: chatMessages)
-                    print("[SocialBrainView] Received response from LLM:")
-                    if let firstChoice = response.choices.first {
-                        print("[SocialBrainView] \(firstChoice.message.content)")
-                    } else {
-                        print("[SocialBrainView] No content in response")
-                    }
                     await MainActor.run {
                         let aiMessage = aiServiceManager.convertToSocialBrainMessage(response)
                         messages.append(aiMessage)
@@ -530,7 +528,6 @@ struct SocialBrainView: View {
                 await MainActor.run {
                     isLoading = false
                     isStreaming = false
-                    print("[SocialBrainView] Error caught: \(error)")
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     showError = true
                 }
@@ -614,6 +611,24 @@ struct SocialBrainView: View {
     
     private func cleanupKeyboardObservers() {
         NotificationCenter.default.removeObserver(self)
+    }
+    
+    private func setupSampleModeObserver() {
+        NotificationCenter.default.addObserver(
+            forName: .sampleModeChanged,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Reset conversation state and refresh suggested questions
+            self.isConversationActive = false
+            self.messages.removeAll()
+            self.inputText = ""
+            self.initializeSuggestedQuestions()
+        }
+    }
+    
+    private func cleanupSampleModeObserver() {
+        NotificationCenter.default.removeObserver(self, name: .sampleModeChanged, object: nil)
     }
 }
 

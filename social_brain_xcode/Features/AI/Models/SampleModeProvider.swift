@@ -192,25 +192,16 @@ struct ContactProvider: SampleModeProvider {
     }
     
     func getSuggestedQuestions(for context: PromptContext) -> [SocialBrainMessage] {
-        print("[ContactProvider] Getting suggested questions for context")
-        print("[ContactProvider] Contact: \(context.contact?.name ?? "nil")")
-        print("[ContactProvider] Question: \(context.question)")
-        
         if let contact = context.contact, let name = contact.name {
-            print("[ContactProvider] Returning contact-specific question for: \(name)")
             return [
                 SocialBrainMessage(content: "查看 \(name) 的社交备忘录", isFromUser: false, timestamp: Date(), promptIdentifier: 1)
             ]
         }
         
-        print("[ContactProvider] Returning default questions")
         return suggestedQuestions
     }
     
     func generateSystemPrompt(for context: PromptContext) async throws -> String {
-        print("[ContactProvider] Generating system prompt")
-        print("[ContactProvider] Context - mode: \(context.mode), contact: \(context.contact?.name ?? "nil"), question: \(context.question)")
-        
         var prompt = baseSystemPrompt
         
         // Add contact-specific context if available
@@ -218,12 +209,10 @@ struct ContactProvider: SampleModeProvider {
             
             // Add question-specific guidance
             if context.question.contains("备忘录") || context.question.contains("社交记录") {
-                print("[ContactProvider] Adding social memo guidance")
                 prompt += "\n\n" + SampleModePrompts.UnifiedPrompt.contact
             }
         }
         
-        print("[ContactProvider] Generated prompt:\n\(prompt)")
         return prompt
     }
 }

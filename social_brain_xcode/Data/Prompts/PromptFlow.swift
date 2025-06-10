@@ -1,5 +1,6 @@
 import Foundation
 import CoreData
+import os
 
 protocol PromptFlowProtocol {
     func generatePrompts(
@@ -56,37 +57,27 @@ struct PromptUpdateContext {
 /// Add notes to system prompt
 class AddNoteFunction: PromptUpdateFunction {
     func update(_ prompt: String, userInput: String, sampleMode: String?, sourceType: String, sourceId: String, contact: Contact?) async throws -> String {
-        print("[AddNoteFunction] Starting update")
-        print("[AddNoteFunction] Sample mode: \(sampleMode ?? "nil")")
-        print("[AddNoteFunction] Source type: \(sourceType)")
-        print("[AddNoteFunction] Source ID: \(sourceId)")
-        
         // Extract notes from CoreData based on sample mode
         let notes = extractNotes(sampleMode: sampleMode, sourceType: sourceType, sourceId: sourceId)
         
         // Prepare the notes section
         let notesSection: String
         if let notes = notes, !notes.isEmpty {
-            print("[AddNoteFunction] Adding notes section with actual notes")
             notesSection = "\n\n==== 互动记录如下: ==== \n\(notes)"
         } else {
-            print("[AddNoteFunction] Adding notes section with '暂时没有记录'")
             notesSection = "\n\n==== 互动记录如下: ==== \n暂时没有记录"
         }
         
         // Check if notes section already exists and replace it
         if prompt.contains("==== 互动记录如下: ====") {
-            print("[AddNoteFunction] Replacing existing notes section")
             let pattern = "==== 互动记录如下: ====.*?(?=\n\n====|$)"
             if let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) {
                 let range = NSRange(prompt.startIndex..<prompt.endIndex, in: prompt)
                 let result = regex.stringByReplacingMatches(in: prompt, options: [], range: range, withTemplate: notesSection)
-                print("[AddNoteFunction] Notes section replaced")
                 return result
             }
         }
         
-        print("[AddNoteFunction] Adding new notes section")
         return prompt + notesSection
     }
     
@@ -101,12 +92,8 @@ class AddNoteFunction: PromptUpdateFunction {
             noteType = 1 // Non-sample mode: type = 1, subtype = 1
         }
         
-        print("[AddNoteFunction] 获取笔记: \(noteType), subtype: \(noteSubType)")
-        print("[AddNoteFunction] 示例模式: \(sampleMode ?? "nil")")
-        
         // Fetch notes from CoreData
         let notes = NoteManager.shared.fetchNotes(type: noteType, subType: noteSubType)
-        print("[AddNoteFunction] Found \(notes.count) notes")
         
         // Format notes for the prompt
         let formattedNotes = notes.compactMap { note -> String? in
@@ -122,11 +109,8 @@ class AddNoteFunction: PromptUpdateFunction {
         }.joined(separator: "\n")
         
         guard !formattedNotes.isEmpty else {
-            print("[AddNoteFunction] No valid notes found")
             return nil
         }
-        
-        print("[AddNoteFunction] Formatted notes length: \(formattedNotes.count)")
         
         // Add context information if available
         var enhancedNotes = formattedNotes
@@ -139,47 +123,31 @@ class AddNoteFunction: PromptUpdateFunction {
 /// Add topics to system prompt
 class AddTopicFunction: PromptUpdateFunction {
     func update(_ prompt: String, userInput: String, sampleMode: String?, sourceType: String, sourceId: String, contact: Contact?) async throws -> String {
-        print("[AddTopicFunction] Starting update")
-        print("[AddTopicFunction] Input length: \(userInput.count)")
-        print("[AddTopicFunction] Sample mode: \(sampleMode ?? "nil")")
-        print("[AddTopicFunction] Source type: \(sourceType)")
-        print("[AddTopicFunction] Source ID: \(sourceId)")
-        
         // Extract topics from user input with context
         let topics = extractTopics(from: userInput, sampleMode: sampleMode, sourceType: sourceType, sourceId: sourceId)
-        
-        print("[AddTopicFunction] Extracted topics length: \(topics?.count ?? 0)")
         
         // Prepare the topics section
         let topicsSection: String
         if let topics = topics, !topics.isEmpty {
-            print("[AddTopicFunction] Adding topics section with actual topics")
             topicsSection = "\n\n==== 话题库如下: ==== \n\(topics)"
         } else {
-            print("[AddTopicFunction] Adding topics section with '暂时没有记录'")
             topicsSection = "\n\n==== 话题库如下: ==== \n暂时没有记录"
         }
         
         // Check if topics section already exists and replace it
         if prompt.contains("==== 话题库如下: ====") {
-            print("[AddTopicFunction] Replacing existing topics section")
             let pattern = "==== 话题库如下: ====.*?(?=\n\n====|$)"
             if let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) {
                 let range = NSRange(prompt.startIndex..<prompt.endIndex, in: prompt)
                 let result = regex.stringByReplacingMatches(in: prompt, options: [], range: range, withTemplate: topicsSection)
-                print("[AddTopicFunction] Topics section replaced")
                 return result
             }
         }
         
-        print("[AddTopicFunction] Adding new topics section")
         return prompt + topicsSection
     }
     
     private func extractTopics(from text: String, sampleMode: String?, sourceType: String, sourceId: String) -> String? {
-        print("[AddTopicFunction] Extracting topics from text")
-        print("[AddTopicFunction] Sample mode: \(sampleMode ?? "nil")")
-        
         // Determine note type and subtype based on sample mode
         let noteType: Int16
         let noteSubType: Int16 = 2 // Always subtype 2 as per requirements
@@ -190,11 +158,8 @@ class AddTopicFunction: PromptUpdateFunction {
             noteType = 1 // Non-sample mode: type = 1, subtype = 2
         }
         
-        print("[AddTopicFunction] 获取话题笔记: \(noteType), subtype: \(noteSubType)")
-        
         // Fetch topic notes from CoreData
         let topicNotes = NoteManager.shared.fetchNotes(type: noteType, subType: noteSubType)
-        print("[AddTopicFunction] Found \(topicNotes.count) topic notes")
         
         // Format topic notes for the prompt
         let formattedTopics = topicNotes.compactMap { note -> String? in
@@ -210,11 +175,8 @@ class AddTopicFunction: PromptUpdateFunction {
         }.joined(separator: "\n")
         
         guard !formattedTopics.isEmpty else {
-            print("[AddTopicFunction] No valid topic notes found")
             return nil
         }
-        
-        print("[AddTopicFunction] Formatted topics length: \(formattedTopics.count)")
         
         // Enhanced extraction logic based on context
         var enhancedTopics = formattedTopics
@@ -226,37 +188,23 @@ class AddTopicFunction: PromptUpdateFunction {
 /// Add contact information to system prompt
 class AddContactFunction: PromptUpdateFunction {
     func update(_ prompt: String, userInput: String, sampleMode: String?, sourceType: String, sourceId: String, contact: Contact?) async throws -> String {
-        print("[AddContactFunction] Starting update")
-        print("[AddContactFunction] Input length: \(userInput.count)")
-        print("[AddContactFunction] Sample mode: \(sampleMode ?? "nil")")
-        print("[AddContactFunction] Source type: \(sourceType)")
-        print("[AddContactFunction] Source ID: \(sourceId)")
-        print("[AddContactFunction] Contact: \(contact?.name ?? "nil")")
-        
         // Extract contact info based on sample mode and type
         let contactInfo = extractContactInfo(contact: contact ?? Contact(), sampleMode: sampleMode, sourceType: sourceType, sourceId: sourceId)
-        print("[AddContactFunction] Extracted contact info length: \(contactInfo.count)")
         
         // Check if contact section already exists and replace it
         if prompt.contains("==== 熟人信息如下 ====") {
-            print("[AddContactFunction] Replacing existing contact section")
             let pattern = "==== 熟人信息如下 ====.*?(?=\n\n====|$)"
             if let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) {
                 let range = NSRange(prompt.startIndex..<prompt.endIndex, in: prompt)
                 let result = regex.stringByReplacingMatches(in: prompt, options: [], range: range, withTemplate: contactInfo)
-                print("[AddContactFunction] Contact section replaced")
                 return result
             }
         }
         
-        print("[AddContactFunction] Adding new contact section")
         return prompt + contactInfo
     }
     
     private func extractContactInfo(contact: Contact, sampleMode: String?, sourceType: String, sourceId: String) -> String {
-        print("[AddContactFunction] Extracting contact info")
-        print("[AddContactFunction] Sample mode: \(sampleMode ?? "nil")")
-        
         // Determine contact type based on sample mode
         let contactType: Int16
         if let mode = sampleMode, !mode.isEmpty {
@@ -265,15 +213,11 @@ class AddContactFunction: PromptUpdateFunction {
             contactType = 1 // Non-sample mode: type = 1
         }
         
-        print("[AddContactFunction] Fetching contacts with type: \(contactType)")
-        
         // Fetch contacts from CoreData based on type
         let contacts = ContactManager.shared.fetchContacts(byType: contactType)
-        print("[AddContactFunction] Found \(contacts.count) contacts with type \(contactType)")
         
         // Format contacts for the prompt
         if contacts.count > 1 {
-            print("[AddContactFunction] Adding contacts section with actual contacts")
             let formattedContacts = contacts.compactMap { contact -> String? in
                 guard let name = contact.name,
                       !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -313,7 +257,6 @@ class AddContactFunction: PromptUpdateFunction {
             \(formattedContacts)
             """
         } else {
-            print("[AddContactFunction] Adding contacts section with '暂时没有记录'")
             return """
             
             \n\n==== 熟人信息如下 ====
@@ -326,47 +269,31 @@ class AddContactFunction: PromptUpdateFunction {
 /// Add circle/network information to system prompt
 class AddCircleFunction: PromptUpdateFunction {
     func update(_ prompt: String, userInput: String, sampleMode: String?, sourceType: String, sourceId: String, contact: Contact?) async throws -> String {
-        print("[AddCircleFunction] Starting update")
-        print("[AddCircleFunction] Input length: \(userInput.count)")
-        print("[AddCircleFunction] Sample mode: \(sampleMode ?? "nil")")
-        print("[AddCircleFunction] Source type: \(sourceType)")
-        print("[AddCircleFunction] Source ID: \(sourceId)")
-        
         // Extract circles from user input with context
         let circles = extractCircles(from: userInput, sampleMode: sampleMode, sourceType: sourceType, sourceId: sourceId)
-        
-        print("[AddCircleFunction] Extracted circles length: \(circles?.count ?? 0)")
         
         // Prepare the circlesSection
         let circlesSection: String
         if let circles = circles, !circles.isEmpty {
-            print("[AddCircleFunction] Adding circles section with actual circles")
             circlesSection = "\n\n==== 圈子信息如下: ==== \n\(circles)"
         } else {
-            print("[AddCircleFunction] Adding circles section with '暂时没有记录'")
             circlesSection = "\n\n==== 圈子信息如下: ==== \n暂时没有记录"
         }
         
         // Check if circles section already exists and replace it
         if prompt.contains("==== 圈子信息如下: ====") {
-            print("[AddCircleFunction] Replacing existing circles section")
             let pattern = "==== 圈子信息如下: ====.*?(?=\n\n====|$)"
             if let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) {
                 let range = NSRange(prompt.startIndex..<prompt.endIndex, in: prompt)
                 let result = regex.stringByReplacingMatches(in: prompt, options: [], range: range, withTemplate: circlesSection)
-                print("[AddCircleFunction] Circles section replaced")
                 return result
             }
         }
         
-        print("[AddCircleFunction] Adding new circles section")
         return prompt + circlesSection
     }
     
     private func extractCircles(from text: String, sampleMode: String?, sourceType: String, sourceId: String) -> String? {
-        print("[AddCircleFunction] Extracting circles from text")
-        print("[AddCircleFunction] Sample mode: \(sampleMode ?? "nil")")
-        
         // Determine circle type based on sample mode
         let circleType: Int16
         if let mode = sampleMode, !mode.isEmpty {
@@ -375,15 +302,11 @@ class AddCircleFunction: PromptUpdateFunction {
             circleType = 1 // Non-sample mode: type = 1
         }
         
-        print("[AddCircleFunction] 获取圈子: type = \(circleType)")
-        
         // Fetch circles from CoreData based on type
         let circles = CircleManager.shared.fetchCircles(byType: circleType)
-        print("[AddCircleFunction] Found \(circles.count) circles with type \(circleType)")
         
         // Format circles for the prompt
         if circles.count > 0 {
-            print("[AddCircleFunction] Adding circles section with actual circles")
             let formattedCircles = circles.compactMap { circle -> String? in
                 guard let name = circle.name,
                       !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -411,7 +334,6 @@ class AddCircleFunction: PromptUpdateFunction {
             
             return formattedCircles
         } else {
-            print("[AddCircleFunction] No valid circles found")
             return nil
         }
     }
@@ -565,6 +487,7 @@ class AddSourceInfoFunction: PromptUpdateFunction {
 /// - ContactFlow: [0, 1, 2, 3, 4] → Notes → Topics → Contact → Circle → Source
 class PromptUpdateManager {
     static let shared = PromptUpdateManager()
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.socialbrain", category: "PromptUpdateManager")
     
     // Function Mapping:
     // [0] = AddNoteFunction
@@ -609,23 +532,14 @@ class PromptUpdateManager {
         contact: Contact?
     ) async throws -> String {
         let functionIndices = getUpdateConfiguration(for: flowType)
-        print("[PromptUpdateManager] ========================================")
-        print("[PromptUpdateManager] Starting prompt update for flow: \(flowType)")
-        print("[PromptUpdateManager] Function indices: \(functionIndices)")
-        print("[PromptUpdateManager] Function names: \(functionIndices.map { getFunctionName(for: $0) })")
-        print("[PromptUpdateManager] ========================================")
         
         var updatedPrompt = prompt
         
         // Process functions in the exact order specified by configuration
         for (index, functionIndex) in functionIndices.enumerated() {
             guard functionIndex < updateFunctions.count else { 
-                print("[PromptUpdateManager] Warning: Index \(functionIndex) out of bounds, skipping")
                 continue 
             }
-            
-            let functionName = getFunctionName(for: functionIndex)
-            print("[PromptUpdateManager] Step \(index + 1)/\(functionIndices.count): Calling \(functionName) (index: \(functionIndex))")
             
             updatedPrompt = try await updateFunctions[functionIndex].update(
                 updatedPrompt,
@@ -635,36 +549,12 @@ class PromptUpdateManager {
                 sourceId: sourceId,
                 contact: contact
             )
-            
-            print("[PromptUpdateManager] Step \(index + 1)/\(functionIndices.count): \(functionName) completed")
         }
-        
-        print("[PromptUpdateManager] ========================================")
-        print("[PromptUpdateManager] All functions completed for flow: \(flowType)")
-        print("[PromptUpdateManager] Final prompt length: \(updatedPrompt.count)")
         
         // Verify section order
         let orderCorrect = verifySectionOrder(updatedPrompt, flowType: flowType)
-        if orderCorrect {
-            print("[PromptUpdateManager] ✅ Section order verification passed")
-        } else {
-            print("[PromptUpdateManager] ❌ Section order verification failed")
-        }
         
-        print("[PromptUpdateManager] ========================================")
         return updatedPrompt
-    }
-    
-    /// Get function name for debugging
-    private func getFunctionName(for index: Int) -> String {
-        switch index {
-        case 0: return "AddNoteFunction"
-        case 1: return "AddTopicFunction"
-        case 2: return "AddContactFunction"
-        case 3: return "AddCircleFunction"
-        case 4: return "AddSourceInfoFunction"
-        default: return "UnknownFunction(\(index))"
-        }
     }
     
     /// Verify that sections appear in the correct order based on configuration
@@ -681,25 +571,19 @@ class PromptUpdateManager {
             }
         }.filter { !$0.isEmpty }
         
-        print("[PromptUpdateManager] Verifying section order for flow: \(flowType)")
-        print("[PromptUpdateManager] Expected order: \(sectionMarkers)")
-        
         var lastIndex = -1
         for (index, marker) in sectionMarkers.enumerated() {
             if let markerIndex = prompt.range(of: marker)?.lowerBound {
                 let markerPosition = prompt.distance(from: prompt.startIndex, to: markerIndex)
                 if markerPosition <= lastIndex {
-                    print("[PromptUpdateManager] ❌ Section order violation: \(marker) appears before expected position")
                     return false
                 }
                 lastIndex = markerPosition
-                print("[PromptUpdateManager] ✅ Section \(index + 1): \(marker) at position \(markerPosition)")
             } else {
-                print("[PromptUpdateManager] ⚠️ Section not found: \(marker)")
+                return false
             }
         }
         
-        print("[PromptUpdateManager] ✅ All sections in correct order")
         return true
     }
 }
@@ -933,6 +817,7 @@ class NoteFlow: PromptFlowProtocol {
 class QuestionFlow: PromptFlowProtocol {
     private let promptManager = PromptConfigurationManager.shared
     private let updateManager = PromptUpdateManager.shared
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.socialbrain", category: "QuestionFlow")
     
     func generatePrompts(
         sourceType: String,
@@ -943,16 +828,7 @@ class QuestionFlow: PromptFlowProtocol {
         promptDisplay: String?,
         promptIdentifier: Int
     ) async throws -> PromptPair {
-        print("[QuestionFlow] Generating prompts for:")
-        print("- Source Type: \(sourceType)")
-        print("- Source Action: \(sourceAction)")
-        print("- Source ID: \(sourceId)")
-        print("- Sample Mode: \(sampleMode ?? "none")")
-        print("- Prompt ID: \(promptIdentifier)")
-        print("- Contact: \(contact?.name ?? "none")")
-        
         guard let promptDisplay = promptDisplay else {
-            print("[QuestionFlow] Error: Question display text is required but was nil")
             throw PromptError.questionRequired
         }
         
@@ -967,11 +843,8 @@ class QuestionFlow: PromptFlowProtocol {
         
         if let prompt = prompts.first {
             guard let content = prompt.content else {
-                print("[QuestionFlow] Error: Prompt \(promptIdentifier) found but content is nil")
                 throw PromptError.promptNotFound
             }
-            
-            print("[QuestionFlow] Found prompt with ID: \(promptIdentifier)")
             
             // For questions, we'll use the prompt content as system prompt
             // and the promptDisplay as the user prompt
@@ -988,27 +861,14 @@ class QuestionFlow: PromptFlowProtocol {
                 contact: contact
             )
             
-            let userPrompt = promptDisplay
-            
             let promptPair = PromptPair(
                 systemPrompt: systemPrompt,
-                userPrompt: userPrompt
+                userPrompt: promptDisplay
             )
-            
-            print("[QuestionFlow] Returning PromptPair:")
-            print("--------------------------------")
-            print("System Prompt: \(promptPair.systemPrompt)")
-            if let userPrompt = promptPair.userPrompt {
-                print("User Prompt: \(userPrompt)")
-            } else {
-                print("User Prompt: nil")
-            }
-            print("--------------------------------")
             
             return promptPair
         }
         
-        print("[QuestionFlow] Error: No prompt found with identifier: \(promptIdentifier)")
         throw PromptError.promptNotFound
     }
 }

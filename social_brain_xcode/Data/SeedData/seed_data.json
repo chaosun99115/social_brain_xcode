@@ -281,6 +281,16 @@
                 },
                 {
                     "uniqueIdentifier": "indie_note_2",
+                    "content": "如何介绍社交大脑\n\n针对普通用户：\n\n社交大脑是传统通讯录应用的智能升级版。通讯录主要记录联系方式，而社交大脑则能够记录人际关系里的方方面面。在记录的基础上，社交大脑还能够主动协助处理各种复杂的人际事务。\n\n针对有商业背景的用户：\n\n社交大脑是CRM的个人版本。社交大脑可以帮助用户梳理自己的人际关系网络，让用户在复杂的人际事务中可以游刃有余。\n\n针对有开发背景的用户：\n\n社交大脑是一个专注于人际关系场景的知识库产品。这个应用结合了内置的提示词与用户记录的人际关系信息，向用户提供针对性的建议。 ",
+                    "type": 0,
+                    "subType": 2,
+                    "updateCompleted": 1,
+                    "createdAt": "2025-05-01T10:00:00Z",
+                    "updatedAt": "2025-05-01T10:00:00Z",
+                    "recordStatus": 1
+                },
+                {
+                    "uniqueIdentifier": "indie_note_3",
                     "content": "今天跟前同事 @小李 吃了个饭。他问了挺多我做独立开发的体会。他分享说公司最近已经有过一次大裁员，他也开始担心被裁员后的出路，不知道独立开发是不是一条可以走得通的路。",
                     "type": 0,
                     "subType": 1,
@@ -290,7 +300,7 @@
                     "recordStatus": 1
                 },
                 {
-                    "uniqueIdentifier": "indie_note_3",
+                    "uniqueIdentifier": "indie_note_4",
                     "content": "今天参加了朋友 @小周 的生日聚会，认识了她的大学同学 @小蔡 。小蔡性格开朗，是个设计师。小蔡谈到她工作之余最大的爱好是陶艺，已经坚持了三年多。",
                     "type": 0,
                     "subType": 1,
@@ -300,8 +310,8 @@
                     "recordStatus": 1
                 },
                 {
-                    "uniqueIdentifier": "indie_note_4",
-                    "content": "今天 @小蔡 分享了一个陶艺展览的朋友圈。我发了个评论，她在回复里提到下周六还有一个陶艺展览，问我是否有兴趣一起去。\n\n虽然我对陶艺了解不多，但考虑到艺术家们一般也需要维护圈子内的各种关系，这可能是个接社交大脑种子用户的好机会，我答应的她的邀请",
+                    "uniqueIdentifier": "indie_note_5",
+                    "content": "今天 @小蔡 分享了一个陶艺展览的朋友圈。我发了个评论，她在回复里提到下周六还有一个陶艺展览，问我是否有兴趣一起去。\n\n虽然我对陶艺了解不多，但考虑到艺术家们一般也需要维护圈子内的各种关系，这可能是个接社交大脑种子用户的好机会，我就答应了她的邀请。",
                     "type": 0,
                     "subType": 1,
                     "updateCompleted": 1,
@@ -311,13 +321,13 @@
                 },
                 {
                     "uniqueIdentifier": "indie_note_5",
-                    "content": "为了准备在陶艺展览，今天阅读了几篇关于艺术家职业发展的文章和采访，汇总的发现如下：\n\n艺术家平均每月参加3-5场行业活动，他们的事业发展非常依赖人脉网络（画廊运营、收藏家、评论家、同行），能够高效管理关系，进而专注于创作的工具是很多艺术家的潜在需求。",
+                    "content": "艺术家人际关系网络\n\n艺术家平均每月参加3-5场线下行业活动，他们的事业发展非常依赖人际关系网络\n\n艺术家主要的社交对象：画廊运营、策展人、同行艺术家\n\n在艺术创作与人际互动之间不断切换是艺术家们的一个痛点。",
                     "type": 0,
                     "subType": 2,
                     "updateCompleted": 1,
                     "createdAt": "2025-05-17T10:00:00Z",
                     "updatedAt": "2025-05-17T10:00:00Z",
-                    "recordStatus": 1
+                    "recordStatus": 1                    
                 }
             ],
             "contactInsights": [],
@@ -330,12 +340,22 @@
                 {
                     "createdAt": "2024-04-01T10:00:00Z",
                     "contactIdentifier": "indie_contact_2",
-                    "noteIdentifier": "indie_note_1"
+                    "noteIdentifier": "indie_note_3"
                 },
                 {
                     "createdAt": "2024-04-01T10:00:00Z",
-                    "contactIdentifier": "indie_contact_2",
-                    "noteIdentifier": "indie_note_3"
+                    "contactIdentifier": "indie_contact_3",
+                    "noteIdentifier": "indie_note_4"
+                },
+                {
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "contactIdentifier": "indie_contact_4",
+                    "noteIdentifier": "indie_note_4"
+                },
+                {
+                    "createdAt": "2024-04-01T10:00:00Z",
+                    "contactIdentifier": "indie_contact_4",
+                    "noteIdentifier": "indie_note_5"
                 }
                 
             ],

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MentionTextView: View {
     let text: String
+    let preserveEmptyLines: Bool
     
     // Define mention types and their styles
     enum MentionType {
@@ -30,14 +31,32 @@ struct MentionTextView: View {
         }
     }
     
+    // Default initializer that preserves empty lines (for detail views)
+    init(text: String) {
+        self.text = text
+        self.preserveEmptyLines = true
+    }
+    
+    // Initializer with explicit control over empty line preservation
+    init(text: String, preserveEmptyLines: Bool) {
+        self.text = text
+        self.preserveEmptyLines = preserveEmptyLines
+    }
+    
     var body: some View {
         Text(attributedString)
     }
     
     private func processText(_ text: String) -> String {
-        let lines = text.components(separatedBy: .newlines)
-        let processedLines = lines.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-        return processedLines.joined(separator: "\n")
+        if preserveEmptyLines {
+            // Preserve all lines, including empty ones
+            return text
+        } else {
+            // Original compact behavior - filter out empty lines
+            let lines = text.components(separatedBy: .newlines)
+            let processedLines = lines.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            return processedLines.joined(separator: "\n")
+        }
     }
     
     var attributedString: AttributedString {
@@ -84,7 +103,23 @@ struct MentionTextView_Previews: PreviewProvider {
             MentionTextView(text: "Hello @张三 and #技术圈")
             MentionTextView(text: "Meeting with @李四 in #产品组")
             MentionTextView(text: "Regular text with @王五 and #设计圈 mentions")
-            MentionTextView(text: "Line 1\n\n\n\n\n\n\nLine 2") // Test empty lines
+            
+            // Test empty lines preservation
+            VStack(alignment: .leading) {
+                Text("With empty lines preserved (default):")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                MentionTextView(text: "Line 1\n\n\n\n\n\n\nLine 2")
+                    .background(Color.gray.opacity(0.1))
+            }
+            
+            VStack(alignment: .leading) {
+                Text("With compact mode (no empty lines):")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                MentionTextView(text: "Line 1\n\n\n\n\n\n\nLine 2", preserveEmptyLines: false)
+                    .background(Color.gray.opacity(0.1))
+            }
         }
         .padding()
         .previewLayout(.sizeThatFits)

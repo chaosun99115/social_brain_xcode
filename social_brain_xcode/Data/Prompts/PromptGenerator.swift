@@ -25,30 +25,28 @@ class PromptGenerator {
         // Each prompt identifier should map to exactly one flow
         switch promptIdentifier {
         case 1: // Regular mode - Chat flow
-            logger.debug("[PromptGenerator] Using ChatFlow for prompt ID: \(promptIdentifier)")
             return questionFlow
         case 2: // Regular mode - Chat flow
-            logger.debug("[PromptGenerator] Using ChatFlow for prompt ID: \(promptIdentifier)")
             return questionFlow
         case 3: // Indie dev - Question flow
-            logger.debug("[PromptGenerator] Using QuestionFlow for prompt ID: \(promptIdentifier)")
             return questionFlow
         case 4: // Changed job - Question flow
-            logger.debug("[PromptGenerator] Using QuestionFlow for prompt ID: \(promptIdentifier)")
             return questionFlow
         case 5: // Contact - Contact flow
-            logger.debug("[PromptGenerator] Using ContactFlow for prompt ID: \(promptIdentifier)")
             return contactFlow
         case 6: // Note - Note flow
-            logger.debug("[PromptGenerator] Using NoteFlow for prompt ID: \(promptIdentifier)")
             return noteFlow
+        case 7: // Sample 1 (Changed job)
+            return questionFlow
+        case 8: // Sample 2 (Indie dev)
+            return questionFlow
+        case 9: // Sample (Changed job & Indie dev)
+            return questionFlow
         case 0: // Changed job contact - Contact flow
-            logger.debug("[PromptGenerator] Using ContactFlow for prompt ID: \(promptIdentifier)")
             return chatFlow
         case 999:
             return questionFlow
         default:
-            logger.debug("[PromptGenerator] Using ChatFlow for default prompt ID: \(promptIdentifier)")
             return chatFlow
         }
     }
@@ -72,18 +70,10 @@ class PromptGenerator {
         promptDisplay: String?,
         promptIdentifier: Int
     ) async throws -> PromptPair {
-        print("[PromptGenerator] Generating prompts for:")
-        print("- Source Type: \(sourceType)")
-        print("- Source Action: \(sourceAction)")
-        print("- Source ID: \(sourceId)")
-        print("- Sample Mode: \(sampleMode ?? "none")")
-        print("- Prompt ID: \(promptIdentifier)")
-        print("- Contact: \(contact?.name ?? "none")")
-        
         // Use getFlow to determine the appropriate flow based on promptIdentifier
         let flow = getFlow(for: promptIdentifier) as! PromptFlowProtocol
         
-        return try await flow.generatePrompts(
+        let result = try await flow.generatePrompts(
             sourceType: sourceType,
             sourceAction: sourceAction,
             sourceId: sourceId,
@@ -92,6 +82,8 @@ class PromptGenerator {
             promptDisplay: promptDisplay,
             promptIdentifier: promptIdentifier
         )
+        
+        return result
     }
     
     /// Generates a system prompt based on the given context

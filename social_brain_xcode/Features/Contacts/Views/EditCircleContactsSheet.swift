@@ -21,6 +21,9 @@ struct EditCircleContactsSheet: View {
     /// Circle manager for handling circle operations
     @StateObject private var circleManager = CircleManager.shared
     
+    /// App mode manager for filtering contacts
+    @EnvironmentObject var appModeManager: AppModeManager
+    
     /// All available contacts
     @State private var allContacts: [Contact] = []
     
@@ -144,6 +147,10 @@ struct EditCircleContactsSheet: View {
             .onAppear {
                 loadContacts()
             }
+            .onChange(of: appModeManager.isSampleMode) { _ in
+                // Refresh contacts when sample mode changes
+                loadContacts()
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
     }
@@ -152,7 +159,16 @@ struct EditCircleContactsSheet: View {
     
     /// Loads all contacts and sets up the initial selection state
     private func loadContacts() {
-        allContacts = contactManager.fetchContacts()
+        // Filter contacts based on app mode
+        let fetchedContacts = contactManager.fetchContacts()
+        if appModeManager.isSampleMode {
+            // In sample mode, only show type=0 contacts
+            allContacts = fetchedContacts.filter { $0.type == 0 }
+        } else {
+            // In regular mode, only show type!=0 contacts
+            allContacts = fetchedContacts.filter { $0.type != 0 }
+        }
+        
         if let circleId = circle.circleId {
             let related = circleManager.getContactsForCircle(circleId: circleId)
             selectedContactIds = Set(related.compactMap { $0.contactId })

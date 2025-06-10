@@ -71,33 +71,22 @@ struct SocialBrainSheetView: View {
     
     // Add helper method to get provider
     private func getSampleProvider() -> SampleModeProvider? {
-        print("[SocialBrainSheetView] getSampleProvider started")
-        print("[SocialBrainSheetView] isSampleMode: \(appModeManager.isSampleMode)")
-        print("[SocialBrainSheetView] sampleModeType: \(appModeManager.sampleModeType ?? "nil")")
-        print("[SocialBrainSheetView] sourceType: \(sourceType)")
-        
         // For contact-specific views, use ContactProvider
         if sourceType == "contact" {
-            print("[SocialBrainSheetView] Using ContactProvider for contact view")
             return ContactProvider()
         }
         
         // For sample mode, use the configured provider
         guard appModeManager.isSampleMode,
               let modeType = appModeManager.sampleModeType else {
-            print("[SocialBrainSheetView] No sample provider available")
             return nil
         }
         
-        print("[SocialBrainSheetView] Getting provider for mode: \(modeType)")
         return SampleModeProviderFactory.getProvider(for: modeType)
     }
     
     // Modify initializeSuggestedQuestions to only use SourceTypePromptMapping
     private func initializeSuggestedQuestions() {
-        print("[SocialBrainSheetView] initializeSuggestedQuestions started")
-        print("[SocialBrainSheetView] Current contextContact: \(contextContact?.name ?? "nil")")
-        
         Task {
             do {
                 let context = try await CoreDataManager.shared.viewContext
@@ -137,7 +126,6 @@ struct SocialBrainSheetView: View {
                     suggestedQuestions = questions
                 }
             } catch {
-                print("[SocialBrainSheetView] Error fetching prompts: \(error)")
                 // Set empty questions on error
                 await MainActor.run {
                     suggestedQuestions = []
@@ -165,7 +153,6 @@ struct SocialBrainSheetView: View {
     private func handleSuggestedQuestion(_ question: String, promptIdentifier: Int? = nil) {
         isCustomQuestion = false
         guard let identifier = promptIdentifier else {
-            print("[SocialBrainSheetView] Error: No prompt identifier provided for suggested question")
             return
         }
         currentPromptIdentifier = identifier
@@ -292,7 +279,7 @@ struct SocialBrainSheetView: View {
                                     Image(systemName: "square.and.pencil")
                                         .font(.system(size: 18))
                                     
-                                    Text("新建笔记")
+                                    Text("收集话题")
                                         .font(.system(size: 14, weight: .medium))
                                 }
                                 .padding(.vertical, 8)
@@ -367,12 +354,6 @@ struct SocialBrainSheetView: View {
             Text(errorMessage ?? "An unknown error occurred")
         }
         .onAppear {
-            print("[SocialBrainSheetView] View appeared with context:")
-            print("[SocialBrainSheetView] - sourceType: \(sourceType)")
-            print("[SocialBrainSheetView] - sourceAction: \(sourceAction)")
-            print("[SocialBrainSheetView] - sourceId: \(sourceId)")
-            print("[SocialBrainSheetView] - initialContact: \(initialContact?.name ?? "nil")")
-            
             // If we have an initialContact, use it directly
             if let contact = initialContact {
                 contextContact = contact
@@ -408,9 +389,12 @@ struct SocialBrainSheetView: View {
             ConfigurationSheetView()
         }
         .sheet(isPresented: $showingNoteModal) {
-            SimpleNoteModalView(initialText: "") { newNoteText in
+            SimpleNoteModalView(
+                initialText: "",
+                subType: .topicCollection,
+                modalTitle: "收集话题"
+            ) { newNoteText in
                 // Handle the new note creation
-                print("[SocialBrainSheetView] New note created: \(newNoteText)")
             }
             .environmentObject(NoteManager.shared)
             .environmentObject(appModeManager)
@@ -481,7 +465,6 @@ struct SocialBrainSheetView: View {
                 
                 // Check if we should use streaming (Doubao or DeepSeek)
                 if let doubaoService = chatService as? DoubaoChatService {
-                    print("[SocialBrainSheetView] Using Doubao streaming mode")
                     isStreaming = true
                     currentStreamingMessage = ""
                     // Create a temporary message for streaming
@@ -494,7 +477,6 @@ struct SocialBrainSheetView: View {
                     var isFirstChunk = true
                     try await doubaoService.sendStreamingMessage(limitedText, context: chatMessages) { chunk in
                         Task { @MainActor in
-                            // No logging chunks
                             currentStreamingMessage += chunk
                             if let lastIndex = messages.indices.last {
                                 messages[lastIndex].content = currentStreamingMessage
@@ -508,7 +490,6 @@ struct SocialBrainSheetView: View {
                     isStreaming = false
                     isLoading = false
                 } else if let deepSeekService = chatService as? DeepSeekChatService {
-                    print("[SocialBrainSheetView] Using DeepSeek streaming mode")
                     isStreaming = true
                     currentStreamingMessage = ""
                     let streamingMessage = SocialBrainMessage(
@@ -520,7 +501,6 @@ struct SocialBrainSheetView: View {
                     var isFirstChunk = true
                     try await deepSeekService.sendStreamingMessage(limitedText, context: chatMessages) { chunk in
                         Task { @MainActor in
-                            // No logging chunks
                             currentStreamingMessage += chunk
                             if let lastIndex = messages.indices.last {
                                 messages[lastIndex].content = currentStreamingMessage
@@ -534,14 +514,7 @@ struct SocialBrainSheetView: View {
                     isStreaming = false
                     isLoading = false
                 } else {
-                    print("[SocialBrainSheetView] Using non-streaming mode")
                     let response = try await chatService.sendMessage(limitedText, context: chatMessages)
-                    print("[SocialBrainSheetView] Received response from LLM:")
-                    if let firstChoice = response.choices.first {
-                        print("[SocialBrainSheetView] \(firstChoice.message.content)")
-                    } else {
-                        print("[SocialBrainSheetView] No content in response")
-                    }
                     await MainActor.run {
                         let aiMessage = aiServiceManager.convertToSocialBrainMessage(response)
                         messages.append(aiMessage)
@@ -552,7 +525,6 @@ struct SocialBrainSheetView: View {
                 await MainActor.run {
                     isLoading = false
                     isStreaming = false
-                    print("[SocialBrainSheetView] Error caught: \(error)")
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     showError = true
                 }
@@ -624,7 +596,6 @@ struct SocialBrainSheetView: View {
                 }
             } catch {
                 // Fallback handling for keyboard detection issues
-                print("[SocialBrainSheetView] Keyboard detection error: \(error.localizedDescription)")
                 self.isKeyboardVisible = true
                 self.inputAccessoryHeight = 0
             }
@@ -658,8 +629,6 @@ struct SocialBrainSheetView: View {
                 
                 // Configure keyboard appearance for sheet modal
                 window.overrideUserInterfaceStyle = .unspecified
-                
-                print("[SocialBrainSheetView] Keyboard configured for sheet modal")
             }
         }
     }

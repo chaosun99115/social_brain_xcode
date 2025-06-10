@@ -209,8 +209,8 @@ struct SocialNotesView: View {
                     Button(action: {
                         showingConfigurationSheet = true
                     }) {
-                        Image(systemName: "ellipsis")
-                            .font(.system(size: 20))
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 16))
                             .foregroundColor(.primaryText)
                     }
                 }
@@ -265,9 +265,15 @@ struct SocialNotesView: View {
             setupNotificationObservers()
             // Initial refresh
             refreshTrigger.toggle()
+            
+            // Setup sample mode change observer
+            setupSampleModeObserver()
         }
         .onDisappear {
             removeNotificationObservers()
+            
+            // Cleanup sample mode observer
+            cleanupSampleModeObserver()
         }
     }
     
@@ -340,6 +346,23 @@ struct SocialNotesView: View {
     
     private func removeNotificationObservers() {
         NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshNotesList"), object: nil)
+    }
+    
+    private func setupSampleModeObserver() {
+        NotificationCenter.default.addObserver(
+            forName: .sampleModeChanged,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Refresh notes when sample mode changes
+            Task {
+                await self.refreshNotes()
+            }
+        }
+    }
+    
+    private func cleanupSampleModeObserver() {
+        NotificationCenter.default.removeObserver(self, name: .sampleModeChanged, object: nil)
     }
     
     private func refreshNotes() async {

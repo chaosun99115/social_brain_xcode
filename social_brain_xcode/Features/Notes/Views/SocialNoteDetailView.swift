@@ -51,7 +51,7 @@ struct SocialNoteDetailView: View {
                                     .textSelection(.enabled)
                                     .font(.body)
                                     .foregroundColor(.primaryText)
-                                    .lineSpacing(4)
+                                    .lineSpacing(8)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .multilineTextAlignment(.leading)
                             }
@@ -201,7 +201,6 @@ struct SocialNoteDetailView: View {
                 initialText: note.content ?? "",  // Use note.content directly instead of editingNoteText
                 noteId: note.noteId
             ) { updatedText in
-                print("Debug - Received updated text: \(updatedText)")
                 if !updatedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     guard let noteId = note.noteId else { return }
                     if noteManager.updateNote(noteId: noteId, text: updatedText) {

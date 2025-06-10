@@ -516,7 +516,7 @@ struct NoteCardView: View {
                 .foregroundColor(.secondaryText)
             
             if let content = note.content {
-                MentionTextView(text: content)
+                MentionTextView(text: content, preserveEmptyLines: false)
                     .font(.body)
                     .lineLimit(4)
                     .multilineTextAlignment(.leading)

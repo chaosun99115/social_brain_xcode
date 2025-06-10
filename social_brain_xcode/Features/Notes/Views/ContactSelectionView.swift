@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContactSelectionView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var contactManager = ContactManager.shared
     @State private var contacts: [Contact] = []
     @State private var searchText = ""
@@ -45,7 +46,24 @@ struct ContactSelectionView: View {
             }
         }
         .task {
-            contacts = contactManager.fetchContacts()
+            // Filter contacts based on app mode
+            if appModeManager.isSampleMode {
+                // In sample mode, only show type=0 contacts
+                contacts = contactManager.fetchContacts(byType: 0)
+            } else {
+                // In regular mode, only show type!=0 contacts
+                let allContacts = contactManager.fetchContacts()
+                contacts = allContacts.filter { $0.type != 0 }
+            }
+        }
+        .onChange(of: appModeManager.isSampleMode) { _ in
+            // Refresh contacts when sample mode changes
+            if appModeManager.isSampleMode {
+                contacts = contactManager.fetchContacts(byType: 0)
+            } else {
+                let allContacts = contactManager.fetchContacts()
+                contacts = allContacts.filter { $0.type != 0 }
+            }
         }
     }
 } 

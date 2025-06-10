@@ -10,8 +10,33 @@ import CoreData
 import LocalAuthentication
 
 class AppModeManager: ObservableObject {
-    @Published var isSampleMode: Bool = false
-    @Published var sampleModeType: String? = nil
+    @Published var isSampleMode: Bool = false {
+        didSet {
+            if isSampleMode != oldValue {
+                NotificationCenter.default.post(
+                    name: .sampleModeChanged,
+                    object: nil,
+                    userInfo: ["isSampleMode": isSampleMode, "sampleModeType": sampleModeType as Any]
+                )
+            }
+        }
+    }
+    @Published var sampleModeType: String? = nil {
+        didSet {
+            if sampleModeType != oldValue {
+                NotificationCenter.default.post(
+                    name: .sampleModeChanged,
+                    object: nil,
+                    userInfo: ["isSampleMode": isSampleMode, "sampleModeType": sampleModeType as Any]
+                )
+            }
+        }
+    }
+}
+
+// Add notification name extension
+extension Notification.Name {
+    static let sampleModeChanged = Notification.Name("sampleModeChanged")
 }
 
 // Add a new class to manage app settings
