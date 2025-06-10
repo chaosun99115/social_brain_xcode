@@ -85,12 +85,38 @@ final class SeedDataManager {
         return scenarioData
     }
     
+    /// Switches to a different sample data scenario while preserving user data
+    func switchToScenario(_ scenario: SeedDataScenario, in context: NSManagedObjectContext) async throws {
+        // Import the new scenario data - this will automatically clean up existing sample data
+        try await importSeedData(into: context, scenario: scenario)
+    }
+    
+    /// Removes sample data while keeping user data
+    func removeSampleData(from context: NSManagedObjectContext) throws {
+        try deleteExistingStore(for: context)
+    }
+    
+    /// Gets the current sample data scenario (if any)
+    func getCurrentScenario(in context: NSManagedObjectContext) throws -> SeedDataScenario? {
+        // This is a simplified implementation - in a real app, you might want to store
+        // the current scenario in UserDefaults or as a separate entity
+        let sampleData = try fetchSampleData(in: context)
+        if !sampleData.notes.isEmpty {
+            // Check if it matches known scenarios by examining the data
+            // This is a basic implementation - you might want to add a scenario identifier
+            // to your data model for more accurate detection
+            return .changedJob // Default assumption
+        }
+        return nil
+    }
+    
     // MARK: - Store Management
     
     func deleteExistingStore(for context: NSManagedObjectContext) throws {
+        // Only delete sample data (type == 0), keep user data (type != 0)
         let entityTypes = [
             "Note",
-            "Contact",
+            "Contact", 
             "ContactInsight",
             "NoteContactRelationship",
             "Circle",
@@ -101,38 +127,94 @@ final class SeedDataManager {
         
         for entityType in entityTypes {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityType)
-            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
             
-            do {
-                try context.execute(deleteRequest)
-            } catch {
-                // Continue with other entities even if one fails
+            // For entities that have a 'type' attribute, only delete those with type == 0
+            if entityType == "Note" || entityType == "Contact" || entityType == "Circle" {
+                fetchRequest.predicate = NSPredicate(format: "type == %d", 0)
+                
+                do {
+                    let count = try context.count(for: fetchRequest)
+                    if count > 0 {
+                        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+                        try context.execute(deleteRequest)
+                    }
+                } catch {
+                    // Continue with other entities even if one fails
+                }
+            } else {
+                // For other entities, we need to check if they're related to sample data
+                // This is more complex and will be handled in the import logic
+                continue
             }
         }
         
+        // Clean up orphaned relationships (those pointing to deleted sample data)
+        try cleanupOrphanedRelationships(in: context)
+    }
+    
+    private func cleanupOrphanedRelationships(in context: NSManagedObjectContext) throws {
+        // Ensure we're on the correct queue for this context
+        guard context.concurrencyType == .mainQueueConcurrencyType || 
+              context.concurrencyType == .privateQueueConcurrencyType else {
+            throw NSError(domain: "SeedDataManager", code: 5, userInfo: [NSLocalizedDescriptionKey: "Invalid context concurrency type"])
+        }
+        
+        var totalDeleted = 0
+        
+        // Use batch delete requests instead of individual deletions to avoid collection mutation issues
+        
+        // Clean up NoteContactRelationships that reference deleted notes or contacts
+        let noteContactRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest<NSFetchRequestResult>(entityName: "NoteContactRelationship")
+        noteContactRequest.predicate = NSPredicate(format: "notes == nil OR contacts == nil")
+        
         do {
-            try context.save()
+            let count = try context.count(for: noteContactRequest)
+            if count > 0 {
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: noteContactRequest)
+                try context.execute(deleteRequest)
+                totalDeleted += count
+            }
         } catch {
-            throw error
+            // Continue with other deletions even if one fails
+        }
+        
+        // Clean up CircleContactRelationships that reference deleted circles or contacts
+        let circleContactRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest<NSFetchRequestResult>(entityName: "CircleContactRelationship")
+        circleContactRequest.predicate = NSPredicate(format: "circles == nil OR contacts == nil")
+        
+        do {
+            let count = try context.count(for: circleContactRequest)
+            if count > 0 {
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: circleContactRequest)
+                try context.execute(deleteRequest)
+                totalDeleted += count
+            }
+        } catch {
+            // Continue with other deletions even if one fails
+        }
+        
+        // Clean up InsightCircleRelationships that reference deleted circles or insights
+        let insightCircleRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest<NSFetchRequestResult>(entityName: "InsightCircleRelationship")
+        insightCircleRequest.predicate = NSPredicate(format: "circles == nil OR insights == nil")
+        
+        do {
+            let count = try context.count(for: insightCircleRequest)
+            if count > 0 {
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: insightCircleRequest)
+                try context.execute(deleteRequest)
+                totalDeleted += count
+            }
+        } catch {
+            // Continue with other deletions even if one fails
         }
     }
     
     // MARK: - Data Import
     
     func importSeedData(into context: NSManagedObjectContext, scenario: SeedDataScenario? = nil) async throws {
+        // Delete only sample data (type == 0) and keep user data (type != 0)
+        // This will clean up any existing sample data before importing new data
         try deleteExistingStore(for: context)
-        
-        let noteFetchRequest: NSFetchRequest<Note> = Note.fetchRequest()
-        noteFetchRequest.predicate = NSPredicate(format: "type == %d", 0)
-        let existingNotes: [Note]
-        do {
-            existingNotes = try context.fetch(noteFetchRequest)
-            if !existingNotes.isEmpty {
-                throw NSError(domain: "SeedDataManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Sample data already exists"])
-            }
-        } catch {
-            throw error
-        }
         
         let data: Data
         do {
@@ -157,7 +239,7 @@ final class SeedDataManager {
         entityUUIDs.removeAll()
         
         try await context.perform {
-            // Import Contacts
+            // Import Contacts (sample data with type == 0)
             for contactData in seedData.contacts {
                 let contact = Contact(context: context)
                 let contactUUID = self.generateAndStoreUUID(for: contactData.uniqueIdentifier)
@@ -169,7 +251,7 @@ final class SeedDataManager {
                 contact.recordStatus = contactData.recordStatus
             }
             
-            // Import Notes
+            // Import Notes (sample data with type == 0)
             for noteData in seedData.notes {
                 let note = Note(context: context)
                 let noteUUID = self.generateAndStoreUUID(for: noteData.uniqueIdentifier)
@@ -184,7 +266,7 @@ final class SeedDataManager {
                 note.isArchived = false
             }
             
-            // Import Contact Insights
+            // Import Contact Insights (sample data)
             for insightData in seedData.contactInsights {
                 let insight = ContactInsight(context: context)
                 let insightUUID = self.generateAndStoreUUID(for: insightData.uniqueIdentifier)
@@ -198,7 +280,7 @@ final class SeedDataManager {
                 insight.recordStatus = insightData.recordStatus
             }
             
-            // Import Circles
+            // Import Circles (sample data with type == 0)
             for circleData in seedData.circles {
                 let circle = Circle(context: context)
                 let circleUUID = self.generateAndStoreUUID(for: circleData.uniqueIdentifier)
@@ -210,7 +292,7 @@ final class SeedDataManager {
                 circle.recordStatus = circleData.recordStatus
             }
 
-            // Import Circle Insights
+            // Import Circle Insights (sample data)
             for insightData in seedData.circleInsights {
                 let insight = CircleInsight(context: context)
                 let insightUUID = self.generateAndStoreUUID(for: insightData.uniqueIdentifier)
@@ -412,6 +494,89 @@ final class SeedDataManager {
             relationshipRequest.predicate = NSPredicate(format: "contacts.contactId == %@", contactId as CVarArg)
             _ = try context.fetch(relationshipRequest)
         }
+    }
+    
+    // MARK: - Data Retrieval Utilities
+    
+    /// Fetches all contacts (both sample and user data)
+    func fetchAllContacts(in context: NSManagedObjectContext) throws -> [Contact] {
+        let request: NSFetchRequest<Contact> = Contact.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Contact.createdAt, ascending: false)]
+        return try context.fetch(request)
+    }
+    
+    /// Fetches all notes (both sample and user data)
+    func fetchAllNotes(in context: NSManagedObjectContext) throws -> [Note] {
+        let request: NSFetchRequest<Note> = Note.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)]
+        return try context.fetch(request)
+    }
+    
+    /// Fetches all circles (both sample and user data)
+    func fetchAllCircles(in context: NSManagedObjectContext) throws -> [Circle] {
+        let request: NSFetchRequest<Circle> = Circle.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Circle.createdAt, ascending: false)]
+        return try context.fetch(request)
+    }
+    
+    /// Fetches only sample data (type == 0)
+    func fetchSampleData(in context: NSManagedObjectContext) throws -> (contacts: [Contact], notes: [Note], circles: [Circle]) {
+        let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
+        contactRequest.predicate = NSPredicate(format: "type == %d", 0)
+        contactRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Contact.createdAt, ascending: false)]
+        
+        let noteRequest: NSFetchRequest<Note> = Note.fetchRequest()
+        noteRequest.predicate = NSPredicate(format: "type == %d", 0)
+        noteRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)]
+        
+        let circleRequest: NSFetchRequest<Circle> = Circle.fetchRequest()
+        circleRequest.predicate = NSPredicate(format: "type == %d", 0)
+        circleRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Circle.createdAt, ascending: false)]
+        
+        let contacts = try context.fetch(contactRequest)
+        let notes = try context.fetch(noteRequest)
+        let circles = try context.fetch(circleRequest)
+        
+        return (contacts, notes, circles)
+    }
+    
+    /// Fetches only user data (type != 0)
+    func fetchUserData(in context: NSManagedObjectContext) throws -> (contacts: [Contact], notes: [Note], circles: [Circle]) {
+        let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
+        contactRequest.predicate = NSPredicate(format: "type != %d", 0)
+        contactRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Contact.createdAt, ascending: false)]
+        
+        let noteRequest: NSFetchRequest<Note> = Note.fetchRequest()
+        noteRequest.predicate = NSPredicate(format: "type != %d", 0)
+        noteRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)]
+        
+        let circleRequest: NSFetchRequest<Circle> = Circle.fetchRequest()
+        circleRequest.predicate = NSPredicate(format: "type != %d", 0)
+        circleRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Circle.createdAt, ascending: false)]
+        
+        let contacts = try context.fetch(contactRequest)
+        let notes = try context.fetch(noteRequest)
+        let circles = try context.fetch(circleRequest)
+        
+        return (contacts, notes, circles)
+    }
+    
+    /// Checks if sample data exists
+    func hasSampleData(in context: NSManagedObjectContext) throws -> Bool {
+        let request: NSFetchRequest<Note> = Note.fetchRequest()
+        request.predicate = NSPredicate(format: "type == %d", 0)
+        request.fetchLimit = 1
+        let count = try context.count(for: request)
+        return count > 0
+    }
+    
+    /// Checks if user data exists
+    func hasUserData(in context: NSManagedObjectContext) throws -> Bool {
+        let request: NSFetchRequest<Note> = Note.fetchRequest()
+        request.predicate = NSPredicate(format: "type != %d", 0)
+        request.fetchLimit = 1
+        let count = try context.count(for: request)
+        return count > 0
     }
 }
 

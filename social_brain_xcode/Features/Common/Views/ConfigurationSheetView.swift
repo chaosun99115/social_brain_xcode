@@ -108,7 +108,7 @@ struct ConfigurationSheetView: View {
                         showingSampleDataDialog = true
                     }) {
                         HStack {
-                            Label("查看示例数据", systemImage: "person.3.sequence.fill")
+                            Text("查看示例数据")
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .foregroundColor(.secondary)
@@ -118,91 +118,34 @@ struct ConfigurationSheetView: View {
                     .foregroundColor(.primary)
                 }
                 
-                // Pro Features Section
-                Section {
-                    Button(action: {
-                        showingProUpgrade = true
-                    }) {
-                        HStack {
-                            Label("解锁Pro", systemImage: "star.fill")
-                                .foregroundColor(.yellow)
-                            Spacer()
-                            if isProUser {
-                                Text("已订阅")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                    }
-                    .foregroundColor(.primary)
-                }
-                
-                // Pro Features Section (Premium Features)
-                Section(header: Text("Pro功能")) {
-                    VStack(spacing: 12) {
-                        // Face ID Toggle
-                        Toggle("Face ID锁定", isOn: Binding(
-                            get: { appSettingsManager.isFaceIDEnabled },
-                            set: { newValue in
-                                if !isProUser {
-                                    pendingFaceIDAction = newValue
-                                    showingProUpgrade = true
-                                    appSettingsManager.setFaceIDEnabled(false)
-                                    return
-                                }
-                                if newValue {
-                                    authenticateWithFaceID()
-                                } else {
-                                    appSettingsManager.setFaceIDEnabled(false)
-                                }
-                            }
-                        ))
-                        .disabled(isAuthenticating)
-                        
-                        if !isProUser {
-                            Text("升级到Pro以解锁所有高级功能")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .padding(.top, 4)
-                        }
-                    }
-                }
-                
-                // Social Knowledge Base Section
+                // Advanced Features Section
                 Section(header: Text("高级功能")) {
+                    // Face ID Toggle
+                    Toggle("Face ID锁定", isOn: Binding(
+                        get: { appSettingsManager.isFaceIDEnabled },
+                        set: { newValue in
+                            if newValue {
+                                authenticateWithFaceID()
+                            } else {
+                                appSettingsManager.setFaceIDEnabled(false)
+                            }
+                        }
+                    ))
+                    .disabled(isAuthenticating)
+                    
+                    // Social Knowledge Base
                     NavigationLink(destination: PromptListView()) {
                         HStack {
                             Text("社交经验库")
                             Spacer()
-                            if !isProUser {
-                                Text("Pro")
-                                    .font(.caption)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.yellow.opacity(0.2))
-                                    .foregroundColor(.yellow)
-                                    .cornerRadius(4)
-                            }
                         }
                     }
-                    .disabled(!isProUser)
                 }
                 
                 // About Section
                 Section(header: Text("关于")) {
                     NavigationLink(destination: AboutView()) {
                         Label("关于社交大脑", systemImage: "info.circle")
-                    }
-                    
-                    NavigationLink(destination: PrivacyPolicyView()) {
-                        Label("隐私政策", systemImage: "hand.raised")
-                    }
-                    
-                    NavigationLink(destination: TermsOfServiceView()) {
-                        Label("使用条款", systemImage: "doc.text")
                     }
                 }
                 
@@ -215,21 +158,6 @@ struct ConfigurationSheetView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                
-                // Add Feature Flag Section (Development Only)
-                #if DEBUG
-                Section(header: Text("开发设置")) {
-                    Toggle("需要订阅才能使用高级功能", isOn: Binding(
-                        get: { featureFlagManager.requireSubscriptionForProFeatures },
-                        set: { featureFlagManager.setRequireSubscriptionForProFeatures($0) }
-                    ))
-                    .tint(.accentColor)
-                    
-                    Text("关闭此选项将允许所有用户使用 Face ID 和 iCloud 同步功能")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                #endif
             }
             .navigationTitle("设置")
             .navigationBarTitleDisplayMode(.inline)
@@ -341,8 +269,22 @@ struct ConfigurationSheetView: View {
     }
     
     private func handleSampleModeSelection(_ mode: SampleModeConfig.ModeDefinition) async {
-        // TODO: Implement sample mode selection
-        // This should be similar to the implementation in SocialContactView
+        do {
+            // Use the SeedDataManager method to switch scenarios while preserving user data
+            try await SeedDataManager.shared.switchToScenario(mode.scenario, in: persistenceController.container.viewContext)
+            
+            // Update UI on main thread
+            await MainActor.run {
+                appModeManager.isSampleMode = true
+                appModeManager.sampleModeType = (mode.id == "indie") ? "indieDev" : mode.id
+                
+                // Dismiss the configuration sheet
+                dismiss()
+            }
+        } catch {
+            // Handle error - you might want to show an alert here
+            print("Error switching to sample mode: \(error)")
+        }
     }
     
     private func handleICloudSyncToggle(_ enabled: Bool) {

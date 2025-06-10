@@ -49,11 +49,19 @@ struct SocialNotesView: View {
     // Helper function to filter notes based on app mode and tab
     private func filterNotesByModeAndTab(_ notes: [SocialNote]) -> [SocialNote] {
         let (expectedType, expectedSubType) = getExpectedTypes()
+        let isSampleMode = appModeManager.isSampleMode
         
         return notes.filter { note in
-            let typeMatches = note.type.rawValue == expectedType
             let subTypeMatches = note.subType == expectedSubType
-            return typeMatches && subTypeMatches
+            
+            if isSampleMode {
+                // In sample mode, show both sample data (type = 0) and user data (type != 0)
+                return subTypeMatches
+            } else {
+                // In regular mode, only show user data (type = 1)
+                let typeMatches = note.type.rawValue == expectedType
+                return typeMatches && subTypeMatches
+            }
         }
     }
     
@@ -346,15 +354,8 @@ struct SocialNotesView: View {
     private func handleSampleModeSelection(_ mode: SampleModeConfig.ModeDefinition) async {
         // Remove debug logs
         do {
-            // Clear existing sample data if any
-            let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Note.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "type == %d", 0)
-            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-            try viewContext.execute(deleteRequest)
-            try viewContext.save()
-            
-            // Import new sample data
-            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: mode.scenario)
+            // Use the new SeedDataManager method to switch scenarios while preserving user data
+            try await SeedDataManager.shared.switchToScenario(mode.scenario, in: viewContext)
             
             // Update UI
             await MainActor.run {

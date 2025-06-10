@@ -408,6 +408,7 @@ struct SimpleNoteModalView: View {
         Task {
             // Use sample (type 0) for sample mode, regular (type 1) for non-sample mode
             let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
+            
             if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: noteType, subType: subType.rawValue, mentions: allMentions) {
                 onSave(textState.text)
                 dismiss()

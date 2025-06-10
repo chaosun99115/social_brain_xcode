@@ -318,15 +318,8 @@ struct SocialContactView: View {
         errorMessageSample = nil
         
         do {
-            // Clear existing sample data
-            let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Note.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "type == %d", 0)
-            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-            try viewContext.execute(deleteRequest)
-            try viewContext.save()
-            
-            // Import new sample data
-            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: mode.scenario)
+            // Use the new SeedDataManager method to switch scenarios while preserving user data
+            try await SeedDataManager.shared.switchToScenario(mode.scenario, in: viewContext)
             
             await MainActor.run {
                 appModeManager.isSampleMode = true
@@ -547,15 +540,8 @@ struct ContactListView: View {
         errorMessageSample = nil
         
         do {
-            // Clear existing sample data
-            let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Note.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "type == %d", 0)
-            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-            try viewContext.execute(deleteRequest)
-            try viewContext.save()
-            
-            // Import new sample data
-            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: mode.scenario)
+            // Use the new SeedDataManager method to switch scenarios while preserving user data
+            try await SeedDataManager.shared.switchToScenario(mode.scenario, in: viewContext)
             
             await MainActor.run {
                 appModeManager.isSampleMode = true
@@ -635,35 +621,6 @@ struct ContactCardView: View {
     }
 }
 
-// Tab Button Component
-struct TabButton: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(isSelected ? .primaryText : .secondaryText)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    VStack {
-                        Spacer()
-                        if isSelected {
-                            Rectangle()
-                                .fill(Color.primaryText)
-                                .frame(height: 2)
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
-                    }
-                )
-        }
-        .buttonStyle(PlainButtonStyle())
-        .animation(.easeInOut(duration: 0.4), value: isSelected)
-    }
-}
 
 // Add CircleListView component before SocialContactView_Previews
 struct CircleListView: View {
@@ -827,15 +784,8 @@ struct CircleListView: View {
         errorMessageSample = nil
         
         do {
-            // Clear existing sample data
-            let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Note.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "type == %d", 0)
-            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-            try viewContext.execute(deleteRequest)
-            try viewContext.save()
-            
-            // Import new sample data
-            try await SeedDataManager.shared.importSeedData(into: viewContext, scenario: mode.scenario)
+            // Use the new SeedDataManager method to switch scenarios while preserving user data
+            try await SeedDataManager.shared.switchToScenario(mode.scenario, in: viewContext)
             
             await MainActor.run {
                 appModeManager.isSampleMode = true

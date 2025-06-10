@@ -47,7 +47,7 @@ struct CreatePromptView: View {
                 
                 // Display field
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("显示文案")
+                    Text("包含问题")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     TextField("请输入显示文案", text: $display)
@@ -75,6 +75,7 @@ struct CreatePromptView: View {
                 Button("保存") {
                     savePrompt()
                 }
+                .foregroundColor(.green)
                 .disabled(name.isEmpty || display.isEmpty || content.isEmpty)
             }
         }

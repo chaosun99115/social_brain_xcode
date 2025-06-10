@@ -1,5 +1,35 @@
 import SwiftUI
 
+// MARK: - TabButton Component
+struct TabButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(isSelected ? .primaryText : .secondaryText)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(
+                    VStack {
+                        Spacer()
+                        if isSelected {
+                            Rectangle()
+                                .fill(Color.primaryText)
+                                .frame(height: 2)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+                    }
+                )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .animation(.easeInOut(duration: 0.4), value: isSelected)
+    }
+}
+
 struct FeatureRow: View {
     let icon: String
     let title: String

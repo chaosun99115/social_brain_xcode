@@ -45,6 +45,8 @@ class PromptGenerator {
         case 0: // Changed job contact - Contact flow
             logger.debug("[PromptGenerator] Using ContactFlow for prompt ID: \(promptIdentifier)")
             return chatFlow
+        case 999:
+            return questionFlow
         default:
             logger.debug("[PromptGenerator] Using ChatFlow for default prompt ID: \(promptIdentifier)")
             return chatFlow

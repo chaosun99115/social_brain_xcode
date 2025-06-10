@@ -126,6 +126,7 @@ struct PromptDetailView: View {
                 Button("更新") {
                     updatePrompt()
                 }
+                .foregroundColor(.green)
                 .disabled(name.isEmpty || display.isEmpty || (prompt.type == 1 && content.isEmpty))
             }
         }

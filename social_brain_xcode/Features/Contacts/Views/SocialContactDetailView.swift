@@ -58,44 +58,47 @@ struct SocialContactDetailView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Tabs
+                // Tab selector using TabButton component
                 HStack(spacing: 0) {
-                    ForEach(TabType.allCases, id: \.self) { tab in
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                activeTab = tab
-                            }
-                        }) {
-                            VStack(spacing: 8) {
-                                Text(tab.localizedName)
-                                    .font(.system(size: 17, weight: .medium))
-                                    .foregroundColor(activeTab == tab ? .primaryText : .secondaryText)
-                                
-                                // Active indicator
-                                Rectangle()
-                                    .fill(activeTab == tab ? Color.primaryText : Color.clear)
-                                    .frame(height: 2)
+                    TabButton(
+                        title: "基本信息",
+                        isSelected: activeTab == .basicInfo,
+                        action: { 
+                            withAnimation(.easeInOut(duration: 0.4)) { 
+                                activeTab = .basicInfo 
                             }
                         }
-                        .frame(maxWidth: .infinity)
-                    }
+                    )
+                    
+                    TabButton(
+                        title: "相关笔记",
+                        isSelected: activeTab == .notes,
+                        action: { 
+                            withAnimation(.easeInOut(duration: 0.4)) { 
+                                activeTab = .notes 
+                            }
+                        }
+                    )
                 }
-                .padding(.top, 8)
-                .padding(.bottom, 0)
+                .padding(.horizontal, 8)
+                .padding(.top, 2)
                 
-                // Content based on active tab
-                Group {
-                    switch activeTab {
-                    case .basicInfo:
-                        ScrollView {
-                            basicInfoSectionView
-                        }
-                    case .notes:
-                        ScrollView {
-                            notesSectionView
-                        }
+                // TabView for content with swipe gesture support
+                TabView(selection: $activeTab) {
+                    // Basic Info Tab
+                    ScrollView {
+                        basicInfoSectionView
                     }
+                    .tag(TabType.basicInfo)
+                    
+                    // Notes Tab
+                    ScrollView {
+                        notesSectionView
+                    }
+                    .tag(TabType.notes)
                 }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .animation(.easeInOut(duration: 0.4), value: activeTab)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
                 // Fixed bottom toolbar that respects safe areas
@@ -837,3 +840,4 @@ struct ContactInfoField: View {
         }
     }
 }
+
