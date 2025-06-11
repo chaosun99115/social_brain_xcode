@@ -373,7 +373,6 @@
 		AFA276292DB03EA800C29B81 /* Localization */ = {
 			isa = PBXGroup;
 			children = (
-				AFBD50E82DA70C770066907B /* en.lproj */,
 				AFBD50E12DA70C770066907B /* zh-Hans.lproj */,
 			);
 			path = Localization;
@@ -478,13 +477,6 @@
 				AFBD50E42DA70C770066907B /* InfoPlist.strings */,
 			);
 			path = "zh-Hans.lproj";
-			sourceTree = "<group>";
-		};
-		AFBD50E82DA70C770066907B /* en.lproj */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = en.lproj;
 			sourceTree = "<group>";
 		};
 		AFBF988E2DCAA43B00AF626E /* Config */ = {
