@@ -171,7 +171,9 @@ struct EditCircleContactsSheet: View {
         
         if let circleId = circle.circleId {
             let related = circleManager.getContactsForCircle(circleId: circleId)
-            selectedContactIds = Set(related.compactMap { $0.contactId })
+            // Filter out archived contacts from the related contacts
+            let nonArchivedRelated = related.filter { !$0.isArchived }
+            selectedContactIds = Set(nonArchivedRelated.compactMap { $0.contactId })
         }
     }
     

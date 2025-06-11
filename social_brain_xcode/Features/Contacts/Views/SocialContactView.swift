@@ -104,8 +104,8 @@ struct SocialContactView: View {
                 guard let contactId = contact.contactId else {
                     return false
                 }
-                // Only show type=1 contacts in non-sample mode
-                return contact.type == 1
+                // Only show type=1 contacts in non-sample mode and exclude archived contacts
+                return contact.type == 1 && !contact.isArchived
             }
         }
         
@@ -298,6 +298,12 @@ struct SocialContactView: View {
             
             // Setup sample mode change observer
             setupSampleModeObserver()
+            
+            // Refresh contacts when view appears (e.g., when returning from detail view)
+            Task {
+                await loadContacts()
+                await loadCircles()
+            }
         }
         .onDisappear {
             isViewActive = false
@@ -459,6 +465,10 @@ struct ContactListView: View {
                     // Force layout update when list appears
                     DispatchQueue.main.async {
                         UIApplication.shared.windows.first?.layoutIfNeeded()
+                    }
+                    // Refresh contacts when view appears (e.g., when returning from detail view)
+                    Task {
+                        await onRefresh()
                     }
                 }
             }
@@ -627,10 +637,21 @@ struct ContactCardView: View {
     }
     
     private func formatLastUpdateTime() -> String {
-        guard let updatedAt = contact.updatedAt else { return "未知时间" }
+        guard let contactId = contact.contactId else { return "未知时间" }
+        
+        // Get the latest note for this contact
+        let notes = contactManager.getActiveNotesForContact(contactId: contactId)
+        guard let latestNote = notes.max(by: { 
+            ($0.updatedAt ?? Date.distantPast) < ($1.updatedAt ?? Date.distantPast) 
+        }) else {
+            return "暂无笔记"
+        }
+        
+        guard let latestNoteDate = latestNote.updatedAt else { return "未知时间" }
+        
         let calendar = Calendar.current
         let now = Date()
-        let components = calendar.dateComponents([.day], from: updatedAt, to: now)
+        let components = calendar.dateComponents([.day], from: latestNoteDate, to: now)
         
         if let days = components.day {
             if days == 0 {

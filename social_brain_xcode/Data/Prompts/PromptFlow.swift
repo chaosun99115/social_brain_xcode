@@ -316,8 +316,10 @@ class AddCircleFunction: PromptUpdateFunction {
                 // Get contacts for this circle
                 if let circleId = circle.circleId {
                     let contacts = CircleManager.shared.getContactsForCircle(circleId: circleId)
-                    if !contacts.isEmpty {
-                        let contactNames = contacts.compactMap { contact -> String? in
+                    // Filter out archived contacts
+                    let nonArchivedContacts = contacts.filter { !$0.isArchived }
+                    if !nonArchivedContacts.isEmpty {
+                        let contactNames = nonArchivedContacts.compactMap { contact -> String? in
                             guard let contactName = contact.name,
                                   !contactName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
                             return contactName

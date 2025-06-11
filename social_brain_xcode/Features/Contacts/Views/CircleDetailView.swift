@@ -89,7 +89,7 @@ struct CircleDetailView: View {
         }
         .sheet(isPresented: $showingAddContact) {
             AddContactToCircleView(circle: circle) { contact in
-                if let contact = contact {
+                if let contact = contact, !contact.isArchived {
                     contacts.append(contact)
                 }
             }
@@ -105,7 +105,9 @@ struct CircleDetailView: View {
         }
         .sheet(isPresented: $showingEditCircleSheet) {
             EditCircleContactsSheet(circle: circle, isPresented: $showingEditCircleSheet) { updatedContacts in
-                self.contacts = updatedContacts
+                // Filter out archived contacts from the updated list
+                let nonArchivedContacts = updatedContacts.filter { !$0.isArchived }
+                self.contacts = nonArchivedContacts
             }
             .environmentObject(appModeManager)
         }
@@ -143,11 +145,12 @@ struct CircleDetailView: View {
         await MainActor.run { isLoading = true }
         defer { Task { @MainActor in isLoading = false } }
         
-        // Load contacts
+        // Load contacts and filter out archived ones
         let loadedContacts = circleManager.getContactsForCircle(circleId: circleId)
+        let nonArchivedContacts = loadedContacts.filter { !$0.isArchived }
         
         await MainActor.run {
-            self.contacts = loadedContacts
+            self.contacts = nonArchivedContacts
         }
     }
     
@@ -271,14 +274,16 @@ struct AddContactToCircleView: View {
             }
         }
         .task {
-            // Filter contacts based on app mode
+            // Filter contacts based on app mode and exclude archived contacts
             let fetchedContacts = contactManager.fetchContacts()
+            let nonArchivedContacts = fetchedContacts.filter { !$0.isArchived }
+            
             if appModeManager.isSampleMode {
                 // In sample mode, only show type=0 contacts
-                contacts = fetchedContacts.filter { $0.type == 0 }
+                contacts = nonArchivedContacts.filter { $0.type == 0 }
             } else {
                 // In regular mode, only show type!=0 contacts
-                contacts = fetchedContacts.filter { $0.type != 0 }
+                contacts = nonArchivedContacts.filter { $0.type != 0 }
             }
         }
     }

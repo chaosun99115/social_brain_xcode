@@ -16,6 +16,7 @@ class ContactManager: ObservableObject {
         contact.createdAt = Date()
         contact.updatedAt = Date()
         contact.recordStatus = 0 // unsynced
+        contact.isArchived = false // Set isArchived to false by default
         
         do {
             try context.save()
@@ -29,12 +30,41 @@ class ContactManager: ObservableObject {
     // MARK: - Read
     func fetchContacts() -> [Contact] {
         let request: NSFetchRequest<Contact> = Contact.fetchRequest()
+        request.predicate = NSPredicate(format: "isArchived == NO OR isArchived == nil")
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Contact.updatedAt, ascending: false)]
         
         do {
             return try context.fetch(request)
         } catch {
             print("Error fetching contacts: \(error)")
+            return []
+        }
+    }
+    
+    func fetchAllContacts(includingArchived: Bool = false) -> [Contact] {
+        let request: NSFetchRequest<Contact> = Contact.fetchRequest()
+        if !includingArchived {
+            request.predicate = NSPredicate(format: "isArchived == NO OR isArchived == nil")
+        }
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Contact.updatedAt, ascending: false)]
+        
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Error fetching all contacts: \(error)")
+            return []
+        }
+    }
+    
+    func fetchArchivedContacts() -> [Contact] {
+        let request: NSFetchRequest<Contact> = Contact.fetchRequest()
+        request.predicate = NSPredicate(format: "isArchived == YES")
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Contact.updatedAt, ascending: false)]
+        
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Error fetching archived contacts: \(error)")
             return []
         }
     }
@@ -102,6 +132,39 @@ class ContactManager: ObservableObject {
         }
     }
     
+    // MARK: - Archive/Unarchive
+    func archiveContact(contactId: UUID) -> Bool {
+        guard let contact = fetchContact(withId: contactId) else { return false }
+        
+        contact.isArchived = true
+        contact.updatedAt = Date()
+        contact.recordStatus = 0 // mark as unsynced
+        
+        do {
+            try context.save()
+            return true
+        } catch {
+            print("Error archiving contact: \(error)")
+            return false
+        }
+    }
+    
+    func unarchiveContact(contactId: UUID) -> Bool {
+        guard let contact = fetchContact(withId: contactId) else { return false }
+        
+        contact.isArchived = false
+        contact.updatedAt = Date()
+        contact.recordStatus = 0 // mark as unsynced
+        
+        do {
+            try context.save()
+            return true
+        } catch {
+            print("Error unarchiving contact: \(error)")
+            return false
+        }
+    }
+    
     // MARK: - Delete
     func deleteContact(contactId: UUID) -> Bool {
         guard let contact = fetchContact(withId: contactId) else { return false }
@@ -149,9 +212,22 @@ class ContactManager: ObservableObject {
         }
     }
     
+    func getActiveNotesForContact(contactId: UUID) -> [Note] {
+        let request: NSFetchRequest<NoteContactRelationship> = NoteContactRelationship.fetchRequest()
+        request.predicate = NSPredicate(format: "contacts.contactId == %@ AND (notes.isArchived == NO OR notes.isArchived == nil)", contactId as CVarArg)
+        
+        do {
+            let relationships = try context.fetch(request)
+            return relationships.compactMap { $0.notes }
+        } catch {
+            print("Error fetching active notes for contact: \(error)")
+            return []
+        }
+    }
+    
     // MARK: - Note Count
     func getNotesCount(forContactId contactId: UUID) -> Int {
-        return getNotesForContact(contactId: contactId).count
+        return getActiveNotesForContact(contactId: contactId).count
     }
     
     func validateContactRelationships(_ contact: Contact) throws {

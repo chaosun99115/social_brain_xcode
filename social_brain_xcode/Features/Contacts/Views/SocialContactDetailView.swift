@@ -24,6 +24,12 @@ struct SocialContactDetailView: View {
     @State private var showingEditContactSheet = false
     @State private var refreshTrigger = false
     @State private var showingNoteModal = false
+    @State private var currentContact: Contact // Add state to track the current contact
+    
+    init(contact: Contact) {
+        self.contact = contact
+        self._currentContact = State(initialValue: contact)
+    }
     
     // Add property to determine if this is a contact view
     private var isContactView: Bool {
@@ -36,7 +42,7 @@ struct SocialContactDetailView: View {
         return (
             sourceType: "contact",
             sourceAction: "general",
-            sourceId: contact.contactId?.uuidString ?? ""
+            sourceId: currentContact.contactId?.uuidString ?? ""
         )
     }
     
@@ -129,7 +135,7 @@ struct SocialContactDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle(contact.name ?? "联系人")
+        .navigationTitle(currentContact.name ?? "联系人")
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -171,7 +177,7 @@ struct SocialContactDetailView: View {
                 sourceType: socialBrainContext.sourceType,
                 sourceAction: socialBrainContext.sourceAction,
                 sourceId: socialBrainContext.sourceId,
-                initialContact: contact
+                initialContact: currentContact
             )
             .environmentObject(appModeManager)
         }
@@ -182,19 +188,25 @@ struct SocialContactDetailView: View {
             )
         }
         .fullScreenCover(isPresented: $showingEditContactSheet) {
-            EditContactView(contact: contact, refreshTrigger: $refreshTrigger)
+            EditContactView(contact: currentContact, refreshTrigger: $refreshTrigger)
         }
         .sheet(isPresented: $showingNoteModal) {
             SimpleNoteModalView(
                 initialText: "",
                 subType: .interactionRecord,
-                modalTitle: "记录与\(contact.name ?? "联系人")的互动",
+                modalTitle: "记录与\(currentContact.name ?? "联系人")的互动",
                 onSave: { _ in
                     loadContactNotes()
                 }
             )
             .environmentObject(NoteManager.shared)
             .environmentObject(appModeManager)
+        }
+        .onChange(of: refreshTrigger) { _ in
+            // Reload data when contact is updated
+            refreshContactData()
+            loadContactNotes()
+            loadContactInsights()
         }
         .onAppear {
             loadContactNotes()
@@ -205,11 +217,6 @@ struct SocialContactDetailView: View {
         .onDisappear {
             // Show the tab bar again when leaving this view
             hideTabBar(false)
-        }
-        .onChange(of: refreshTrigger) { _ in
-            // Reload data when contact is updated
-            loadContactNotes()
-            loadContactInsights()
         }
         .edgesIgnoringSafeArea(.bottom)
     }
@@ -281,7 +288,7 @@ struct SocialContactDetailView: View {
     
     private func loadContactInsights() {
         isLoadingInsights = true
-        guard let contactId = contact.contactId else { contactInsights = []; isLoadingInsights = false; return }
+        guard let contactId = currentContact.contactId else { contactInsights = []; isLoadingInsights = false; return }
         
         // Fetch insights directly for this contact
         contactInsights = insightManager.getInsightsForContact(contactId: contactId)
@@ -294,13 +301,23 @@ struct SocialContactDetailView: View {
         isLoadingInsights = false
     }
     
+    // Function to refresh contact data from Core Data
+    private func refreshContactData() {
+        guard let contactId = currentContact.contactId else { return }
+        
+        // Fetch the updated contact from Core Data
+        if let updatedContact = contactManager.fetchContact(withId: contactId) {
+            currentContact = updatedContact
+        }
+    }
+    
     // MARK: - Basic Info Section
     private var basicInfoSectionView: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Name Field - Always show since it's required
             ContactInfoField(
                 placeholder: "姓名",
-                text: contact.name ?? "",
+                text: contact.name,
                 isMultiline: false
             )
             .padding(.top, 24)
@@ -312,9 +329,8 @@ struct SocialContactDetailView: View {
             // Telephone Field - Show with placeholder if nil
             ContactInfoField(
                 placeholder: "电话",
-                text: contact.tel ?? "未设置",
-                isMultiline: false,
-                isEmpty: contact.tel == nil
+                text: contact.tel,
+                isMultiline: false
             )
             
             Divider()
@@ -352,21 +368,12 @@ struct SocialContactDetailView: View {
                 .padding(.vertical, 8)
             
             // Memo Section - Always show but with placeholder if empty
-            VStack(alignment: .leading, spacing: 8) {
-                Text("备注")
-                    .foregroundColor(.secondary)
-                    .font(.subheadline)
-                    .padding(.top, 12)
-                    .padding(.leading, 16)
-                
-                Text(contact.memo?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "未设置")
-                    .font(.body)
-                    .foregroundColor(contact.memo?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true ? .secondary : .primary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(Color(.systemBackground))
+            ContactInfoField(
+                placeholder: "备注",
+                text: contact.memo,
+                isMultiline: true,
+                defaultHeight: 60
+            )
             
             Spacer()
         }
@@ -785,10 +792,9 @@ struct CheckboxView: View {
 // Update ContactInfoField to handle empty state
 struct ContactInfoField: View {
     let placeholder: String
-    let text: String
+    let text: String?
     let isMultiline: Bool
     let defaultHeight: CGFloat?
-    let isEmpty: Bool
     
     // Constants for sizing
     private let minHeight: CGFloat = 44
@@ -796,12 +802,21 @@ struct ContactInfoField: View {
     private let horizontalPadding: CGFloat = 16
     private let verticalPadding: CGFloat = 12
     
-    init(placeholder: String, text: String, isMultiline: Bool, defaultHeight: CGFloat? = nil, isEmpty: Bool = false) {
+    init(placeholder: String, text: String?, isMultiline: Bool, defaultHeight: CGFloat? = nil) {
         self.placeholder = placeholder
         self.text = text
         self.isMultiline = isMultiline
         self.defaultHeight = defaultHeight
-        self.isEmpty = isEmpty
+    }
+    
+    private var displayText: String {
+        let trimmedText = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmedText.isEmpty ? "未设置" : trimmedText
+    }
+    
+    private var isEmpty: Bool {
+        let trimmedText = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmedText.isEmpty
     }
     
     var body: some View {
@@ -820,7 +835,7 @@ struct ContactInfoField: View {
                 
                 // Text display area
                 if isMultiline {
-                    Text(text)
+                    Text(displayText)
                         .font(.body)
                         .foregroundColor(isEmpty ? .secondary : .primary)
                         .frame(minHeight: defaultHeight ?? minHeight, maxHeight: maxHeight, alignment: .topLeading)
@@ -828,7 +843,7 @@ struct ContactInfoField: View {
                         .padding(.vertical, 4)
                         .background(Color.clear)
                 } else {
-                    Text(text)
+                    Text(displayText)
                         .font(.body)
                         .foregroundColor(isEmpty ? .secondary : .primary)
                         .frame(height: minHeight, alignment: .leading)

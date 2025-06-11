@@ -16,6 +16,7 @@ struct EditContactView: View {
     @State private var showingBirthdayPicker = false
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var showingDeleteConfirmation = false
     
     // Add state for keyboard focus
     @FocusState private var focusedField: Field?
@@ -54,75 +55,98 @@ struct EditContactView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    // Name Field
-                    ContactInputField(
-                        placeholder: "姓名",
-                        text: $name,
-                        isMultiline: false
-                    )
-                    .focused($focusedField, equals: .name)
-                    .padding(.top, 24)
-                    
-                    // Telephone Field
-                    ContactInputField(
-                        placeholder: "电话",
-                        text: $tel,
-                        isMultiline: false
-                    )
-                    .focused($focusedField, equals: .tel)
-                    .keyboardType(.phonePad)
-                    
-                    // Birthday Field
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Name Field
+                        ContactInputField(
+                            placeholder: "姓名",
+                            text: $name,
+                            isMultiline: false
+                        )
+                        .focused($focusedField, equals: .name)
+                        .padding(.top, 24)
+                        
+                        // Telephone Field
+                        ContactInputField(
+                            placeholder: "电话",
+                            text: $tel,
+                            isMultiline: false
+                        )
+                        .focused($focusedField, equals: .tel)
+                        .keyboardType(.phonePad)
+                        
+                        // Birthday Field
+                        Button(action: {
+                            focusedField = nil
+                            showingBirthdayPicker = true
+                        }) {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text("生日")
+                                    .foregroundColor(.secondary)
+                                    .font(.subheadline)
+                                    .padding(.top, 12)
+                                    .padding(.leading, 16)
+                                
+                                HStack {
+                                    if let birthday = birthday {
+                                        Text(dateFormatter.string(from: birthday))
+                                            .foregroundColor(.primary)
+                                            .font(.body)
+                                    } else {
+                                        Text("")
+                                            .foregroundColor(.primary)
+                                            .font(.body)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "calendar")
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                                .frame(height: 44)
+                            }
+                            .background(Color(.systemBackground))
+                        }
+                        
+                        // Memo Field
+                        ContactInputField(
+                            placeholder: "备注",
+                            text: $memo,
+                            isMultiline: true,
+                            defaultHeight: 88
+                        )
+                        .focused($focusedField, equals: .memo)
+                        
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 0)
+                }
+                .scrollDismissesKeyboard(.immediately)
+                
+                // Delete Button - Fixed at bottom
+                VStack(spacing: 0) {
+                    Divider()
                     Button(action: {
                         focusedField = nil
-                        showingBirthdayPicker = true
+                        showingDeleteConfirmation = true
                     }) {
-                        VStack(alignment: .leading, spacing: 0) {
-                            Text("生日")
-                                .foregroundColor(.secondary)
-                                .font(.subheadline)
-                                .padding(.top, 12)
-                                .padding(.leading, 16)
-                            
-                            HStack {
-                                if let birthday = birthday {
-                                    Text(dateFormatter.string(from: birthday))
-                                        .foregroundColor(.primary)
-                                        .font(.body)
-                                } else {
-                                    Text("")
-                                        .foregroundColor(.primary)
-                                        .font(.body)
-                                }
-                                Spacer()
-                                Image(systemName: "calendar")
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                            .frame(height: 44)
+                        HStack {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                            Text("删除熟人")
+                                .foregroundColor(.red)
+                                .font(.body)
                         }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
                         .background(Color(.systemBackground))
                     }
-                    
-                    // Memo Field
-                    ContactInputField(
-                        placeholder: "备注",
-                        text: $memo,
-                        isMultiline: true,
-                        defaultHeight: 88
-                    )
-                    .focused($focusedField, equals: .memo)
-                    
-                    Spacer(minLength: 0)
                 }
-                .padding(.horizontal, 0)
+                .background(Color(.systemBackground))
             }
-            .scrollDismissesKeyboard(.immediately)
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("编辑联系人")
+            .navigationTitle("编辑熟人")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -146,6 +170,15 @@ struct EditContactView: View {
                 Button("确定", role: .cancel) { }
             } message: {
                 Text(errorMessage)
+            }
+            .alert("删除熟人", isPresented: $showingDeleteConfirmation) {
+                Button("取消", role: .cancel) { }
+                Button("删除", role: .destructive) {
+                    deleteContact()
+                }
+            } message: {
+                let notesCount = contactManager.getNotesCount(forContactId: contact.contactId ?? UUID())
+                Text("\(contact.name ?? "此联系人") 有\(notesCount)条关联笔记，是否确认删除？")
             }
             .sheet(isPresented: $showingBirthdayPicker) {
                 NavigationView {
@@ -209,6 +242,35 @@ struct EditContactView: View {
             contact.memo = memo.trimmingCharacters(in: .whitespacesAndNewlines)
             contact.birthday = birthday
             contact.updatedAt = Date()
+            contact.recordStatus = 0 // mark as unsynced
+            // Preserve the existing type - don't change it during edit
+            // contact.type remains unchanged
+            
+            try viewContext.save()
+            refreshTrigger.toggle()
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+            showingError = true
+        }
+    }
+    
+    private func deleteContact() {
+        guard let contactId = contact.contactId else { return }
+        
+        do {
+            // Get related notes
+            let relatedNotes = contactManager.getNotesForContact(contactId: contactId)
+            
+            // Archive the contact
+            contact.isArchived = true
+            contact.updatedAt = Date()
+            
+            // Archive related notes
+            for note in relatedNotes {
+                note.isArchived = true
+                note.updatedAt = Date()
+            }
             
             try viewContext.save()
             refreshTrigger.toggle()

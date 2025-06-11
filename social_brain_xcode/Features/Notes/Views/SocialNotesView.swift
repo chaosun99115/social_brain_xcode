@@ -31,7 +31,7 @@ struct SocialNotesView: View {
     
     // Separate function to get all valid notes
     private func getAllValidNotes() -> [SocialNote] {
-        let coreDataNotes = noteManager.fetchNotes()
+        let coreDataNotes = noteManager.fetchActiveNotes()
         return convertToSocialNotes(coreDataNotes)
     }
     

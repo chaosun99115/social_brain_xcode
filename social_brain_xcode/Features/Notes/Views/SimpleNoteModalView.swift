@@ -520,6 +520,17 @@ struct TextViewWrapper: UIViewRepresentable {
         textView.returnKeyType = .default
         textView.text = state.text
         
+        // Add line spacing to match SocialNoteDetailView
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 8
+        textView.attributedText = NSAttributedString(
+            string: state.text,
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 17, weight: .regular),
+                .paragraphStyle: paragraphStyle
+            ]
+        )
+        
         // Configure input accessory view to prevent constraint conflicts
         let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0))
         accessoryView.backgroundColor = .clear
@@ -554,7 +565,16 @@ struct TextViewWrapper: UIViewRepresentable {
         // Only update if text is different
         if uiView.text != state.text {
             let selectedRange = uiView.selectedTextRange
-            uiView.text = state.text
+            // Update text with line spacing
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.lineSpacing = 8
+            uiView.attributedText = NSAttributedString(
+                string: state.text,
+                attributes: [
+                    .font: UIFont.systemFont(ofSize: 17, weight: .regular),
+                    .paragraphStyle: paragraphStyle
+                ]
+            )
             if let selectedRange = selectedRange {
                 uiView.selectedTextRange = selectedRange
             }
@@ -584,6 +604,26 @@ struct TextViewWrapper: UIViewRepresentable {
         
         func textViewDidChange(_ textView: UITextView) {
             state.text = textView.text
+            
+            // Maintain line spacing when text changes
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.lineSpacing = 8
+            let attributedText = NSAttributedString(
+                string: textView.text,
+                attributes: [
+                    .font: UIFont.systemFont(ofSize: 17, weight: .regular),
+                    .paragraphStyle: paragraphStyle
+                ]
+            )
+            
+            // Only update if the attributed text is different to avoid infinite loop
+            if textView.attributedText != attributedText {
+                let selectedRange = textView.selectedTextRange
+                textView.attributedText = attributedText
+                if let selectedRange = selectedRange {
+                    textView.selectedTextRange = selectedRange
+                }
+            }
         }
     }
 }
@@ -619,4 +659,3 @@ struct SimpleNoteModalView_Previews: PreviewProvider {
             .environmentObject(NoteManager.shared)
     }
 } 
-

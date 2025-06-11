@@ -283,31 +283,27 @@ struct AddContactSheet: View {
     private func saveContact() {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { 
-            print("[DEBUG] saveContact: Name is empty, aborting save")
             return 
         }
         
         do {
-            print("[DEBUG] saveContact: Starting to save new contact with name: \(trimmedName)")
             // Create new contact
             let contact = Contact(context: viewContext)
             contact.contactId = UUID()
             contact.name = trimmedName
             contact.tel = tel.trimmingCharacters(in: .whitespacesAndNewlines)
             contact.memo = memo.trimmingCharacters(in: .whitespacesAndNewlines)
-            print("[DEBUG] saveContact: Saving birthday: \(String(describing: birthday))")
             contact.birthday = birthday
             contact.createdAt = Date()
             contact.updatedAt = Date()
             contact.type = 1  // Set type to 1 for regular contacts
             contact.recordStatus = 1  // Set record status to active
+            contact.isArchived = false  // Set isArchived to false
             
             try viewContext.save()
-            print("[DEBUG] saveContact: Successfully saved new contact with ID: \(String(describing: contact.contactId))")
             refreshTrigger.toggle()
             dismiss()
         } catch {
-            print("[DEBUG] saveContact: Error saving contact: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
             showingError = true
         }
@@ -315,33 +311,28 @@ struct AddContactSheet: View {
     
     private func updateContact() {
         guard let contact = contact else { 
-            print("[DEBUG] updateContact: No contact provided for update")
             return 
         }
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { 
-            print("[DEBUG] updateContact: Name is empty, aborting update")
             return 
         }
         
         do {
-            print("[DEBUG] updateContact: Starting to update contact with ID: \(String(describing: contact.contactId))")
             // Update contact
             contact.name = trimmedName
             contact.tel = tel.trimmingCharacters(in: .whitespacesAndNewlines)
             contact.memo = memo.trimmingCharacters(in: .whitespacesAndNewlines)  // Update memo directly
-            print("[DEBUG] updateContact: Updating birthday: \(String(describing: birthday))")
             contact.birthday = birthday
             contact.updatedAt = Date()
             contact.type = 1  // Ensure type is set to 1 for regular contacts
             contact.recordStatus = 1  // Ensure record status is active
+            contact.isArchived = false  // Ensure isArchived is false
             
             try viewContext.save()
-            print("[DEBUG] updateContact: Successfully updated contact with ID: \(String(describing: contact.contactId))")
             refreshTrigger.toggle()
             dismiss()
         } catch {
-            print("[DEBUG] updateContact: Error updating contact: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
             showingError = true
         }

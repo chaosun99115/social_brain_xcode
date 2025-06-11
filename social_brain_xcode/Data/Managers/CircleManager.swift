@@ -191,7 +191,10 @@ class CircleManager: ObservableObject {
     
     // MARK: - Contact Count
     func getContactsCount(forCircleId circleId: UUID) -> Int {
-        return getContactsForCircle(circleId: circleId).count
+        let contacts = getContactsForCircle(circleId: circleId)
+        // Filter out archived contacts for the count
+        let nonArchivedContacts = contacts.filter { !$0.isArchived }
+        return nonArchivedContacts.count
     }
     
     func validateCircleRelationships(_ circle: Circle) throws {

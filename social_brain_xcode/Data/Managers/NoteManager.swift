@@ -72,6 +72,23 @@ class NoteManager: ObservableObject {
         }
     }
     
+    func fetchActiveNotes() -> [Note] {
+        let request: NSFetchRequest<Note> = Note.fetchRequest()
+        request.predicate = NSPredicate(format: "isArchived == NO OR isArchived == nil")
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false),
+            NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)
+        ]
+        
+        do {
+            let notes = try context.fetch(request)
+            return notes
+        } catch {
+            print("Error fetching active notes: \(error)")
+            return []
+        }
+    }
+    
     func fetchAllNotes() async throws -> [Note] {
         let request: NSFetchRequest<Note> = Note.fetchRequest()
         request.sortDescriptors = [
@@ -113,6 +130,23 @@ class NoteManager: ObservableObject {
         }
     }
     
+    func fetchActiveNotes(type: Int16, subType: Int16) -> [Note] {
+        let request: NSFetchRequest<Note> = Note.fetchRequest()
+        request.predicate = NSPredicate(format: "type == %d AND subType == %d AND (isArchived == NO OR isArchived == nil)", type, subType)
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false),
+            NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)
+        ]
+        
+        do {
+            let notes = try context.fetch(request)
+            return notes
+        } catch {
+            print("Error fetching active notes by type and subtype: \(error)")
+            return []
+        }
+    }
+    
     func fetchNotesAsync(type: Int16, subType: Int16) async throws -> [Note] {
         let request: NSFetchRequest<Note> = Note.fetchRequest()
         request.predicate = NSPredicate(format: "type == %d AND subType == %d", type, subType)
@@ -138,6 +172,88 @@ class NoteManager: ObservableObject {
         } catch {
             print("Error updating note: \(error)")
             return false
+        }
+    }
+    
+    // New method to update note with mentions and relationships
+    func updateNoteWithMentions(noteId: UUID, content: String, mentions: [String]) async -> Bool {
+        let backgroundContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
+        backgroundContext.parent = context
+        
+        return await backgroundContext.perform {
+            // Get the note in background context
+            guard let backgroundNote = try? backgroundContext.existingObject(with: self.fetchNote(withId: noteId)?.objectID ?? NSManagedObjectID()) as? Note else {
+                return false
+            }
+            
+            // Update note content
+            backgroundNote.content = content
+            backgroundNote.updatedAt = Date()
+            backgroundNote.recordStatus = 0 // mark as unsynced
+            
+            // Remove existing relationships
+            let existingRelationships = backgroundNote.contacts as? Set<NoteContactRelationship> ?? []
+            for relationship in existingRelationships {
+                backgroundContext.delete(relationship)
+            }
+            
+            // Add new relationships for mentions
+            for mention in mentions {
+                // Get or create contact in the background context
+                let contact: Contact
+                if let existingContact = ContactManager.shared.fetchContact(withName: mention) {
+                    // Get the contact in the background context
+                    guard let contactInBackgroundContext = try? backgroundContext.existingObject(with: existingContact.objectID) as? Contact else {
+                        continue
+                    }
+                    contact = contactInBackgroundContext
+                } else {
+                    // Create new contact in the background context
+                    let newContact = Contact(context: backgroundContext)
+                    newContact.contactId = UUID()
+                    newContact.name = mention
+                    newContact.createdAt = Date()
+                    newContact.updatedAt = Date()
+                    newContact.recordStatus = 0 // unsynced
+                    newContact.type = 0 // default type
+                    newContact.isArchived = false // Set isArchived to false
+                    
+                    // Save the background context to ensure the contact is properly created
+                    do {
+                        try backgroundContext.save()
+                    } catch {
+                        continue
+                    }
+                    
+                    contact = newContact
+                }
+                
+                // Create relationship in the same context
+                let relationship = NoteContactRelationship(context: backgroundContext)
+                relationship.relationshipId = UUID()
+                relationship.createdAt = Date()
+                relationship.notes = backgroundNote
+                relationship.contacts = contact
+            }
+            
+            do {
+                // Save the background context
+                try backgroundContext.save()
+                
+                // Save the parent context
+                try self.context.save()
+                
+                // Process note in background (fire-and-forget)
+                Task.detached { [weak self] in
+                    guard let self = self, let note = self.fetchNote(withId: noteId) else { return }
+                    await self.processNoteInBackground(note)
+                }
+                
+                return true
+            } catch {
+                print("Error updating note with mentions: \(error)")
+                return false
+            }
         }
     }
     
@@ -326,6 +442,7 @@ class NoteManager: ObservableObject {
                     newContact.updatedAt = Date()
                     newContact.recordStatus = 0 // unsynced
                     newContact.type = 0 // default type
+                    newContact.isArchived = false // Set isArchived to false
                     
                     // Save the background context to ensure the contact is properly created
                     do {
