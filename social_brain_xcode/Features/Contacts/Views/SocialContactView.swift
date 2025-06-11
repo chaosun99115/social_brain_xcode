@@ -84,10 +84,6 @@ struct SocialContactView: View {
     // Pull-to-refresh
     private func refreshContacts() async {
         await MainActor.run { isRefreshing = true }
-        // Provide haptic feedback
-        let generator = UINotificationFeedbackGenerator()
-        generator.prepare()
-        generator.notificationOccurred(.success)
         // Add a small delay to ensure the refresh control is in the correct state
         try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
         await loadContacts()

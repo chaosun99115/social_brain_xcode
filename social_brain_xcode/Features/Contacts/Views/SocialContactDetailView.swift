@@ -26,6 +26,10 @@ struct SocialContactDetailView: View {
     @State private var showingNoteModal = false
     @State private var currentContact: Contact // Add state to track the current contact
     
+    // Drag gesture state
+    @State private var dragOffset: CGFloat = 0
+    @State private var isDragging = false
+    
     init(contact: Contact) {
         self.contact = contact
         self._currentContact = State(initialValue: contact)
@@ -132,6 +136,50 @@ struct SocialContactDetailView: View {
                     VisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
                         .ignoresSafeArea(edges: .bottom)
                 )
+            }
+            .offset(x: dragOffset)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        // Only allow dragging from the left edge
+                        let startLocation: CGPoint = value.startLocation
+                        if startLocation.x < 50 {
+                            isDragging = true
+                            // Limit drag to positive values (rightward movement)
+                            dragOffset = max(0, value.translation.width)
+                        }
+                    }
+                    .onEnded { value in
+                        isDragging = false
+                        let threshold: CGFloat = 100
+                        
+                        if dragOffset > threshold {
+                            // Dismiss the view
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                dragOffset = UIScreen.main.bounds.width
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                presentationMode.wrappedValue.dismiss()
+                            }
+                        } else {
+                            // Snap back to original position
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                dragOffset = 0
+                            }
+                        }
+                    }
+            )
+            
+            // Visual feedback during drag
+            if isDragging && dragOffset > 0 {
+                HStack {
+                    // Semi-transparent overlay on the left
+                    Color.black.opacity(0.3 * (dragOffset / UIScreen.main.bounds.width))
+                        .frame(width: dragOffset)
+                        .ignoresSafeArea()
+                    
+                    Spacer()
+                }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
