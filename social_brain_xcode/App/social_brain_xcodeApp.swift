@@ -100,9 +100,17 @@ struct social_brain_xcodeApp: App {
             UITabBar.appearance().scrollEdgeAppearance = appearance
         }
         
-        // Re-ingest default prompts to ensure proper identifiers
+        // Only re-ingest default prompts if no prompts exist at all
         let context = PersistenceController.shared.container.viewContext
-        PromptService.shared.reingestDefaultPrompts(in: context)
+        let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+        do {
+            let existingCount = try context.count(for: fetchRequest)
+            if existingCount == 0 {
+                PromptService.shared.reingestDefaultPrompts(in: context)
+            }
+        } catch {
+            print("🔧 App: Error checking existing prompts: \(error)")
+        }
     }
     
     var body: some Scene {

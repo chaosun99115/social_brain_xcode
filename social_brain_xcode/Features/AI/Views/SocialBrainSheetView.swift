@@ -659,10 +659,12 @@ struct SheetGrowingTextView: UIViewRepresentable {
         // Disable the system input assistant view completely
         textView.inputAssistantItem.leadingBarButtonGroups = []
         textView.inputAssistantItem.trailingBarButtonGroups = []
-        textView.autocorrectionType = .no
-        textView.smartDashesType = .no
-        textView.smartQuotesType = .no
-        textView.smartInsertDeleteType = .no
+        
+        // Keep all smart text features enabled for better Chinese input support
+        // Don't disable any features that might interfere with input methods
+        textView.smartDashesType = .yes
+        textView.smartQuotesType = .yes
+        textView.smartInsertDeleteType = .yes
         
         // Set proper content insets to avoid overlap with keyboard
         textView.contentInset = .zero

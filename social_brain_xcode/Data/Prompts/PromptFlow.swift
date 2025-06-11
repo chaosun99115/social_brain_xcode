@@ -654,7 +654,7 @@ class ChatFlow: PromptFlowProtocol {
         
         // Fetch prompt entity directly using identifier
         let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "identifier == %d", promptIdentifier)
+        fetchRequest.predicate = NSPredicate(format: "identifier == %d AND (isArchived == NO OR isArchived == nil)", promptIdentifier)
         fetchRequest.fetchLimit = 1
         
         let prompts = try context.fetch(fetchRequest)
@@ -706,7 +706,7 @@ class NoteFlow: PromptFlowProtocol {
         
         // Fetch prompt entity directly using identifier
         let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "identifier == %d", promptIdentifier)
+        fetchRequest.predicate = NSPredicate(format: "identifier == %d AND (isArchived == NO OR isArchived == nil)", promptIdentifier)
         fetchRequest.fetchLimit = 1
         
         let prompts = try context.fetch(fetchRequest)
@@ -766,7 +766,7 @@ class QuestionFlow: PromptFlowProtocol {
         
         // Fetch prompt entity directly using identifier
         let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "identifier == %d", promptIdentifier)
+        fetchRequest.predicate = NSPredicate(format: "identifier == %d AND (isArchived == NO OR isArchived == nil)", promptIdentifier)
         fetchRequest.fetchLimit = 1
         
         let prompts = try context.fetch(fetchRequest)

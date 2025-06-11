@@ -26,62 +26,73 @@ class PromptService {
     /// Re-ingests all default prompts, clearing existing ones first
     /// - Parameter context: The managed object context to use
     func reingestDefaultPrompts(in context: NSManagedObjectContext) {
+        // First, preserve user-created prompts (identifier = 999)
+        let userPromptsFetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+        userPromptsFetchRequest.predicate = NSPredicate(format: "identifier == 999")
+        let userPrompts: [Prompt]
+        
+        do {
+            userPrompts = try context.fetch(userPromptsFetchRequest)
+            logger.debug("Preserving \(userPrompts.count) user-created prompts before re-ingestion")
+        } catch {
+            logger.error("Error fetching user prompts: \(error.localizedDescription)")
+            userPrompts = []
+        }
+        
         clearAllPrompts(in: context)
         ingestDefaultPrompts(in: context)
+        
+        // Restore user-created prompts
+        for userPrompt in userPrompts {
+            let restoredPrompt = Prompt(context: context)
+            restoredPrompt.id = userPrompt.id
+            restoredPrompt.identifier = userPrompt.identifier
+            restoredPrompt.name = userPrompt.name
+            restoredPrompt.intro = userPrompt.intro
+            restoredPrompt.display = userPrompt.display
+            restoredPrompt.content = userPrompt.content
+            restoredPrompt.type = userPrompt.type
+            restoredPrompt.order = userPrompt.order
+            restoredPrompt.createdAt = userPrompt.createdAt
+            restoredPrompt.updatedAt = userPrompt.updatedAt
+            restoredPrompt.recordStatus = userPrompt.recordStatus
+            restoredPrompt.isArchived = userPrompt.isArchived // Preserve isArchived status
+        }
+        
+        do {
+            try context.save()
+            logger.debug("Successfully re-ingested default prompts and restored \(userPrompts.count) user prompts")
+        } catch {
+            logger.error("Error restoring user prompts: \(error.localizedDescription)")
+        }
     }
     
     /// Ingests default prompts into Core Data
     /// - Parameter context: The managed object context to use
     func ingestDefaultPrompts(in context: NSManagedObjectContext) {
-        // Track created prompts to avoid duplicates
-        var createdPrompts: [(identifier: Int, name: String)] = []
+        for prompt in DefaultPrompts.prompts {
+            for identifier in prompt.identifiers {
+                let newPrompt = Prompt(context: context)
+                newPrompt.id = UUID()
+                newPrompt.identifier = Int16(identifier)
+                newPrompt.name = prompt.name
+                newPrompt.intro = prompt.intro
+                newPrompt.display = prompt.display
+                newPrompt.content = prompt.content
+                newPrompt.type = prompt.type
+                newPrompt.order = Int16(prompt.order)
+                newPrompt.createdAt = Date()
+                newPrompt.updatedAt = Date()
+                newPrompt.recordStatus = 0
+                newPrompt.isArchived = false // Set isArchived to false for default prompts
+            }
+        }
         
         do {
-            for (_, promptData) in DefaultPrompts.prompts.enumerated() {
-                // Create a prompt entry for each identifier
-                for identifier in promptData.identifiers {
-                    // Check if we already created this identifier for this prompt
-                    if createdPrompts.contains(where: { $0.identifier == identifier && $0.name == promptData.name }) {
-                        continue
-                    }
-                    
-                    let prompt = Prompt(context: context)
-                    prompt.id = UUID()
-                    prompt.name = promptData.name
-                    prompt.display = promptData.display
-                    prompt.content = promptData.content
-                    prompt.type = promptData.type
-                    prompt.createdAt = Date()
-                    prompt.updatedAt = Date()
-                    prompt.recordStatus = 0
-                    prompt.order = Int16(promptData.order)
-                    prompt.intro = promptData.intro
-                    prompt.identifier = Int16(identifier)
-                    
-                    // Track created prompt
-                    createdPrompts.append((identifier: identifier, name: promptData.name))
-                }
-            }
-            
-            // Save context
             try context.save()
-            
-            // Verify ingestion
-            let verifyRequest2: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-            let results = try context.fetch(verifyRequest2)
-            
-            // Only log if there's a mismatch
-            if results.count != createdPrompts.count {
-                logger.error("""
-                    Prompt ingestion verification failed:
-                    - Expected prompts: \(createdPrompts.count)
-                    - Actual prompts in DB: \(results.count)
-                    - Created prompt IDs: \(createdPrompts.map { $0.identifier }.sorted())
-                    """)
-            }
-            
+            logger.debug("Successfully ingested default prompts")
         } catch {
-            logger.error("Error during prompt ingestion: \(error.localizedDescription)")
+            logger.error("Error ingesting default prompts: \(error.localizedDescription)")
         }
     }
     

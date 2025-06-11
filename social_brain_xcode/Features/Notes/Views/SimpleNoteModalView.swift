@@ -379,47 +379,62 @@ struct SimpleNoteModalView: View {
         }
     }
     
+    // Extracts mentions as (type, name) tuples
+    private func extractMentionsWithType(from text: String) -> [(type: String, name: String)] {
+        var mentions: [(String, String)] = []
+        let pattern = "([@#])\\(([^()]+)\\)"
+        let regex = try? NSRegularExpression(pattern: pattern)
+        let nsString = text as NSString
+        let results = regex?.matches(in: text, range: NSRange(location: 0, length: nsString.length)) ?? []
+        for match in results {
+            let symbol = nsString.substring(with: match.range(at: 1))
+            let name = nsString.substring(with: match.range(at: 2)).trimmingCharacters(in: .whitespacesAndNewlines)
+            let type = symbol == "@" ? "contact" : "circle"
+            mentions.append((type, name))
+        }
+        return mentions
+    }
+
+    private func extractMentions(from text: String) -> [String] {
+        // For compatibility with existing code, but not used for unmatched logic anymore
+        return extractMentionsWithType(from: text).map { $0.name }
+    }
+    
     private func saveNote() {
         if let noteId = noteId {
             // Update existing note
             if !textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 if noteManager.updateNote(noteId: noteId, text: textState.text) {
+                    // Post notification to refresh contacts list so note counts are updated
+                    NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
                     onSave(textState.text)
                     dismiss()
                 }
             }
         } else {
             // Create new note with mentions
-            let mentions = extractMentions(from: textState.text)
-            let existingContacts = mentions.compactMap { name -> String? in
-                if let contact = ContactManager.shared.fetchContact(withName: name) {
-                    return name
-                } else {
-                    return nil
+            let mentionsWithType = extractMentionsWithType(from: textState.text)
+            var unmatchedContacts: [String] = []
+            var unmatchedCircles: [String] = []
+            for (type, name) in mentionsWithType {
+                if type == "contact" {
+                    if ContactManager.shared.fetchContact(withName: name) == nil {
+                        unmatchedContacts.append(name)
+                    }
+                } else if type == "circle" {
+                    if CircleManager.shared.fetchCircle(withName: name) == nil {
+                        unmatchedCircles.append(name)
+                    }
                 }
             }
-            let unmatched = mentions.filter { !existingContacts.contains($0) }
-            
+            let unmatched = unmatchedContacts + unmatchedCircles
             if !unmatched.isEmpty {
                 unmatchedMentions = unmatched
                 showingMentionConfirmation = true
                 return
             } else {
-                saveNoteWithMentions(mentions: mentions)
+                saveNoteWithMentions(mentions: mentionsWithType.map { $0.name })
             }
-        }
-    }
-    
-    private func extractMentions(from text: String) -> [String] {
-        // Match @ followed by one or more of: Chinese, English, numbers, underscore, hyphen, full-width parenthesis
-        // Stop at whitespace or common punctuation
-        let pattern = "@([\\u4e00-\\u9fa5A-Za-z0-9_\\-（）()]+)"
-        let regex = try? NSRegularExpression(pattern: pattern)
-        let nsString = text as NSString
-        let results = regex?.matches(in: text, range: NSRange(location: 0, length: nsString.length)) ?? []
-        
-        return results.map { match in
-            return nsString.substring(with: match.range(at: 1))
         }
     }
     
@@ -430,6 +445,8 @@ struct SimpleNoteModalView: View {
             let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
             
             if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: noteType, subType: subType.rawValue, mentions: allMentions) {
+                // Post notification to refresh contacts list so note counts are updated
+                NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
                 onSave(textState.text)
                 dismiss()
             }
@@ -454,8 +471,8 @@ struct SimpleNoteModalView: View {
                 currentText.remove(at: currentText.index(currentText.startIndex, offsetBy: cursorPosition))
             }
 
-            // Insert mention with exactly one space on both sides
-            let mention = " @\(name) "
+            // Insert mention with parentheses to support names with spaces
+            let mention = " @(\(name)) "
             let nsText = currentText as NSString
             let newText = nsText.replacingCharacters(in: NSRange(location: cursorPosition, length: 0), with: mention)
             textView.text = newText
@@ -487,8 +504,8 @@ struct SimpleNoteModalView: View {
                 currentText.remove(at: currentText.index(currentText.startIndex, offsetBy: cursorPosition))
             }
 
-            // Insert mention with exactly one space on both sides
-            let mention = " #\(name) "
+            // Insert mention with parentheses to support names with spaces
+            let mention = " #(\(name)) "
             let nsText = currentText as NSString
             let newText = nsText.replacingCharacters(in: NSRange(location: cursorPosition, length: 0), with: mention)
             textView.text = newText
@@ -499,6 +516,14 @@ struct SimpleNoteModalView: View {
                 textView.selectedTextRange = textView.textRange(from: newPosition, to: newPosition)
             }
         }
+    }
+    
+    // Add test function to verify mention detection
+    private func testMentionDetection() {
+        let testText = "Hello @(John Smith) and #(技术圈) with @张三 and #产品组"
+        let mentions = extractMentions(from: testText)
+        print("Test mentions: \(mentions)")
+        // Should print: ["John Smith", "技术圈", "张三", "产品组"]
     }
 }
 
@@ -520,17 +545,6 @@ struct TextViewWrapper: UIViewRepresentable {
         textView.returnKeyType = .default
         textView.text = state.text
         
-        // Add line spacing to match SocialNoteDetailView
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 8
-        textView.attributedText = NSAttributedString(
-            string: state.text,
-            attributes: [
-                .font: UIFont.systemFont(ofSize: 17, weight: .regular),
-                .paragraphStyle: paragraphStyle
-            ]
-        )
-        
         // Configure input accessory view to prevent constraint conflicts
         let accessoryView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 0))
         accessoryView.backgroundColor = .clear
@@ -541,10 +555,12 @@ struct TextViewWrapper: UIViewRepresentable {
         // Disable the system input assistant view completely to prevent constraint conflicts
         textView.inputAssistantItem.leadingBarButtonGroups = []
         textView.inputAssistantItem.trailingBarButtonGroups = []
-        textView.autocorrectionType = .no
-        textView.smartDashesType = .no
-        textView.smartQuotesType = .no
-        textView.smartInsertDeleteType = .no
+        
+        // Keep all smart text features enabled for better Chinese input support
+        // Don't disable any features that might interfere with input methods
+        textView.smartDashesType = .yes
+        textView.smartQuotesType = .yes
+        textView.smartInsertDeleteType = .yes
         
         // Set proper content insets to avoid overlap with keyboard
         textView.contentInset = .zero
@@ -562,19 +578,10 @@ struct TextViewWrapper: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UITextView, context: Context) {
-        // Only update if text is different
+        // Only update if text is different and avoid constant attributed text updates
         if uiView.text != state.text {
             let selectedRange = uiView.selectedTextRange
-            // Update text with line spacing
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.lineSpacing = 8
-            uiView.attributedText = NSAttributedString(
-                string: state.text,
-                attributes: [
-                    .font: UIFont.systemFont(ofSize: 17, weight: .regular),
-                    .paragraphStyle: paragraphStyle
-                ]
-            )
+            uiView.text = state.text
             if let selectedRange = selectedRange {
                 uiView.selectedTextRange = selectedRange
             }
@@ -603,27 +610,9 @@ struct TextViewWrapper: UIViewRepresentable {
         }
         
         func textViewDidChange(_ textView: UITextView) {
+            // Simply update the state text without manipulating attributed text
+            // This prevents interference with Chinese input methods
             state.text = textView.text
-            
-            // Maintain line spacing when text changes
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.lineSpacing = 8
-            let attributedText = NSAttributedString(
-                string: textView.text,
-                attributes: [
-                    .font: UIFont.systemFont(ofSize: 17, weight: .regular),
-                    .paragraphStyle: paragraphStyle
-                ]
-            )
-            
-            // Only update if the attributed text is different to avoid infinite loop
-            if textView.attributedText != attributedText {
-                let selectedRange = textView.selectedTextRange
-                textView.attributedText = attributedText
-                if let selectedRange = selectedRange {
-                    textView.selectedTextRange = selectedRange
-                }
-            }
         }
     }
 }

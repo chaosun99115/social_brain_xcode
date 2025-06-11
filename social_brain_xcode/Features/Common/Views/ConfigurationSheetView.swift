@@ -120,6 +120,9 @@ struct ConfigurationSheetView: View {
                 
                 // Advanced Features Section
                 Section(header: Text("高级功能")) {
+                    // iCloud Sync Option
+                    ICloudSyncView()
+
                     // Face ID Toggle
                     Toggle("Face ID锁定", isOn: Binding(
                         get: { appSettingsManager.isFaceIDEnabled },
@@ -237,8 +240,7 @@ struct ConfigurationSheetView: View {
             }
         }
         .onAppear {
-            // Comment out iCloud sync initialization
-            // isICloudSyncEnabled = persistenceController.getCloudKitStatus()
+            // Remove old iCloud sync initialization
         }
     }
     

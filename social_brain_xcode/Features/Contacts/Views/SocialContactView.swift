@@ -389,10 +389,37 @@ struct SocialContactView: View {
                 await self.loadCircles()
             }
         }
+        
+        // Add observer for iCloud sync refresh notifications
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("RefreshContactsList"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Refresh contacts and circles when iCloud sync completes
+            Task {
+                await self.loadContacts()
+                await self.loadCircles()
+            }
+        }
+        
+        // Add observer for circles refresh notifications
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("RefreshCirclesList"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Refresh circles when iCloud sync completes
+            Task {
+                await self.loadCircles()
+            }
+        }
     }
     
     private func cleanupSampleModeObserver() {
         NotificationCenter.default.removeObserver(self, name: .sampleModeChanged, object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshContactsList"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshCirclesList"), object: nil)
     }
 }
 

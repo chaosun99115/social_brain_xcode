@@ -24,6 +24,10 @@ struct PromptDetailView: View {
     @State private var showUpdateAlert = false
     @State private var updateError: String?
     
+    // Delete functionality state
+    @State private var showDeleteAlert = false
+    @State private var deleteError: String?
+    
     // Helper function to get type description
     private func getTypeDescription(_ type: Int16) -> String {
         switch type {
@@ -37,51 +41,86 @@ struct PromptDetailView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Name (editable, always shown)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("经验名称")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    TextField("请输入名称", text: $name)
-                        .font(.body)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                }
-                // Display (editable, always shown)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("包含问题")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    TextField("请输入显示文案", text: $display)
-                        .font(.body)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                }
-                // Conditional fields
-                if prompt.type == 0 {
-                    // Intro (non-editable, multiline)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Name (editable, always shown)
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("简介")
+                        Text("经验名称")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
-                        Text(intro)
+                        TextField("请输入名称", text: $name)
                             .font(.body)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            // Ensure proper Chinese input support
+                            .textInputAutocapitalization(.words)
+                            .disableAutocorrection(false)
                     }
-                } else if prompt.type == 1 {
-                    // Content (editable, multiline)
+                    .padding(.top, 24)
+                    
+                    // Display (editable, always shown)
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("提示词设定")
+                        Text("包含问题")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
-                        TextEditor(text: $content)
+                        TextField("请输入显示文案", text: $display)
                             .font(.body)
-                            .frame(minHeight: 120)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.3)))
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            // Ensure proper Chinese input support
+                            .textInputAutocapitalization(.sentences)
+                            .disableAutocorrection(false)
                     }
+                    
+                    // Conditional fields
+                    if prompt.type == 0 {
+                        // Intro (non-editable, multiline)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("简介")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Text(intro)
+                                .font(.body)
+                        }
+                    } else if prompt.type == 1 {
+                        // Content (editable, multiline)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("提示词设定")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            TextEditor(text: $content)
+                                .font(.body)
+                                .frame(minHeight: 120)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.3)))
+                        }
+                    }
+                    
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal)
+            }
+            .scrollDismissesKeyboard(.immediately)
+            
+            // Delete button - Fixed at bottom
+            VStack(spacing: 0) {
+                Divider()
+                Button(action: {
+                    showDeleteAlert = true
+                }) {
+                    HStack {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                        Text("删除此提示")
+                            .foregroundColor(.red)
+                            .font(.body)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color(.systemBackground))
                 }
             }
-            .padding()
+            .background(Color(.systemBackground))
         }
+        .background(Color.white)
         .navigationTitle("编辑提示")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -107,8 +146,14 @@ struct PromptDetailView: View {
                 Text("提示已更新")
             }
         }
-        .background(Color.clear)
-        .dismissKeyboardOnTap()
+        .alert("删除提示", isPresented: $showDeleteAlert) {
+            Button("取消", role: .cancel) { }
+            Button("删除", role: .destructive) {
+                deletePrompt()
+            }
+        } message: {
+            Text("确定要删除这个提示吗？删除后该提示将不再显示在应用中。")
+        }
         .onAppear {
             name = prompt.name ?? ""
             display = prompt.display ?? ""
@@ -136,6 +181,25 @@ struct PromptDetailView: View {
             // Keep error logging for actual errors
             updateError = "更新失败：\(error.localizedDescription)"
             showUpdateAlert = true
+        }
+    }
+    
+    private func deletePrompt() {
+        // Soft delete by setting isArchived to true
+        prompt.isArchived = true
+        prompt.updatedAt = Date()
+        
+        do {
+            try viewContext.save()
+            
+            // Post notification to refresh prompt lists
+            NotificationCenter.default.post(name: Notification.Name("RefreshPromptList"), object: nil)
+            
+            // Dismiss the view
+            dismiss()
+        } catch {
+            deleteError = "删除失败：\(error.localizedDescription)"
+            // You could show an error alert here if needed
         }
     }
 }

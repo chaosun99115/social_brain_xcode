@@ -10,6 +10,7 @@ struct CircleDetailView: View {
     @State private var showingAddContact = false
     @State private var showingEditCircleSheet = false
     @State private var showingSocialBrain = false
+    @State private var showingDeleteConfirmation = false
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject private var appModeManager: AppModeManager
@@ -44,9 +45,7 @@ struct CircleDetailView: View {
     
     var body: some View {
         ZStack {
-            Color.primaryBackground
-                .ignoresSafeArea()
-            
+            Color.primaryBackground.ignoresSafeArea()
             VStack(spacing: 0) {
                 if isLoading {
                     ProgressView()
@@ -68,12 +67,30 @@ struct CircleDetailView: View {
                         }
                     }
                     .listStyle(.plain)
-                    .safeAreaInset(edge: .bottom) {
-                        Color.clear.frame(height: getTabBarHeight())
-                    }
                 }
             }
         }
+        .overlay(
+            VStack(spacing: 0) {
+                Divider()
+                Button(action: {
+                    showingDeleteConfirmation = true
+                }) {
+                    HStack {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                        Text("删除圈子")
+                            .foregroundColor(.red)
+                            .font(.body)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color(.systemBackground))
+                }
+            }
+            .background(Color(.systemBackground)),
+            alignment: .bottom
+        )
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("圈子熟人")
         .toolbar {
@@ -111,14 +128,35 @@ struct CircleDetailView: View {
             }
             .environmentObject(appModeManager)
         }
+        .alert("确认删除圈子", isPresented: $showingDeleteConfirmation) {
+            Button("取消", role: .cancel) {
+                showingDeleteConfirmation = false
+            }
+            Button("删除", role: .destructive) {
+                deleteCircle()
+            }
+        } message: {
+            Text("确认删除圈子吗？此操作无法撤销。")
+        }
         .task {
             await loadCircleData()
         }
         .onAppear {
+            Task {
+                await loadCircleData()
+            }
+            // Hide the tab bar
             hideTabBar(true)
+            
+            // Setup notification observers for iCloud sync
+            setupNotificationObservers()
         }
         .onDisappear {
+            // Show the tab bar again when leaving this view
             hideTabBar(false)
+            
+            // Cleanup notification observers
+            cleanupNotificationObservers()
         }
     }
     
@@ -157,7 +195,7 @@ struct CircleDetailView: View {
     private func deleteCircle() {
         guard let circleId = circle.circleId else { return }
         
-        if circleManager.deleteCircle(circleId: circleId) {
+        if circleManager.archiveCircle(circleId: circleId) {
             presentationMode.wrappedValue.dismiss()
         }
     }
@@ -198,6 +236,50 @@ struct CircleDetailView: View {
                     tabBarController.tabBar.isHidden = hidden
                 }
             }
+        }
+    }
+    
+    private func setupNotificationObservers() {
+        // Add observer for iCloud sync refresh notifications
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("RefreshContactsList"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Refresh circle data when iCloud sync completes
+            Task {
+                await self.loadCircleData()
+            }
+        }
+        
+        // Add observer for circles refresh notifications
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("RefreshCirclesList"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Refresh circle data when iCloud sync completes
+            Task {
+                await self.loadCircleData()
+            }
+        }
+    }
+    
+    private func cleanupNotificationObservers() {
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshContactsList"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshCirclesList"), object: nil)
+    }
+    
+    // UIViewRepresentable wrapper for UIVisualEffectView to use blur effects
+    struct VisualEffectView: UIViewRepresentable {
+        var effect: UIVisualEffect?
+        
+        func makeUIView(context: UIViewRepresentableContext<Self>) -> UIVisualEffectView {
+            UIVisualEffectView()
+        }
+        
+        func updateUIView(_ uiView: UIVisualEffectView, context: UIViewRepresentableContext<Self>) {
+            uiView.effect = effect
         }
     }
 }

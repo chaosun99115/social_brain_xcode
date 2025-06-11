@@ -352,16 +352,14 @@ struct SocialBrainView: View {
             
             // Setup keyboard observers for keyboard dismissal
             setupKeyboardObservers()
-            
-            // Setup sample mode change observer
-            setupSampleModeObserver()
         }
         .onDisappear {
             // Cleanup keyboard observers
             cleanupKeyboardObservers()
-            
-            // Cleanup sample mode observer
-            cleanupSampleModeObserver()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("RefreshPromptList"))) { _ in
+            // Refresh suggested questions when new prompts are created
+            initializeSuggestedQuestions()
         }
         .onChange(of: isLoading) { loading in
             if loading {
@@ -612,24 +610,6 @@ struct SocialBrainView: View {
     private func cleanupKeyboardObservers() {
         NotificationCenter.default.removeObserver(self)
     }
-    
-    private func setupSampleModeObserver() {
-        NotificationCenter.default.addObserver(
-            forName: .sampleModeChanged,
-            object: nil,
-            queue: .main
-        ) { _ in
-            // Reset conversation state and refresh suggested questions
-            self.isConversationActive = false
-            self.messages.removeAll()
-            self.inputText = ""
-            self.initializeSuggestedQuestions()
-        }
-    }
-    
-    private func cleanupSampleModeObserver() {
-        NotificationCenter.default.removeObserver(self, name: .sampleModeChanged, object: nil)
-    }
 }
 
 struct LoadingModal: View {
@@ -664,7 +644,7 @@ struct LoadingModal: View {
                 // Quote area with arrows
                 ZStack {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("好的社交不在于你是否能达成眼前的目标，而在于你能否不断地自我塑造。")
+                        Text("好的沟通不在于你是否能达成眼前的目标，而在于你能否不断地自我塑造。")
                             .font(.system(size: 16))
                             .foregroundColor(.primaryText)
                             .lineSpacing(5)
@@ -921,10 +901,12 @@ struct GrowingTextView: UIViewRepresentable {
         // Disable the system input assistant view completely
         textView.inputAssistantItem.leadingBarButtonGroups = []
         textView.inputAssistantItem.trailingBarButtonGroups = []
-        textView.autocorrectionType = .no
-        textView.smartDashesType = .no
-        textView.smartQuotesType = .no
-        textView.smartInsertDeleteType = .no
+        
+        // Keep all smart text features enabled for better Chinese input support
+        // Don't disable any features that might interfere with input methods
+        textView.smartDashesType = .yes
+        textView.smartQuotesType = .yes
+        textView.smartInsertDeleteType = .yes
         
         // Set proper content insets to avoid overlap with keyboard
         textView.contentInset = .zero

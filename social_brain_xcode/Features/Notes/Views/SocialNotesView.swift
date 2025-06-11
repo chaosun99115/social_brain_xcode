@@ -32,7 +32,9 @@ struct SocialNotesView: View {
     // Separate function to get all valid notes
     private func getAllValidNotes() -> [SocialNote] {
         let coreDataNotes = noteManager.fetchActiveNotes()
-        return convertToSocialNotes(coreDataNotes)
+        let socialNotes = convertToSocialNotes(coreDataNotes)
+        
+        return socialNotes
     }
     
     // Separate function to determine expected type and subType
@@ -51,18 +53,20 @@ struct SocialNotesView: View {
         let (expectedType, expectedSubType) = getExpectedTypes()
         let isSampleMode = appModeManager.isSampleMode
         
-        return notes.filter { note in
+        let filteredNotes = notes.filter { note in
             let subTypeMatches = note.subType == expectedSubType
+            let typeMatches = note.type.rawValue == expectedType
             
             if isSampleMode {
                 // In sample mode, show both sample data (type = 0) and user data (type != 0)
                 return subTypeMatches
             } else {
                 // In regular mode, only show user data (type = 1)
-                let typeMatches = note.type.rawValue == expectedType
                 return typeMatches && subTypeMatches
             }
         }
+        
+        return filteredNotes
     }
     
     // Helper function to sort notes based on app mode
@@ -101,7 +105,9 @@ struct SocialNotesView: View {
         let sortedNotes = sortNotes(modeFilteredNotes)
         
         // Step 4: Apply search filter if needed
-        return filterNotesBySearch(sortedNotes, searchText: searchText)
+        let finalNotes = filterNotesBySearch(sortedNotes, searchText: searchText)
+        
+        return finalNotes
     }
     
     // Simplified computed property that uses the processing function

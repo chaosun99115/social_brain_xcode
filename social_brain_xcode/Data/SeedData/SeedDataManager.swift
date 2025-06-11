@@ -249,6 +249,7 @@ final class SeedDataManager {
                 contact.createdAt = contactData.createdAt
                 contact.updatedAt = contactData.updatedAt
                 contact.recordStatus = contactData.recordStatus
+                contact.isArchived = false
             }
             
             // Import Notes (sample data with type == 0)
@@ -290,6 +291,7 @@ final class SeedDataManager {
                 circle.createdAt = circleData.createdAt
                 circle.updatedAt = circleData.updatedAt
                 circle.recordStatus = circleData.recordStatus
+                circle.isArchived = false
             }
 
             // Import Circle Insights (sample data)

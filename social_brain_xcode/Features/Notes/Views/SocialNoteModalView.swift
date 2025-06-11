@@ -304,6 +304,8 @@ struct SocialNoteModalView: View {
                     // Use sample (type 0) for sample mode, regular (type 1) for non-sample mode
                     let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
                     if let _ = await noteManager.createNoteWithMentions(content: messageContent, type: noteType, mentions: mentions) {
+                        // Post notification to refresh contacts list so note counts are updated
+                        NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
                         onSave(messageContent)
                         dismiss()
                     }
@@ -318,6 +320,8 @@ struct SocialNoteModalView: View {
             // Use sample (type 0) for sample mode, regular (type 1) for non-sample mode
             let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
             if let _ = await noteManager.createNoteWithMentions(content: messageContent, type: noteType, subType: subType.rawValue, mentions: allMentions) {
+                // Post notification to refresh contacts list so note counts are updated
+                NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
                 onSave(messageContent)
                 dismiss()
             }
@@ -326,16 +330,17 @@ struct SocialNoteModalView: View {
     
     // Add extractMentions function
     private func extractMentions(from text: String) -> [String] {
-        // Match @ followed by one or more of: Chinese, English, numbers, underscore, hyphen, full-width parenthesis
-        // Stop at whitespace or common punctuation
-        let pattern = "@([\\u4e00-\\u9fa5A-Za-z0-9_\\-（）()]+)"
+        var mentions: [String] = []
+        // Only match @(name) or #(name), where name does not contain parentheses
+        let pattern = "[@#]\\(([^()]+)\\)"
         let regex = try? NSRegularExpression(pattern: pattern)
         let nsString = text as NSString
         let results = regex?.matches(in: text, range: NSRange(location: 0, length: nsString.length)) ?? []
-        
-        return results.map { match in
-            return nsString.substring(with: match.range(at: 1))
+        for match in results {
+            let mention = nsString.substring(with: match.range(at: 1)).trimmingCharacters(in: .whitespacesAndNewlines)
+            mentions.append(mention)
         }
+        return mentions
     }
 }
 

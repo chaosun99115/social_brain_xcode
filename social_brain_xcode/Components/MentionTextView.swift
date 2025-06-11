@@ -61,33 +61,121 @@ struct MentionTextView: View {
     
     var attributedString: AttributedString {
         let processedText = processText(text)
-        let words = processedText.split(separator: " ")
         var result = AttributedString("")
+        var currentIndex = processedText.startIndex
         
-        for (index, word) in words.enumerated() {
-            let wordString = String(word)
-            
-            // Check for both types of mentions
-            if wordString.hasPrefix(MentionType.contact.prefix) {
-                var mentionText = AttributedString(wordString)
-                mentionText.foregroundColor = MentionType.contact.color
-                mentionText.font = MentionType.contact.font
-                result.append(mentionText)
-            } else if wordString.hasPrefix(MentionType.group.prefix) {
-                var mentionText = AttributedString(wordString)
-                mentionText.foregroundColor = MentionType.group.color
-                mentionText.font = MentionType.group.font
-                result.append(mentionText)
-            } else {
-                result.append(AttributedString(wordString))
+        while currentIndex < processedText.endIndex {
+            // Check for parenthesized mentions first: @(name with spaces) or #(circle with spaces)
+            if let parenthesizedMention = extractParenthesizedMention(from: processedText, at: currentIndex) {
+                // Add any text before the mention
+                if currentIndex < parenthesizedMention.range.lowerBound {
+                    let beforeText = String(processedText[currentIndex..<parenthesizedMention.range.lowerBound])
+                    result.append(AttributedString(beforeText))
+                }
+                
+                // Add the mention with green styling for both contact and circle
+                var mentionString = AttributedString(parenthesizedMention.text)
+                mentionString.foregroundColor = .green
+                mentionString.font = .systemFont(ofSize: 17, weight: .medium)
+                result.append(mentionString)
+                
+                currentIndex = parenthesizedMention.range.upperBound
             }
-            
-            if index < words.count - 1 {
-                result.append(AttributedString(" "))
+            // Check for simple mentions: @name or #circle
+            else if let simpleMention = extractSimpleMention(from: processedText, at: currentIndex) {
+                // Add any text before the mention
+                if currentIndex < simpleMention.range.lowerBound {
+                    let beforeText = String(processedText[currentIndex..<simpleMention.range.lowerBound])
+                    result.append(AttributedString(beforeText))
+                }
+                
+                // Add the mention with green styling for both contact and circle
+                var mentionString = AttributedString(simpleMention.text)
+                mentionString.foregroundColor = .green
+                mentionString.font = .systemFont(ofSize: 17, weight: .medium)
+                result.append(mentionString)
+                
+                currentIndex = simpleMention.range.upperBound
+            }
+            // Add regular text
+            else {
+                let char = processedText[currentIndex]
+                result.append(AttributedString(String(char)))
+                currentIndex = processedText.index(after: currentIndex)
             }
         }
         
         return result
+    }
+    
+    private func extractParenthesizedMention(from text: String, at index: String.Index) -> (text: String, type: String, range: Range<String.Index>)? {
+        guard index < text.endIndex else { return nil }
+        
+        let char = text[index]
+        if char == "@" || char == "#" {
+            let type = String(char)
+            
+            // Look for opening parenthesis
+            let afterAt = text.index(after: index)
+            guard afterAt < text.endIndex && text[afterAt] == "(" else { return nil }
+            
+            // Find closing parenthesis
+            var parenCount = 1
+            var currentIndex = text.index(after: afterAt)
+            
+            while currentIndex < text.endIndex && parenCount > 0 {
+                let currentChar = text[currentIndex]
+                if currentChar == "(" {
+                    parenCount += 1
+                } else if currentChar == ")" {
+                    parenCount -= 1
+                }
+                currentIndex = text.index(after: currentIndex)
+            }
+            
+            // If we found a matching closing parenthesis
+            if parenCount == 0 {
+                let startIndex = text.index(after: afterAt) // After the opening parenthesis
+                let endIndex = text.index(before: currentIndex) // Before the closing parenthesis
+                let mentionText = String(text[startIndex..<endIndex])
+                
+                // Create the full mention text for display
+                let fullMentionText = "\(type)(\(mentionText))"
+                
+                return (fullMentionText, type, index..<currentIndex)
+            }
+        }
+        
+        return nil
+    }
+    
+    private func extractSimpleMention(from text: String, at index: String.Index) -> (text: String, type: String, range: Range<String.Index>)? {
+        guard index < text.endIndex else { return nil }
+        
+        let char = text[index]
+        if char == "@" || char == "#" {
+            let type = String(char)
+            
+            // Find the end of the mention (stop at whitespace or punctuation)
+            var endIndex = text.index(after: index)
+            while endIndex < text.endIndex {
+                let currentChar = text[endIndex]
+                if currentChar.isWhitespace || currentChar.isPunctuation {
+                    break
+                }
+                endIndex = text.index(after: endIndex)
+            }
+            
+            let range = index..<endIndex
+            let mentionText = String(text[range])
+            
+            // Only return if it's a valid mention (not just @ or # alone)
+            if mentionText.count > 1 {
+                return (mentionText, type, range)
+            }
+        }
+        
+        return nil
     }
 }
 
@@ -100,26 +188,19 @@ extension Color {
 struct MentionTextView_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 20) {
+            // Test new parenthesized mentions
+            MentionTextView(text: "Hello @(John Smith) and #(技术圈)")
+            MentionTextView(text: "Meeting with @(李四) in #(产品组)")
+            MentionTextView(text: "Regular text with @(王五) and #(设计圈) mentions")
+            
+            // Test mixed parenthesized and unquoted mentions
+            MentionTextView(text: "Mixed: @张三 and @(John Smith) with #技术圈 and #(Product Team)")
+            
+            // Test backward compatibility with unquoted mentions
             MentionTextView(text: "Hello @张三 and #技术圈")
-            MentionTextView(text: "Meeting with @李四 in #产品组")
-            MentionTextView(text: "Regular text with @王五 and #设计圈 mentions")
             
-            // Test empty lines preservation
-            VStack(alignment: .leading) {
-                Text("With empty lines preserved (default):")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                MentionTextView(text: "Line 1\n\n\n\n\n\n\nLine 2")
-                    .background(Color.gray.opacity(0.1))
-            }
-            
-            VStack(alignment: .leading) {
-                Text("With compact mode (no empty lines):")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                MentionTextView(text: "Line 1\n\n\n\n\n\n\nLine 2", preserveEmptyLines: false)
-                    .background(Color.gray.opacity(0.1))
-            }
+            // Test complex scenarios
+            MentionTextView(text: "Multiple mentions: @(John Doe) and @(Jane Smith) in #(Engineering Team) and #(Design Team)")
         }
         .padding()
         .previewLayout(.sizeThatFits)

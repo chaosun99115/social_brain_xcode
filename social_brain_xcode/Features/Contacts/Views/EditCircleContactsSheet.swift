@@ -74,6 +74,9 @@ struct EditCircleContactsSheet: View {
                             .font(.body)
                             .padding(.vertical, 10)
                             .padding(.horizontal, 12)
+                            // Ensure proper Chinese input support
+                            .textInputAutocapitalization(.words)
+                            .disableAutocorrection(false)
                     }
                     .background(Color.white)
                     .cornerRadius(0)

@@ -50,7 +50,7 @@ struct AddCircleView: View {
                             .padding(.horizontal, 16)
                         
                         HStack {
-                            TextField("圈子名称", text: $circleName)
+                            CircleTextField(text: $circleName)
                                 .font(.body)
                                 .padding(.vertical, 10)
                                 .padding(.horizontal, 12)
@@ -256,6 +256,64 @@ struct AddCircleView: View {
                     showingErrorAlert = true
                 }
             }
+        }
+    }
+}
+
+// Custom UITextField wrapper optimized for Chinese input in circle creation
+struct CircleTextField: UIViewRepresentable {
+    @Binding var text: String
+    
+    func makeUIView(context: Context) -> UITextField {
+        let textField = UITextField()
+        textField.font = UIFont.systemFont(ofSize: 17)
+        textField.backgroundColor = .white
+        textField.delegate = context.coordinator
+        textField.text = text
+        textField.placeholder = "圈子名称"
+        
+        // Configure for optimal Chinese input support
+        textField.autocorrectionType = .yes
+        textField.smartDashesType = .yes
+        textField.smartQuotesType = .yes
+        textField.smartInsertDeleteType = .yes
+        
+        // Set proper keyboard handling
+        textField.keyboardType = .default
+        textField.returnKeyType = .default
+        textField.enablesReturnKeyAutomatically = true
+        
+        // Disable input assistant view to prevent interference
+        textField.inputAssistantItem.leadingBarButtonGroups = []
+        textField.inputAssistantItem.trailingBarButtonGroups = []
+        
+        return textField
+    }
+    
+    func updateUIView(_ uiView: UITextField, context: Context) {
+        if uiView.text != text {
+            uiView.text = text
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UITextFieldDelegate {
+        var parent: CircleTextField
+        
+        init(_ parent: CircleTextField) {
+            self.parent = parent
+        }
+        
+        func textFieldDidChangeSelection(_ textField: UITextField) {
+            parent.text = textField.text ?? ""
+        }
+        
+        func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+            // Allow all changes to ensure proper Chinese input
+            return true
         }
     }
 }

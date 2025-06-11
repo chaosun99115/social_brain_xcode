@@ -17,6 +17,8 @@
 		AF56DC282DCBE13D00F56D6E /* SeedDataExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */; };
 		AF56DC292DCBE13D00F56D6E /* seed_data.json in Resources */ = {isa = PBXBuildFile; fileRef = AF56DC252DCBE13D00F56D6E /* seed_data.json */; };
 		AF56DC2C2DCBE25900F56D6E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC2A2DCBE25900F56D6E /* AppDelegate.swift */; };
+		AF57FBF52DF9E91100617C0A /* ICloudSyncView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF57FBF22DF9E91100617C0A /* ICloudSyncView.swift */; };
+		AF57FBF62DF9E91100617C0A /* ICloudSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF57FBF42DF9E91100617C0A /* ICloudSyncManager.swift */; };
 		AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111D2DADA98E0071D444 /* NoteManager.swift */; };
 		AF6D11202DADA98E0071D444 /* ContactManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D111E2DADA98E0071D444 /* ContactManager.swift */; };
 		AF6D11232DADA9B20071D444 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6D11222DADA9B20071D444 /* CoreDataManager.swift */; };
@@ -96,6 +98,8 @@
 		AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeedDataExample.swift; sourceTree = "<group>"; };
 		AF56DC252DCBE13D00F56D6E /* seed_data.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = seed_data.json; sourceTree = "<group>"; };
 		AF56DC2A2DCBE25900F56D6E /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		AF57FBF22DF9E91100617C0A /* ICloudSyncView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ICloudSyncView.swift; sourceTree = "<group>"; };
+		AF57FBF42DF9E91100617C0A /* ICloudSyncManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ICloudSyncManager.swift; sourceTree = "<group>"; };
 		AF6D111D2DADA98E0071D444 /* NoteManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteManager.swift; sourceTree = "<group>"; };
 		AF6D111E2DADA98E0071D444 /* ContactManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactManager.swift; sourceTree = "<group>"; };
 		AF6D11222DADA9B20071D444 /* CoreDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
@@ -189,6 +193,39 @@
 			path = SeedData;
 			sourceTree = "<group>";
 		};
+		AF57FBEF2DF9E91100617C0A /* iCloud */ = {
+			isa = PBXGroup;
+			children = (
+				AF57FBF02DF9E91100617C0A /* Models */,
+				AF57FBF12DF9E91100617C0A /* Views */,
+				AF57FBF32DF9E91100617C0A /* Services */,
+			);
+			path = iCloud;
+			sourceTree = "<group>";
+		};
+		AF57FBF02DF9E91100617C0A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AF57FBF12DF9E91100617C0A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AF57FBF22DF9E91100617C0A /* ICloudSyncView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AF57FBF32DF9E91100617C0A /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				AF57FBF42DF9E91100617C0A /* ICloudSyncManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		AF6D11212DADA9B20071D444 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
@@ -205,10 +242,10 @@
 		AFA2761D2DB03BAF00C29B81 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				AF57FBEF2DF9E91100617C0A /* iCloud */,
 				AFE504CA2DF8CCB0006B110F /* Web */,
 				AFAE47392DF1DEB000DD10E0 /* Prompts */,
 				AFAE471A2DE799ED00DD10E0 /* StoreKit */,
-				AFAE47442DF200E300DD10E0 /* Settings */,
 				AFAE46F52DE75D7900DD10E0 /* Common */,
 				AFA2761E2DB03BC900C29B81 /* Notes */,
 				AFA276242DB03D2600C29B81 /* Contacts */,
@@ -432,21 +469,6 @@
 				AFAE47402DF1E21700DD10E0 /* PromptDetailView.swift */,
 			);
 			path = Prompts;
-			sourceTree = "<group>";
-		};
-		AFAE47442DF200E300DD10E0 /* Settings */ = {
-			isa = PBXGroup;
-			children = (
-				AFAE47452DF200E300DD10E0 /* Views */,
-			);
-			path = Settings;
-			sourceTree = "<group>";
-		};
-		AFAE47452DF200E300DD10E0 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Views;
 			sourceTree = "<group>";
 		};
 		AFBD50E12DA70C770066907B /* zh-Hans.lproj */ = {
@@ -683,6 +705,7 @@
 				AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */,
 				AFDDDC9E2DD393F100425764 /* CircleDetailView.swift in Sources */,
 				AFAE46FC2DE77A3800DD10E0 /* SocialBrainSheetView.swift in Sources */,
+				AF57FBF52DF9E91100617C0A /* ICloudSyncView.swift in Sources */,
 				AFAE473D2DF1DEB000DD10E0 /* PromptService.swift in Sources */,
 				AF6D111F2DADA98E0071D444 /* NoteManager.swift in Sources */,
 				AFDDDC9C2DD393DF00425764 /* CircleInsightManager.swift in Sources */,
@@ -690,6 +713,7 @@
 				AFE504C72DF7824E006B110F /* DataDisplayView.swift in Sources */,
 				AFAE473C2DF1DEB000DD10E0 /* PromptListView.swift in Sources */,
 				AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */,
+				AF57FBF62DF9E91100617C0A /* ICloudSyncManager.swift in Sources */,
 				AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */,
 				AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */,
 				AFE504C92DF8BFD8006B110F /* AboutView.swift in Sources */,

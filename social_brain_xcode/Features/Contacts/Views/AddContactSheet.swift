@@ -43,15 +43,75 @@ struct ContactInputField: View {
                         .padding(.horizontal, horizontalPadding - 4) // Compensate for TextEditor's built-in padding
                         .padding(.vertical, 4)
                         .background(Color.clear)
+                        // Ensure proper Chinese input support
+                        .textInputAutocapitalization(.sentences)
+                        .disableAutocorrection(false)
                 } else {
-                    TextField("", text: $text)
-                        .font(.body)
+                    // Use custom UITextField wrapper for better Chinese input support
+                    ContactTextField(text: $text)
                         .frame(height: minHeight)
                         .padding(.horizontal, horizontalPadding)
                         .padding(.vertical, 4)
                         .background(Color.clear)
                 }
             }
+        }
+    }
+}
+
+// Custom UITextField wrapper optimized for Chinese input
+struct ContactTextField: UIViewRepresentable {
+    @Binding var text: String
+    
+    func makeUIView(context: Context) -> UITextField {
+        let textField = UITextField()
+        textField.font = UIFont.systemFont(ofSize: 17)
+        textField.backgroundColor = .clear
+        textField.delegate = context.coordinator
+        textField.text = text
+        
+        // Configure for optimal Chinese input support
+        textField.autocorrectionType = .yes
+        textField.smartDashesType = .yes
+        textField.smartQuotesType = .yes
+        textField.smartInsertDeleteType = .yes
+        
+        // Set proper keyboard handling
+        textField.keyboardType = .default
+        textField.returnKeyType = .default
+        textField.enablesReturnKeyAutomatically = true
+        
+        // Disable input assistant view to prevent interference
+        textField.inputAssistantItem.leadingBarButtonGroups = []
+        textField.inputAssistantItem.trailingBarButtonGroups = []
+        
+        return textField
+    }
+    
+    func updateUIView(_ uiView: UITextField, context: Context) {
+        if uiView.text != text {
+            uiView.text = text
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UITextFieldDelegate {
+        var parent: ContactTextField
+        
+        init(_ parent: ContactTextField) {
+            self.parent = parent
+        }
+        
+        func textFieldDidChangeSelection(_ textField: UITextField) {
+            parent.text = textField.text ?? ""
+        }
+        
+        func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+            // Allow all changes to ensure proper Chinese input
+            return true
         }
     }
 }

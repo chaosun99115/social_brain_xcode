@@ -114,13 +114,13 @@ struct SocialNoteDetailView: View {
                 VStack(spacing: 0) {
                     Divider()
                     HStack(spacing: 0) {
-                        // Archive button
+                        // Delete button
                         Button(action: {
                             showingArchiveConfirmation = true
                         }) {
-                            Image(systemName: "archivebox")
+                            Image(systemName: "trash")
                                 .font(.system(size: 22))
-                                .foregroundColor(.primaryText)
+                                .foregroundColor(.red)
                                 .frame(maxWidth: .infinity)
                         }
                         // Edit Note button
@@ -147,9 +147,9 @@ struct SocialNoteDetailView: View {
                                 .frame(maxWidth: .infinity)
                         }
                     }
-                    .frame(height: 44)
-                    .padding(.vertical, 8)
-                    .padding(.bottom, safeAreaPadding)
+                    .frame(height: 49) // Match standard tab bar height
+                    .padding(.top, 0) // Position buttons at the top
+                    .padding(.bottom, getBottomSafeAreaInset()) // Only add safe area padding at bottom
                 }
                 .background(Color.primaryBackground)
             }
@@ -180,19 +180,27 @@ struct SocialNoteDetailView: View {
             }
         )
         .onAppear {
+            DispatchQueue.main.async {
+                hideTabBar(true)
+            }
             loadContactInsights()
-            hideTabBar(true)
             // Ensure proper layout when appearing
             DispatchQueue.main.async {
                 UIApplication.shared.windows.first?.layoutIfNeeded()
             }
         }
         .onDisappear {
-            // Show the tab bar again when leaving this view
-            hideTabBar(false)
+            DispatchQueue.main.async {
+                hideTabBar(false)
+            }
             // Ensure proper layout when disappearing
             DispatchQueue.main.async {
                 UIApplication.shared.windows.first?.layoutIfNeeded()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            DispatchQueue.main.async {
+                hideTabBar(true)
             }
         }
         .edgesIgnoringSafeArea(.bottom)
@@ -206,19 +214,23 @@ struct SocialNoteDetailView: View {
                     if noteManager.updateNote(noteId: noteId, text: updatedText) {
                         // Post notification to refresh the notes list
                         NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
+                        // Post notification to refresh contacts list so note counts are updated
+                        NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
                     }
                 }
             }
         }
         .alert(isPresented: $showingArchiveConfirmation) {
             Alert(
-                title: Text("归档笔记"),
-                message: Text("确定要归档这条笔记吗？归档后可以在归档列表中查看。"),
-                primaryButton: .destructive(Text("归档")) {
+                title: Text("删除笔记"),
+                message: Text("确认删除笔记？"),
+                primaryButton: .destructive(Text("删除")) {
                     guard let noteId = note.noteId else { return }
-                    if noteManager.archiveNote(noteId: noteId) {
+                    if noteManager.deleteNote(noteId: noteId) {
                         // Post notification to refresh the notes list
                         NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
+                        // Post notification to refresh contacts list so note counts are updated
+                        NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
                         presentationMode.wrappedValue.dismiss()
                     }
                 },
@@ -240,7 +252,11 @@ struct SocialNoteDetailView: View {
     
     // Dynamic safe area padding for different devices
     private var safeAreaPadding: CGFloat {
-        // Get the bottom safe area inset
+        return getBottomSafeAreaInset()
+    }
+    
+    // Get bottom safe area inset
+    private func getBottomSafeAreaInset() -> CGFloat {
         let keyWindow = UIApplication.shared.connectedScenes
             .filter { $0.activationState == .foregroundActive }
             .compactMap { $0 as? UIWindowScene }
@@ -248,10 +264,7 @@ struct SocialNoteDetailView: View {
             .filter { $0.isKeyWindow }
             .first
             
-        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
-        
-        // Add padding based on whether device has home indicator
-        return bottomInset > 0 ? bottomInset + 8 : 8
+        return keyWindow?.safeAreaInsets.bottom ?? 0
     }
     
     // UIViewRepresentable wrapper for UIVisualEffectView to use blur effects
@@ -270,15 +283,7 @@ struct SocialNoteDetailView: View {
     // Add helper function to get tab bar height
     private func getTabBarHeight() -> CGFloat {
         let standardTabBarHeight: CGFloat = 49
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-        
-        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
-        return standardTabBarHeight + bottomInset
+        return standardTabBarHeight + getBottomSafeAreaInset()
     }
     
     // Update hideTabBar function to handle layout updates

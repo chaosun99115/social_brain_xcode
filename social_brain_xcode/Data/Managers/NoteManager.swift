@@ -74,7 +74,7 @@ class NoteManager: ObservableObject {
     
     func fetchActiveNotes() -> [Note] {
         let request: NSFetchRequest<Note> = Note.fetchRequest()
-        request.predicate = NSPredicate(format: "isArchived == NO OR isArchived == nil")
+        request.predicate = NSPredicate(format: "recordStatus != 2 AND (isArchived == NO OR isArchived == nil)") // Exclude deleted and archived notes
         request.sortDescriptors = [
             NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false),
             NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)
@@ -115,7 +115,7 @@ class NoteManager: ObservableObject {
     // MARK: - Fetch by Type and SubType
     func fetchNotes(type: Int16, subType: Int16) -> [Note] {
         let request: NSFetchRequest<Note> = Note.fetchRequest()
-        request.predicate = NSPredicate(format: "type == %d AND subType == %d", type, subType)
+        request.predicate = NSPredicate(format: "type == %d AND subType == %d AND (isArchived == NO OR isArchived == nil)", type, subType)
         request.sortDescriptors = [
             NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false),
             NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)
@@ -143,6 +143,40 @@ class NoteManager: ObservableObject {
             return notes
         } catch {
             print("Error fetching active notes by type and subtype: \(error)")
+            return []
+        }
+    }
+    
+    func fetchArchivedNotes() -> [Note] {
+        let request: NSFetchRequest<Note> = Note.fetchRequest()
+        request.predicate = NSPredicate(format: "isArchived == YES")
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false),
+            NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)
+        ]
+        
+        do {
+            let notes = try context.fetch(request)
+            return notes
+        } catch {
+            print("Error fetching archived notes: \(error)")
+            return []
+        }
+    }
+    
+    func fetchArchivedNotes(type: Int16, subType: Int16) -> [Note] {
+        let request: NSFetchRequest<Note> = Note.fetchRequest()
+        request.predicate = NSPredicate(format: "type == %d AND subType == %d AND isArchived == YES", type, subType)
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Note.updatedAt, ascending: false),
+            NSSortDescriptor(keyPath: \Note.createdAt, ascending: false)
+        ]
+        
+        do {
+            let notes = try context.fetch(request)
+            return notes
+        } catch {
+            print("Error fetching archived notes by type and subtype: \(error)")
             return []
         }
     }
@@ -307,6 +341,22 @@ class NoteManager: ObservableObject {
         }
     }
     
+    func unarchiveNote(noteId: UUID) -> Bool {
+        guard let note = fetchNote(withId: noteId) else { return false }
+        
+        note.isArchived = false
+        note.updatedAt = Date()
+        note.recordStatus = 0 // mark as unsynced
+        
+        do {
+            try context.save()
+            return true
+        } catch {
+            print("Error unarchiving note: \(error)")
+            return false
+        }
+    }
+    
     // MARK: - Relationships
     func addContactToNote(noteId: UUID, contactId: UUID) -> Bool {
         guard let note = fetchNote(withId: noteId),
@@ -349,16 +399,17 @@ class NoteManager: ObservableObject {
     
     // MARK: - Helper Methods
     private func extractMentions(from text: String) -> [String] {
-        // Match @ followed by one or more of: Chinese, English, numbers, underscore, hyphen, full-width parenthesis
-        // Stop at whitespace or common punctuation
-        let pattern = "@([\\u4e00-\\u9fa5A-Za-z0-9_\\-（）()]+)"
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+        var mentions: [String] = []
+        // Only match @(name) or #(name), where name does not contain parentheses
+        let pattern = "[@#]\\(([^()]+)\\)"
+        let regex = try? NSRegularExpression(pattern: pattern)
         let nsString = text as NSString
-        let results = regex.matches(in: text, range: NSRange(location: 0, length: nsString.length))
-        
-        return results.map { match in
-            return nsString.substring(with: match.range(at: 1))
+        let results = regex?.matches(in: text, range: NSRange(location: 0, length: nsString.length)) ?? []
+        for match in results {
+            let mention = nsString.substring(with: match.range(at: 1)).trimmingCharacters(in: .whitespacesAndNewlines)
+            mentions.append(mention)
         }
+        return mentions
     }
     
     // MARK: - Background Processing

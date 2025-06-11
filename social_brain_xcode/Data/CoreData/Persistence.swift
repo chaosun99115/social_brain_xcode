@@ -63,6 +63,16 @@ class PersistenceController: ObservableObject {
 
     let container: NSPersistentCloudKitContainer
     @Published private(set) var isCloudKitEnabled = false
+    
+    // Add debouncing for remote changes
+    private var remoteChangeDebounceTimer: Timer?
+    private var lastRemoteChangeTime: Date = Date()
+    private let remoteChangeDebounceInterval: TimeInterval = 1.0 // 1 second debounce
+    
+    // Add tracking to prevent sync loops
+    private var lastCloudKitEventType: NSPersistentCloudKitContainer.EventType?
+    private var lastCloudKitEventTime: Date = Date()
+    private let cloudKitEventDebounceInterval: TimeInterval = 0.5 // 0.5 second debounce for CloudKit events
 
     init(inMemory: Bool = false) {
         // Disable CoreData debug logging
@@ -95,15 +105,18 @@ class PersistenceController: ObservableObject {
         // Load the persistent store
         container.loadPersistentStores { [weak self] (storeDescription, error) in
             if let error = error as NSError? {
+                print("❌ PersistenceController: Failed to load persistent store: \(error)")
                 // Handle store loading errors
                 if let url = storeDescription.url {
                     do {
                         try self?.container.persistentStoreCoordinator.destroyPersistentStore(at: url, ofType: storeDescription.type, options: nil)
                         try self?.container.persistentStoreCoordinator.addPersistentStore(ofType: storeDescription.type, configurationName: storeDescription.configuration, at: url, options: storeDescription.options)
                     } catch {
+                        print("❌ PersistenceController: Failed to recreate persistent store: \(error)")
                         fatalError("Failed to recreate persistent store: \(error)")
                     }
                 } else {
+                    print("❌ PersistenceController: No URL available for store recreation")
                     fatalError("Failed to load persistent store: \(error)")
                 }
             }
@@ -134,33 +147,69 @@ class PersistenceController: ObservableObject {
     }
     
     private func handleRemoteChanges() {
+        // Cancel any existing timer
+        remoteChangeDebounceTimer?.invalidate()
+        
+        // Schedule a new debounced refresh
+        remoteChangeDebounceTimer = Timer.scheduledTimer(withTimeInterval: remoteChangeDebounceInterval, repeats: false) { [weak self] _ in
+            self?.performRemoteChangeRefresh()
+        }
+    }
+    
+    private func performRemoteChangeRefresh() {
+        // Check if enough time has passed since last refresh to prevent loops
+        let timeSinceLastRefresh = Date().timeIntervalSince(lastRemoteChangeTime)
+        if timeSinceLastRefresh < remoteChangeDebounceInterval {
+            return
+        }
+        
+        lastRemoteChangeTime = Date()
+        
         // Refresh the view context when remote changes occur
         container.viewContext.perform {
             self.container.viewContext.refreshAllObjects()
+            
+            // Post notifications to refresh views after remote changes
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
+                NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
+                NotificationCenter.default.post(name: Notification.Name("RefreshCirclesList"), object: nil)
+            }
         }
     }
     
     private func handleCloudKitEvent(_ notification: Notification) {
         guard let cloudEvent = notification.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey]
-                as? NSPersistentCloudKitContainer.Event else { return }
+                as? NSPersistentCloudKitContainer.Event else { 
+            return 
+        }
         
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
+        // Check if this is a duplicate event to prevent loops
+        let timeSinceLastEvent = Date().timeIntervalSince(lastCloudKitEventTime)
+        if lastCloudKitEventType == cloudEvent.type && timeSinceLastEvent < cloudKitEventDebounceInterval {
+            return
+        }
+        
+        // Update tracking
+        lastCloudKitEventType = cloudEvent.type
+        lastCloudKitEventTime = Date()
+        
+        // Ensure all @Published updates happen on main thread
+        Task { @MainActor in
             switch cloudEvent.type {
             case .setup:
-                self.syncStatus = .inProgress
+                syncStatus = .inProgress
             case .import:
-                self.syncStatus = .completed
+                syncStatus = .completed
             case .export:
-                self.syncStatus = .completed
+                syncStatus = .completed
             @unknown default:
                 break
             }
             
             if let error = cloudEvent.error {
-                self.syncStatus = .failed(error)
-                self.lastSyncError = error
+                syncStatus = .failed(error)
+                lastSyncError = error
             }
         }
     }
@@ -190,7 +239,8 @@ class PersistenceController: ObservableObject {
     
     // Add a method to check iCloud availability
     func checkICloudAvailability() -> Bool {
-        return FileManager.default.ubiquityIdentityToken != nil
+        let isAvailable = FileManager.default.ubiquityIdentityToken != nil
+        return isAvailable
     }
     
     // Add a method to get iCloud account status
@@ -198,7 +248,7 @@ class PersistenceController: ObservableObject {
         return await withCheckedContinuation { continuation in
             CKContainer.default().accountStatus { status, error in
                 if let error = error {
-                    print("Error checking iCloud account status: \(error)")
+                    print("❌ PersistenceController: Error checking iCloud account status: \(error)")
                 }
                 continuation.resume(returning: status)
             }
@@ -214,39 +264,86 @@ class PersistenceController: ObservableObject {
         if enabled && !isCloudKitEnabled {
             // Enable CloudKit sync
             let cloudKitContainerIdentifier = "iCloud.socialbrainbeta"
+            
             let cloudKitOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: cloudKitContainerIdentifier)
             description.cloudKitContainerOptions = cloudKitOptions
             
-            // Reload the persistent store with CloudKit enabled
-            if let url = description.url {
-                try await container.persistentStoreCoordinator.replacePersistentStore(
-                    at: url,
-                    destinationOptions: description.options,
-                    withPersistentStoreFrom: url,
-                    sourceOptions: nil,
-                    ofType: description.type
-                )
+            // Instead of replacePersistentStore, let's try a different approach
+            // First, let's check if we can access the CloudKit container
+            do {
+                let ckContainer = CKContainer(identifier: cloudKitContainerIdentifier)
+                let accountStatus = try await ckContainer.accountStatus()
+                
+                if accountStatus == .available {
+                    // Reload the persistent store with CloudKit enabled
+                    if let url = description.url {
+                        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                            // First, remove the existing store
+                            if let existingStore = self.container.persistentStoreCoordinator.persistentStores.first {
+                                do {
+                                    try self.container.persistentStoreCoordinator.remove(existingStore)
+                                } catch {
+                                    continuation.resume(throwing: error)
+                                    return
+                                }
+                            }
+                            
+                            // Now add the store back with CloudKit enabled
+                            self.container.loadPersistentStores { _, error in
+                                if let error = error {
+                                    continuation.resume(throwing: error)
+                                } else {
+                                    continuation.resume()
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Update @Published properties on main thread
+                    await MainActor.run {
+                        isCloudKitEnabled = true
+                        syncStatus = .inProgress
+                    }
+                } else {
+                    throw NSError(domain: "com.socialbrain", code: 2, userInfo: [NSLocalizedDescriptionKey: "CloudKit account not available"])
+                }
+            } catch {
+                throw error
             }
             
-            isCloudKitEnabled = true
-            syncStatus = .inProgress
         } else if !enabled && isCloudKitEnabled {
             // Disable CloudKit sync
             description.cloudKitContainerOptions = nil
             
             // Reload the persistent store without CloudKit
             if let url = description.url {
-                try await container.persistentStoreCoordinator.replacePersistentStore(
-                    at: url,
-                    destinationOptions: description.options,
-                    withPersistentStoreFrom: url,
-                    sourceOptions: nil,
-                    ofType: description.type
-                )
+                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                    // First, remove the existing store
+                    if let existingStore = self.container.persistentStoreCoordinator.persistentStores.first {
+                        do {
+                            try self.container.persistentStoreCoordinator.remove(existingStore)
+                        } catch {
+                            continuation.resume(throwing: error)
+                            return
+                        }
+                    }
+                    
+                    // Now add the store back without CloudKit
+                    self.container.loadPersistentStores { _, error in
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else {
+                            continuation.resume()
+                        }
+                    }
+                }
             }
             
-            isCloudKitEnabled = false
-            syncStatus = .notStarted
+            // Update @Published properties on main thread
+            await MainActor.run {
+                isCloudKitEnabled = false
+                syncStatus = .notStarted
+            }
         }
     }
 

@@ -91,6 +91,9 @@ struct SourceTypePromptMapping {
 class PromptConfigurationManager {
     static let shared = PromptConfigurationManager()
     
+    // Add flag to track if cleanup has been performed
+    private var hasPerformedCleanup = false
+    
     private init() {
         // Verify default prompts on initialization
         Task {
@@ -111,15 +114,14 @@ class PromptConfigurationManager {
             let allDefaultIdentifiers = Set(DefaultPrompts.prompts.flatMap { $0.identifiers })
             
             // Detailed verification for each prompt identifier
-            for identifier in allDefaultIdentifiers {
-                let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-                fetchRequest.predicate = NSPredicate(format: "identifier == %d", identifier)
-                
-                let count = try context.count(for: fetchRequest)
-                
-                if count == 0 {
-                    // Find the prompt in DefaultPrompts
-                    if let prompt = DefaultPrompts.prompts.first(where: { $0.identifiers.contains(identifier) }) {
+            for prompt in DefaultPrompts.prompts {
+                for identifier in prompt.identifiers {
+                    let identifierFetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+                    identifierFetchRequest.predicate = NSPredicate(format: "identifier == %d", identifier)
+                    let existingPrompts = try context.fetch(identifierFetchRequest)
+                    
+                    if existingPrompts.isEmpty {
+                        // Create the missing prompt
                         let newPrompt = Prompt(context: context)
                         newPrompt.id = UUID()
                         newPrompt.identifier = Int16(identifier)
@@ -132,28 +134,17 @@ class PromptConfigurationManager {
                         newPrompt.createdAt = Date()
                         newPrompt.updatedAt = Date()
                         newPrompt.recordStatus = 0
-                        
-                        // Save immediately after creating each prompt
-                        do {
-                            try context.save()
-                            
-                            // Verify the save immediately
-                            let verifyRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-                            verifyRequest.predicate = NSPredicate(format: "identifier == %d", identifier)
-                            _ = try context.count(for: verifyRequest)
-                        } catch {
-                            // Handle error silently
-                        }
+                        newPrompt.isArchived = false // Set isArchived to false for default prompts
                     }
                 }
             }
             
             // Final verification of all prompts
             let finalFetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-            _ = try context.fetch(finalFetchRequest)
+            let finalResults = try context.fetch(finalFetchRequest)
             
         } catch {
-            // Handle error silently
+            print("🔧 PromptConfigurationManager: Error in verifyAndIngestDefaultPrompts: \(error)")
         }
     }
     
@@ -178,6 +169,35 @@ class PromptConfigurationManager {
         return processedText
     }
     
+    /// Debug function to check for duplicate prompts in the database
+    func checkForDuplicatePrompts(context: NSManagedObjectContext) -> Bool {
+        let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Prompt.identifier, ascending: true)]
+        
+        do {
+            let allPrompts = try context.fetch(fetchRequest)
+            
+            // Group by identifier
+            let groupedPrompts = Dictionary(grouping: allPrompts) { $0.identifier }
+            
+            // Check for duplicates, but exclude user prompts from the duplicate check
+            for (identifier, prompts) in groupedPrompts {
+                if identifier == 999 {
+                    continue
+                }
+                
+                if prompts.count > 1 {
+                    return true
+                }
+            }
+            
+            return false
+        } catch {
+            print("🔧 PromptConfigurationManager: Error checking for duplicates: \(error)")
+            return false
+        }
+    }
+    
     /// Returns the appropriate prompts based on source type and sample mode
     /// - Parameters:
     ///   - sourceType: The source type (general, contact, note)
@@ -186,6 +206,20 @@ class PromptConfigurationManager {
     ///   - contact: Optional contact for dynamic text replacement
     /// - Returns: Array of prompts that match the criteria
     func getPromptsForSourceType(_ sourceType: String, sampleMode: String? = nil, context: NSManagedObjectContext, contact: Contact? = nil) -> [PromptDisplayable] {
+        // Check for duplicates first
+        let hasDuplicates = checkForDuplicatePrompts(context: context)
+        
+        // If duplicates are found and we haven't cleaned up yet, clean them up synchronously
+        if hasDuplicates && !hasPerformedCleanup {
+            hasPerformedCleanup = true
+            
+            // Run cleanup synchronously to prevent returning duplicates
+            cleanupDuplicatePromptsSync(context: context)
+            
+            // Refresh the context to ensure we get the cleaned data
+            context.refreshAllObjects()
+        }
+        
         // Ensure we're using the main context
         let mainContext = context.concurrencyType == .mainQueueConcurrencyType ? context : context.parent ?? context
         
@@ -200,6 +234,7 @@ class PromptConfigurationManager {
         var prompts: [PromptDisplayable] = []
         for identifier in availableIdentifiers {
             let fetchedPrompts = fetchPromptsWithIdentifier(identifier, context: mainContext)
+            
             // Process each prompt's display text
             let processedPrompts = fetchedPrompts.compactMap { prompt -> PromptDisplayable? in
                 if let adapter = prompt as? PromptAdapter {
@@ -217,7 +252,7 @@ class PromptConfigurationManager {
         }
         
         // Sort prompts by order and createdAt
-        return prompts.sorted { (p1, p2) in
+        let sortedPrompts = prompts.sorted { (p1, p2) in
             if let adapter1 = p1 as? PromptAdapter,
                let adapter2 = p2 as? PromptAdapter {
                 if adapter1.order != adapter2.order {
@@ -227,12 +262,14 @@ class PromptConfigurationManager {
             }
             return false
         }
+        
+        return sortedPrompts
     }
     
     /// Fetches all prompts from CoreData by identifier
     private func fetchPromptsWithIdentifier(_ identifier: Int, context: NSManagedObjectContext) -> [PromptDisplayable] {
         let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "identifier == %d", identifier)
+        fetchRequest.predicate = NSPredicate(format: "identifier == %d AND (isArchived == NO OR isArchived == nil)", identifier)
         
         // Add sort descriptors to order by order (ascending) and updatedAt (descending)
         fetchRequest.sortDescriptors = [
@@ -262,6 +299,7 @@ class PromptConfigurationManager {
             // Always return PromptAdapter instances
             return results.map { PromptAdapter(prompt: $0) }
         } catch {
+            print("🔧 PromptConfigurationManager: Error fetching prompts with identifier \(identifier): \(error)")
             return []
         }
     }
@@ -316,13 +354,18 @@ class PromptConfigurationManager {
         do {
             let context = try await CoreDataManager.shared.viewContext
             
-            // Clear existing prompts
+            // First, preserve user-created prompts (identifier = 999)
+            let userPromptsFetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+            userPromptsFetchRequest.predicate = NSPredicate(format: "identifier == 999")
+            let userPrompts = try context.fetch(userPromptsFetchRequest)
+            
+            // Clear existing prompts (this will also delete user prompts, but we'll restore them)
             let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Prompt.fetchRequest()
             let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
             try context.execute(deleteRequest)
             try context.save()
             
-            // Re-ingest all prompts
+            // Re-ingest all default prompts
             for prompt in DefaultPrompts.prompts {
                 for identifier in prompt.identifiers {
                     let newPrompt = Prompt(context: context)
@@ -335,7 +378,26 @@ class PromptConfigurationManager {
                     newPrompt.order = Int16(prompt.order)
                     newPrompt.createdAt = Date()
                     newPrompt.updatedAt = Date()
+                    newPrompt.recordStatus = 0
+                    newPrompt.isArchived = false // Set isArchived to false for default prompts
                 }
+            }
+            
+            // Restore user-created prompts
+            for userPrompt in userPrompts {
+                let restoredPrompt = Prompt(context: context)
+                restoredPrompt.id = userPrompt.id
+                restoredPrompt.identifier = userPrompt.identifier
+                restoredPrompt.name = userPrompt.name
+                restoredPrompt.intro = userPrompt.intro
+                restoredPrompt.display = userPrompt.display
+                restoredPrompt.content = userPrompt.content
+                restoredPrompt.type = userPrompt.type
+                restoredPrompt.order = userPrompt.order
+                restoredPrompt.createdAt = userPrompt.createdAt
+                restoredPrompt.updatedAt = userPrompt.updatedAt
+                restoredPrompt.recordStatus = userPrompt.recordStatus
+                restoredPrompt.isArchived = userPrompt.isArchived // Preserve isArchived status
             }
             
             try context.save()
@@ -346,10 +408,102 @@ class PromptConfigurationManager {
                 NSSortDescriptor(keyPath: \Prompt.order, ascending: true),
                 NSSortDescriptor(keyPath: \Prompt.updatedAt, ascending: false)
             ]
-            _ = try context.fetch(verifyRequest)
+            let finalResults = try context.fetch(verifyRequest)
             
         } catch {
-            // Handle error silently
+            print("🔧 PromptConfigurationManager: Error in forceReingestDefaultPrompts: \(error)")
+        }
+    }
+    
+    /// Clean up duplicate prompts in the database synchronously, keeping only one prompt per identifier
+    func cleanupDuplicatePromptsSync(context: NSManagedObjectContext) {
+        let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+        fetchRequest.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Prompt.identifier, ascending: true),
+            NSSortDescriptor(keyPath: \Prompt.createdAt, ascending: true) // Keep the oldest one
+        ]
+        
+        do {
+            let allPrompts = try context.fetch(fetchRequest)
+            
+            // Group by identifier
+            let groupedPrompts = Dictionary(grouping: allPrompts) { $0.identifier }
+            
+            var deletedCount = 0
+            
+            for (identifier, prompts) in groupedPrompts {
+                // Skip deduplication for user-created prompts (identifier = 999)
+                if identifier == 999 {
+                    continue
+                }
+                
+                if prompts.count > 1 {
+                    // Keep the first (oldest) prompt, delete the rest
+                    let promptsToDelete = Array(prompts.dropFirst())
+                    
+                    for prompt in promptsToDelete {
+                        context.delete(prompt)
+                        deletedCount += 1
+                    }
+                }
+            }
+            
+            if deletedCount > 0 {
+                try context.save()
+                
+                // Verify cleanup
+                let verifyRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+                let finalCount = try context.count(for: verifyRequest)
+            }
+            
+        } catch {
+            print("🔧 PromptConfigurationManager: Error during cleanup: \(error)")
+        }
+    }
+    
+    /// Clean up duplicate prompts in the database, keeping only one prompt per identifier
+    func cleanupDuplicatePrompts(context: NSManagedObjectContext) async {
+        let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+        fetchRequest.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Prompt.identifier, ascending: true),
+            NSSortDescriptor(keyPath: \Prompt.createdAt, ascending: true) // Keep the oldest one
+        ]
+        
+        do {
+            let allPrompts = try context.fetch(fetchRequest)
+            
+            // Group by identifier
+            let groupedPrompts = Dictionary(grouping: allPrompts) { $0.identifier }
+            
+            var deletedCount = 0
+            
+            for (identifier, prompts) in groupedPrompts {
+                // Skip deduplication for user-created prompts (identifier = 999)
+                if identifier == 999 {
+                    continue
+                }
+                
+                if prompts.count > 1 {
+                    // Keep the first (oldest) prompt, delete the rest
+                    let promptsToDelete = Array(prompts.dropFirst())
+                    
+                    for prompt in promptsToDelete {
+                        context.delete(prompt)
+                        deletedCount += 1
+                    }
+                }
+            }
+            
+            if deletedCount > 0 {
+                try context.save()
+                
+                // Verify cleanup
+                let verifyRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+                let finalCount = try context.count(for: verifyRequest)
+            }
+            
+        } catch {
+            print("🔧 PromptConfigurationManager: Error during cleanup: \(error)")
         }
     }
 } 

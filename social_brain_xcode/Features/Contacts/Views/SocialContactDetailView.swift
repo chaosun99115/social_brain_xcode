@@ -261,10 +261,16 @@ struct SocialContactDetailView: View {
             loadContactInsights()
             // Hide the tab bar
             hideTabBar(true)
+            
+            // Setup notification observers for iCloud sync
+            setupNotificationObservers()
         }
         .onDisappear {
             // Show the tab bar again when leaving this view
             hideTabBar(false)
+            
+            // Cleanup notification observers
+            cleanupNotificationObservers()
         }
         .edgesIgnoringSafeArea(.bottom)
     }
@@ -319,12 +325,12 @@ struct SocialContactDetailView: View {
         isLoading = true
         errorMessage = nil
         
-        // Load notes using ContactManager
+        // Load notes using ContactManager - only active (non-archived) notes
         DispatchQueue.main.async {
-            let allNotes = self.contactManager.getNotesForContact(contactId: contactId)
+            let activeNotes = self.contactManager.getActiveNotesForContact(contactId: contactId)
             
             // Sort notes by date descending
-            self.notes = allNotes.sorted { (note1, note2) -> Bool in
+            self.notes = activeNotes.sorted { (note1, note2) -> Bool in
                 let date1 = note1.createdAt ?? Date.distantPast
                 let date2 = note2.createdAt ?? Date.distantPast
                 return date1 > date2
@@ -357,6 +363,36 @@ struct SocialContactDetailView: View {
         if let updatedContact = contactManager.fetchContact(withId: contactId) {
             currentContact = updatedContact
         }
+    }
+    
+    // MARK: - Notification Observers
+    private func setupNotificationObservers() {
+        // Add observer for iCloud sync refresh notifications
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("RefreshContactsList"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Refresh contact data when iCloud sync completes
+            self.refreshContactData()
+            self.loadContactNotes()
+            self.loadContactInsights()
+        }
+        
+        // Add observer for notes refresh notifications
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("RefreshNotesList"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Refresh contact notes when iCloud sync completes
+            self.loadContactNotes()
+        }
+    }
+    
+    private func cleanupNotificationObservers() {
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshContactsList"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshNotesList"), object: nil)
     }
     
     // MARK: - Basic Info Section

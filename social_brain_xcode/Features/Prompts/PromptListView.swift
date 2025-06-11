@@ -18,6 +18,7 @@ enum PromptMode: String, CaseIterable {
 
 struct PromptListView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.presentationMode) private var presentationMode
     
     let mode: PromptMode
     @FetchRequest private var prompts: FetchedResults<Prompt>
@@ -30,7 +31,7 @@ struct PromptListView: View {
                 NSSortDescriptor(keyPath: \Prompt.order, ascending: true),
                 NSSortDescriptor(keyPath: \Prompt.updatedAt, ascending: false)
             ],
-            predicate: NSPredicate(format: "identifier IN %@", mode.promptIdentifiers),
+            predicate: NSPredicate(format: "identifier IN %@ AND (isArchived == NO OR isArchived == nil)", mode.promptIdentifiers),
             animation: .default
         )
     }
@@ -52,17 +53,27 @@ struct PromptListView: View {
                 }
             }
         }
-        .navigationTitle(mode.rawValue)
+        .navigationTitle(LocalizedStringKey("设置"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 NavigationLink(destination: CreatePromptView()) {
                     Image(systemName: "plus")
+                        .foregroundColor(.green)
                 }
             }
         }
         .onAppear {
-            // No debug logging needed
+            // Refresh the view context to ensure we have the latest data
+            viewContext.refreshAllObjects()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .NSManagedObjectContextDidSave)) { _ in
+            // Refresh when Core Data context is saved
+            viewContext.refreshAllObjects()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("RefreshPromptList"))) { _ in
+            // Refresh when a new prompt is created
+            viewContext.refreshAllObjects()
         }
     }
 }

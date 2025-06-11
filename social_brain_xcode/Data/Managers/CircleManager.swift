@@ -18,6 +18,7 @@ class CircleManager: ObservableObject {
         circle.circleId = UUID()
         circle.name = name
         circle.type = type
+        circle.isArchived = false
         circle.createdAt = Date()
         circle.updatedAt = Date()
         circle.recordStatus = 0 // unsynced
@@ -34,6 +35,7 @@ class CircleManager: ObservableObject {
     // MARK: - Read
     func fetchCircles() -> [Circle] {
         let request: NSFetchRequest<Circle> = Circle.fetchRequest()
+        request.predicate = NSPredicate(format: "isArchived == NO")
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Circle.updatedAt, ascending: false)]
         
         do {
@@ -46,7 +48,7 @@ class CircleManager: ObservableObject {
     
     func fetchCircles(byType type: Int16) -> [Circle] {
         let request: NSFetchRequest<Circle> = Circle.fetchRequest()
-        request.predicate = NSPredicate(format: "type == %d", type)
+        request.predicate = NSPredicate(format: "type == %d AND isArchived == NO", type)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Circle.updatedAt, ascending: false)]
         
         do {
@@ -59,7 +61,7 @@ class CircleManager: ObservableObject {
     
     func fetchCircle(withId circleId: UUID) -> Circle? {
         let request: NSFetchRequest<Circle> = Circle.fetchRequest()
-        request.predicate = NSPredicate(format: "circleId == %@", circleId as CVarArg)
+        request.predicate = NSPredicate(format: "circleId == %@ AND isArchived == NO", circleId as CVarArg)
         request.fetchLimit = 1
         
         do {
@@ -72,7 +74,7 @@ class CircleManager: ObservableObject {
     
     func fetchCircle(withName name: String) -> Circle? {
         let request: NSFetchRequest<Circle> = Circle.fetchRequest()
-        request.predicate = NSPredicate(format: "name == %@", name)
+        request.predicate = NSPredicate(format: "name == %@ AND isArchived == NO", name)
         request.fetchLimit = 1
         
         do {
@@ -124,6 +126,29 @@ class CircleManager: ObservableObject {
         }
     }
     
+    // MARK: - Archive
+    func archiveCircle(circleId: UUID) -> Bool {
+        // Use a different fetch method that doesn't filter by isArchived
+        let request: NSFetchRequest<Circle> = Circle.fetchRequest()
+        request.predicate = NSPredicate(format: "circleId == %@", circleId as CVarArg)
+        request.fetchLimit = 1
+        
+        do {
+            guard let circle = try context.fetch(request).first else { return false }
+            
+            // Archive the circle
+            circle.isArchived = true
+            circle.updatedAt = Date()
+            circle.recordStatus = 0 // mark as unsynced
+            
+            try context.save()
+            return true
+        } catch {
+            print("Error archiving circle: \(error)")
+            return false
+        }
+    }
+    
     // MARK: - Sync Status
     func markCircleAsSynced(circleId: UUID) -> Bool {
         guard let circle = fetchCircle(withId: circleId) else { return false }
@@ -169,7 +194,8 @@ class CircleManager: ObservableObject {
                 try context.save()
             }
             
-            return relationships.compactMap { $0.contacts }
+            // Filter out archived contacts
+            return relationships.compactMap { $0.contacts }.filter { !$0.isArchived }
         } catch {
             print("Error fetching contacts for circle: \(error)")
             return []
@@ -192,9 +218,7 @@ class CircleManager: ObservableObject {
     // MARK: - Contact Count
     func getContactsCount(forCircleId circleId: UUID) -> Int {
         let contacts = getContactsForCircle(circleId: circleId)
-        // Filter out archived contacts for the count
-        let nonArchivedContacts = contacts.filter { !$0.isArchived }
-        return nonArchivedContacts.count
+        return contacts.count
     }
     
     func validateCircleRelationships(_ circle: Circle) throws {
@@ -308,7 +332,8 @@ class CircleManager: ObservableObject {
         request.predicate = NSPredicate(format: "contacts.contactId == %@", contactId as CVarArg)
         do {
             let relationships = try context.fetch(request)
-            return relationships.compactMap { $0.circles }
+            // Filter out archived circles
+            return relationships.compactMap { $0.circles }.filter { !$0.isArchived }
         } catch {
             print("Error fetching circles for contact: \(error)")
             return []
