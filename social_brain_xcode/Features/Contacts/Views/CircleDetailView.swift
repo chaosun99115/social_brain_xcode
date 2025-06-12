@@ -10,7 +10,6 @@ struct CircleDetailView: View {
     @State private var showingAddContact = false
     @State private var showingEditCircleSheet = false
     @State private var showingSocialBrain = false
-    @State private var showingDeleteConfirmation = false
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject private var appModeManager: AppModeManager
@@ -70,27 +69,6 @@ struct CircleDetailView: View {
                 }
             }
         }
-        .overlay(
-            VStack(spacing: 0) {
-                Divider()
-                Button(action: {
-                    showingDeleteConfirmation = true
-                }) {
-                    HStack {
-                        Image(systemName: "trash")
-                            .foregroundColor(.red)
-                        Text("删除圈子")
-                            .foregroundColor(.red)
-                            .font(.body)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color(.systemBackground))
-                }
-            }
-            .background(Color(.systemBackground)),
-            alignment: .bottom
-        )
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("圈子熟人")
         .toolbar {
@@ -127,16 +105,6 @@ struct CircleDetailView: View {
                 self.contacts = nonArchivedContacts
             }
             .environmentObject(appModeManager)
-        }
-        .alert("确认删除圈子", isPresented: $showingDeleteConfirmation) {
-            Button("取消", role: .cancel) {
-                showingDeleteConfirmation = false
-            }
-            Button("删除", role: .destructive) {
-                deleteCircle()
-            }
-        } message: {
-            Text("确认删除圈子吗？此操作无法撤销。")
         }
         .task {
             await loadCircleData()
@@ -189,14 +157,6 @@ struct CircleDetailView: View {
         
         await MainActor.run {
             self.contacts = nonArchivedContacts
-        }
-    }
-    
-    private func deleteCircle() {
-        guard let circleId = circle.circleId else { return }
-        
-        if circleManager.archiveCircle(circleId: circleId) {
-            presentationMode.wrappedValue.dismiss()
         }
     }
     

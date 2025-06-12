@@ -402,13 +402,37 @@ struct SimpleNoteModalView: View {
     
     private func saveNote() {
         if let noteId = noteId {
-            // Update existing note
+            // Update existing note - should handle mentions like new notes
             if !textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                if noteManager.updateNote(noteId: noteId, text: textState.text) {
-                    // Post notification to refresh contacts list so note counts are updated
-                    NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
-                    onSave(textState.text)
-                    dismiss()
+                let mentionsWithType = extractMentionsWithType(from: textState.text)
+                var unmatchedContacts: [String] = []
+                var unmatchedCircles: [String] = []
+                for (type, name) in mentionsWithType {
+                    if type == "contact" {
+                        if ContactManager.shared.fetchContact(withName: name) == nil {
+                            unmatchedContacts.append(name)
+                        }
+                    } else if type == "circle" {
+                        if CircleManager.shared.fetchCircle(withName: name) == nil {
+                            unmatchedCircles.append(name)
+                        }
+                    }
+                }
+                let unmatched = unmatchedContacts + unmatchedCircles
+                if !unmatched.isEmpty {
+                    unmatchedMentions = unmatched
+                    showingMentionConfirmation = true
+                    return
+                } else {
+                    // Use updateNoteWithMentions to properly update relationships
+                    Task {
+                        if await noteManager.updateNoteWithMentions(noteId: noteId, content: textState.text, mentions: mentionsWithType.map { $0.name }) {
+                            // Post notification to refresh contacts list so note counts are updated
+                            NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
+                            onSave(textState.text)
+                            dismiss()
+                        }
+                    }
                 }
             }
         } else {
@@ -444,11 +468,22 @@ struct SimpleNoteModalView: View {
             // Use sample (type 0) for sample mode, regular (type 1) for non-sample mode
             let noteType: NoteType = appModeManager.isSampleMode ? .sample : .regular
             
-            if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: noteType, subType: subType.rawValue, mentions: allMentions) {
-                // Post notification to refresh contacts list so note counts are updated
-                NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
-                onSave(textState.text)
-                dismiss()
+            if let noteId = noteId {
+                // Update existing note with mentions
+                if await noteManager.updateNoteWithMentions(noteId: noteId, content: textState.text, mentions: allMentions) {
+                    // Post notification to refresh contacts list so note counts are updated
+                    NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
+                    onSave(textState.text)
+                    dismiss()
+                }
+            } else {
+                // Create new note with mentions
+                if let _ = await noteManager.createNoteWithMentions(content: textState.text, type: noteType, subType: subType.rawValue, mentions: allMentions) {
+                    // Post notification to refresh contacts list so note counts are updated
+                    NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
+                    onSave(textState.text)
+                    dismiss()
+                }
             }
         }
     }

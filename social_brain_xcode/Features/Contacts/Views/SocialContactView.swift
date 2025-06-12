@@ -116,7 +116,7 @@ struct SocialContactView: View {
     
     var body: some View {
         NavigationView {
-            ZStack {
+            ZStack(alignment: .bottomTrailing) {
                 Color.primaryBackground
                     .ignoresSafeArea()
                 
@@ -181,29 +181,26 @@ struct SocialContactView: View {
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .animation(.easeInOut(duration: 0.4), value: selectedTab)
-                    
-                    // Floating Action Button - Moved inside VStack
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            if selectedTab == 0 {
-                                showingAddContact = true
-                            } else {
-                                showingAddCircleSheet = true
-                            }
-                        }) {
-                            Image(systemName: "person.badge.plus")
-                                .font(.system(size: 22, weight: .bold, design: .default))
-                                .foregroundColor(.white)
-                                .frame(width: 56, height: 56)
-                                .background(Color.green)
-                                .clipShape(SwiftUI.Circle())
-                                .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
-                        }
-                        .padding(.trailing, 16)
-                        .padding(.bottom, 16)
-                    }
                 }
+                
+                // Floating Action Button as overlay
+                Button(action: {
+                    if selectedTab == 0 {
+                        showingAddContact = true
+                    } else {
+                        showingAddCircleSheet = true
+                    }
+                }) {
+                    Image(systemName: "person.badge.plus")
+                        .font(.system(size: 22, weight: .bold, design: .default))
+                        .foregroundColor(.white)
+                        .frame(width: 56, height: 56)
+                        .background(Color.green)
+                        .clipShape(SwiftUI.Circle())
+                        .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
+                }
+                .padding(.trailing, 16)
+                .padding(.bottom, 16)
                 
                 // Show overlay spinner only during refresh
                 if isRefreshing && !isLoading {
@@ -481,9 +478,6 @@ struct ContactListView: View {
                 .refreshable {
                     await onRefresh()
                 }
-                .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: getTabBarHeight())
-                }
                 .onAppear {
                     // Force layout update when list appears
                     DispatchQueue.main.async {
@@ -751,9 +745,6 @@ struct CircleListView: View {
                 .listStyle(.plain)
                 .refreshable {
                     await onRefresh()
-                }
-                .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: getTabBarHeight())
                 }
                 .onAppear {
                     // Force layout update when list appears

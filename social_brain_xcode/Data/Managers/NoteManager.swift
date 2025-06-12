@@ -295,9 +295,10 @@ class NoteManager: ObservableObject {
     func deleteNote(noteId: UUID) -> Bool {
         guard let note = fetchNote(withId: noteId) else { return false }
         
-        // Soft delete by marking as deleted
-        note.recordStatus = 2 // deleted
+        // Soft delete by marking as archived
+        note.isArchived = true
         note.updatedAt = Date()
+        note.recordStatus = 0 // mark as unsynced
         
         do {
             try context.save()

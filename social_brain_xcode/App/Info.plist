@@ -2,6 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleExecutable</key>
+	<string></string>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIImageName</key>
+		<string>AppIcon</string>
+	</dict>
 	<key>CFBundleIdentifier</key>
 	<string>社交大脑</string>
 	<key>CFBundleName</key>
@@ -16,6 +23,8 @@
 	<string>en</string>
 	<key>LSHasLocalizedDisplayName</key>
 	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>AppIcon</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>This app uses Face ID to protect your data</string>
 	<key>UIApplicationSceneManifest</key>
@@ -24,6 +33,19 @@
 		<false/>
 		<key>UISceneConfigurations</key>
 		<dict>
+			<key>UIWindowSceneSessionRoleExternalDisplayNonInteractive</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string></string>
+					<key>UISceneDelegateClassName</key>
+					<string></string>
+					<key>UISceneConfigurationName</key>
+					<string></string>
+					<key>UISceneStoryboardFile</key>
+					<string></string>
+				</dict>
+			</array>
 			<key>UIWindowSceneSessionRoleApplication</key>
 			<array>
 				<dict>

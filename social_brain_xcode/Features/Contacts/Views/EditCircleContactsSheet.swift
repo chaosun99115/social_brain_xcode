@@ -33,6 +33,9 @@ struct EditCircleContactsSheet: View {
     /// Circle name
     @State private var circleName: String
     
+    /// Delete confirmation state
+    @State private var showingDeleteConfirmation = false
+    
     /// Custom background color
     private let backgroundColor = Color(red: 246/255, green: 246/255, blue: 251/255)
     
@@ -130,6 +133,26 @@ struct EditCircleContactsSheet: View {
                 }
                 
                 Spacer()
+                
+                // Delete button at the bottom
+                VStack(spacing: 0) {
+                    Divider()
+                    Button(action: {
+                        showingDeleteConfirmation = true
+                    }) {
+                        HStack {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                            Text("删除圈子")
+                                .foregroundColor(.red)
+                                .font(.body)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color(.systemBackground))
+                    }
+                }
+                .background(Color(.systemBackground))
             }
             .background(backgroundColor.ignoresSafeArea())
             .navigationTitle("编辑圈子")
@@ -146,6 +169,16 @@ struct EditCircleContactsSheet: View {
                         updateCircle()
                     }
                 }
+            }
+            .alert("确认删除圈子", isPresented: $showingDeleteConfirmation) {
+                Button("取消", role: .cancel) {
+                    showingDeleteConfirmation = false
+                }
+                Button("删除", role: .destructive) {
+                    deleteCircle()
+                }
+            } message: {
+                Text("确认删除圈子吗？此操作无法撤销。")
             }
             .onAppear {
                 loadContacts()
@@ -210,6 +243,15 @@ struct EditCircleContactsSheet: View {
             allContacts.first(where: { $0.contactId == id }) 
         })
         isPresented = false
+    }
+    
+    /// Deletes the circle by setting isArchived to true
+    private func deleteCircle() {
+        guard let circleId = circle.circleId else { return }
+        
+        if circleManager.archiveCircle(circleId: circleId) {
+            isPresented = false
+        }
     }
 }
 
