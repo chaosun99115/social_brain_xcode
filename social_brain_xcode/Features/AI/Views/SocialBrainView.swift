@@ -62,6 +62,9 @@ struct SocialBrainView: View {
     @State private var isCustomQuestion: Bool = false
     @State private var currentPromptIdentifier: Int = 0
     
+    // Add streaming task state
+    @State private var streamingTask: Task<Void, Never>? = nil
+    
     // Add helper method to get provider
     private func getSampleProvider() -> SampleModeProvider? {
         guard appModeManager.isSampleMode,
@@ -391,6 +394,9 @@ struct SocialBrainView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         if isConversationActive {
+                            // Cancel streaming task if running
+                            streamingTask?.cancel()
+                            streamingTask = nil
                             // Reset conversation state and go back to default page
                             withAnimation {
                                 isConversationActive = false
@@ -495,32 +501,25 @@ struct SocialBrainView: View {
         let trimmedText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
         let limitedText = String(trimmedText.prefix(1000))
-        
-        // Use the full input text as user question - extraction is handled by the flows
         let userQuestion = limitedText
-        
         if !isConversationActive {
             isConversationActive = true
         }
-        
-        // Add user message
         let userMessage = SocialBrainMessage(
             content: userQuestion,
             isFromUser: true,
             timestamp: Date()
         )
         messages.append(userMessage)
-        
         inputText = ""
         isLoading = true
-        
-        Task {
+        // Cancel any previous streaming task
+        streamingTask?.cancel()
+        streamingTask = Task {
             do {
                 guard let chatService = aiServiceManager.getChatService() else {
                     throw AIChatServiceError.unauthorized
                 }
-                
-                // Use appropriate prompt identifier based on message source
                 let promptPair = try await promptGenerator.generatePrompts(
                     sourceType: sourceType,
                     sourceAction: isCustomQuestion ? "chat" : "question",
@@ -530,34 +529,20 @@ struct SocialBrainView: View {
                     promptDisplay: userQuestion,
                     promptIdentifier: isCustomQuestion ? 0 : currentPromptIdentifier
                 )
-                
-                // Prepare messages with both prompts
                 var chatMessages = aiServiceManager.convertToChatMessages(messages)
-                
-                // Always add system prompt to maintain conversation context
-                // The system prompt provides essential instructions and context for the AI
                 chatMessages.insert(AIChatMessage(role: .system, content: promptPair.systemPrompt), at: 0)
-                
-                // If we have a user prompt, use it to modify the user's message
                 if let userPrompt = promptPair.userPrompt {
                     let enhancedUserMessage = AIChatMessage(
                         role: .user,
                         content: "\(userPrompt)\n\nUser Question: \(userQuestion)"
                     )
-                    // Replace the last user message with the enhanced version
                     if let lastIndex = chatMessages.lastIndex(where: { $0.role == .user }) {
                         chatMessages[lastIndex] = enhancedUserMessage
                     }
                 }
-                
-                // System prompt updates are now handled automatically by the flows
-                // No additional processing needed here
-                
-                // Check if we should use streaming (Doubao or DeepSeek)
                 if let doubaoService = chatService as? DoubaoChatService {
                     isStreaming = true
                     currentStreamingMessage = ""
-                    // Create a temporary message for streaming
                     let streamingMessage = SocialBrainMessage(
                         content: "",
                         isFromUser: false,
@@ -619,10 +604,15 @@ struct SocialBrainView: View {
                     showError = true
                 }
             }
+            // Clear the task reference when done
+            streamingTask = nil
         }
     }
     
     private func startNewConversation() {
+        // Cancel streaming task if running
+        streamingTask?.cancel()
+        streamingTask = nil
         withAnimation {
             isConversationActive = false
             messages.removeAll()
