@@ -189,7 +189,7 @@ class AddTopicFunction: PromptUpdateFunction {
 class AddContactFunction: PromptUpdateFunction {
     func update(_ prompt: String, userInput: String, sampleMode: String?, sourceType: String, sourceId: String, contact: Contact?) async throws -> String {
         // Extract contact info based on sample mode and type
-        let contactInfo = extractContactInfo(contact: contact ?? Contact(), sampleMode: sampleMode, sourceType: sourceType, sourceId: sourceId)
+        let contactInfo = extractContactInfo(contact: contact, sampleMode: sampleMode, sourceType: sourceType, sourceId: sourceId)
         
         // Check if contact section already exists and replace it
         if prompt.contains("==== 熟人信息如下 ====") {
@@ -204,7 +204,7 @@ class AddContactFunction: PromptUpdateFunction {
         return prompt + contactInfo
     }
     
-    private func extractContactInfo(contact: Contact, sampleMode: String?, sourceType: String, sourceId: String) -> String {
+    private func extractContactInfo(contact: Contact?, sampleMode: String?, sourceType: String, sourceId: String) -> String {
         // Determine contact type based on sample mode
         let contactType: Int16
         if let mode = sampleMode, !mode.isEmpty {
@@ -217,7 +217,7 @@ class AddContactFunction: PromptUpdateFunction {
         let contacts = ContactManager.shared.fetchContacts(byType: contactType)
         
         // Format contacts for the prompt
-        if contacts.count > 1 {
+        if contacts.count > 0 {
             let formattedContacts = contacts.compactMap { contact -> String? in
                 guard let name = contact.name,
                       !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -251,18 +251,22 @@ class AddContactFunction: PromptUpdateFunction {
                 return contactInfo
             }.joined(separator: "\n")
             
-            return """
-            
-            \n\n==== 熟人信息如下 ====
-            \(formattedContacts)
-            """
-        } else {
-            return """
-            
-            \n\n==== 熟人信息如下 ====
-            暂时没有记录
-            """
+            // Check if we have any valid formatted contacts
+            if !formattedContacts.isEmpty {
+                return """
+                
+                \n\n==== 熟人信息如下 ====
+                \(formattedContacts)
+                """
+            }
         }
+        
+        // Return empty state message
+        return """
+        
+        \n\n==== 熟人信息如下 ====
+        暂时没有记录
+        """
     }
 }
 

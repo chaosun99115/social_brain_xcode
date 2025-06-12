@@ -33,7 +33,6 @@ class PromptService {
         
         do {
             userPrompts = try context.fetch(userPromptsFetchRequest)
-            logger.debug("Preserving \(userPrompts.count) user-created prompts before re-ingestion")
         } catch {
             logger.error("Error fetching user prompts: \(error.localizedDescription)")
             userPrompts = []
@@ -61,7 +60,6 @@ class PromptService {
         
         do {
             try context.save()
-            logger.debug("Successfully re-ingested default prompts and restored \(userPrompts.count) user prompts")
         } catch {
             logger.error("Error restoring user prompts: \(error.localizedDescription)")
         }
@@ -90,7 +88,6 @@ class PromptService {
         
         do {
             try context.save()
-            logger.debug("Successfully ingested default prompts")
         } catch {
             logger.error("Error ingesting default prompts: \(error.localizedDescription)")
         }
