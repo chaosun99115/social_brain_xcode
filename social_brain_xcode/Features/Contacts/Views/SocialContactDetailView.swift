@@ -8,7 +8,6 @@ struct SocialContactDetailView: View {
     @EnvironmentObject var appModeManager: AppModeManager
     @StateObject private var contactManager = ContactManager.shared
     @StateObject private var insightManager = ContactInsightManager.shared
-    @State private var activeTab: TabType = .basicInfo
     @State private var notes: [Note] = []
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
@@ -50,66 +49,24 @@ struct SocialContactDetailView: View {
         )
     }
     
-    enum TabType: String, CaseIterable {
-        case basicInfo = "基本信息"
-        case notes = "相关笔记"
-        
-        var localizedName: String {
-            switch self {
-            case .basicInfo: return "基本信息"
-            case .notes: return "相关笔记"
-            }
-        }
-    }
-    
     var body: some View {
         ZStack {
             Color.primaryBackground
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Tab selector using TabButton component
-                HStack(spacing: 0) {
-                    TabButton(
-                        title: "基本信息",
-                        isSelected: activeTab == .basicInfo,
-                        action: { 
-                            withAnimation(.easeInOut(duration: 0.4)) { 
-                                activeTab = .basicInfo 
-                            }
-                        }
-                    )
-                    
-                    TabButton(
-                        title: "相关笔记",
-                        isSelected: activeTab == .notes,
-                        action: { 
-                            withAnimation(.easeInOut(duration: 0.4)) { 
-                                activeTab = .notes 
-                            }
-                        }
-                    )
-                }
-                .padding(.horizontal, 8)
-                .padding(.top, 2)
-                
-                // TabView for content with swipe gesture support
-                TabView(selection: $activeTab) {
-                    // Basic Info Tab
-                    ScrollView {
+                // Single scrollable content view
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Basic Info Section
                         basicInfoSectionView
-                    }
-                    .tag(TabType.basicInfo)
-                    
-                    // Notes Tab
-                    ScrollView {
+                        
+                        // Notes Section
                         notesSectionView
                     }
-                    .tag(TabType.notes)
+                    .padding(.top, 16)
+                    .padding(.bottom, 100) // Extra padding for bottom toolbar
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.easeInOut(duration: 0.4), value: activeTab)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
                 // Fixed bottom toolbar that respects safe areas
                 VStack(spacing: 0) {
@@ -141,9 +98,9 @@ struct SocialContactDetailView: View {
             .gesture(
                 DragGesture()
                     .onChanged { value in
-                        // Only allow dragging from the left edge
+                        // Only allow dragging from the left edge - increased from 50 to 100 for easier triggering
                         let startLocation: CGPoint = value.startLocation
-                        if startLocation.x < 50 {
+                        if startLocation.x < 100 {
                             isDragging = true
                             // Limit drag to positive values (rightward movement)
                             dragOffset = max(0, value.translation.width)
@@ -197,26 +154,6 @@ struct SocialContactDetailView: View {
                             .font(.system(size: 17))
                     }
                     .foregroundColor(.accentColor)
-                }
-            }
-            
-            ToolbarItem(placement: .navigationBarTrailing) {
-                if activeTab == .notes {
-                    Button(action: {
-                        showingNoteModal = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.green)
-                    }
-                } else {
-                    Button(action: {
-                        showingEditContactSheet = true
-                    }) {
-                        Text("编辑")
-                            .font(.system(size: 17))
-                            .foregroundColor(.green)
-                    }
                 }
             }
         }
@@ -398,70 +335,97 @@ struct SocialContactDetailView: View {
     // MARK: - Basic Info Section
     private var basicInfoSectionView: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Name Field - Always show since it's required
-            ContactInfoField(
-                placeholder: "姓名",
-                text: contact.name,
-                isMultiline: false
-            )
-            .padding(.top, 24)
-            
-            Divider()
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-            
-            // Telephone Field - Show with placeholder if nil
-            ContactInfoField(
-                placeholder: "电话",
-                text: contact.tel,
-                isMultiline: false
-            )
-            
-            Divider()
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-            
-            // Birthday Field - Show with placeholder if nil
-            VStack(alignment: .leading, spacing: 0) {
-                Text("生日")
-                    .foregroundColor(.secondary)
-                    .font(.subheadline)
-                    .padding(.top, 12)
-                    .padding(.leading, 16)
+            // Section Header
+            HStack {
+                Text("基本信息")
+                    .font(.headline)
+                    .foregroundColor(.primaryText)
                 
-                HStack {
-                    if let birthday = contact.birthday {
-                        Text(dateFormatter.string(from: birthday))
-                            .foregroundColor(.primary)
-                            .font(.body)
-                    } else {
-                        Text("未设置")
-                            .foregroundColor(.secondary)
-                            .font(.body)
-                    }
-                    Spacer()
+                Spacer()
+                
+                Button(action: {
+                    showingEditContactSheet = true
+                }) {
+                    Text("编辑")
+                        .font(.subheadline)
+                        .foregroundColor(.green)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .frame(height: 44)
             }
-            .background(Color(.systemBackground))
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
             
-            Divider()
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-            
-            // Memo Section - Always show but with placeholder if empty
-            ContactInfoField(
-                placeholder: "备注",
-                text: contact.memo,
-                isMultiline: true,
-                defaultHeight: 60
+            // Content
+            VStack(alignment: .leading, spacing: 0) {
+                // Name Field - Always show since it's required
+                CompactContactInfoField(
+                    placeholder: "姓名",
+                    text: contact.name,
+                    isMultiline: false
+                )
+                .padding(.top, 12)
+                
+                Divider()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 2)
+                
+                // Telephone Field - Show with placeholder if nil
+                CompactContactInfoField(
+                    placeholder: "电话",
+                    text: contact.tel,
+                    isMultiline: false
+                )
+                
+                Divider()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 2)
+                
+                // Birthday Field - Show with placeholder if nil
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("生日")
+                        .foregroundColor(.secondary)
+                        .font(.subheadline)
+                        .padding(.top, 6)
+                        .padding(.leading, 16)
+                    
+                    HStack {
+                        if let birthday = contact.birthday {
+                            Text(dateFormatter.string(from: birthday))
+                                .foregroundColor(.primary)
+                                .font(.subheadline)
+                        } else {
+                            Text("未设置")
+                                .foregroundColor(.secondary)
+                                .font(.subheadline)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .frame(height: 28)
+                }
+                .background(Color(.systemBackground))
+                
+                Divider()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 2)
+                
+                // Memo Section - Always show but with placeholder if empty
+                CompactContactInfoField(
+                    placeholder: "备注",
+                    text: contact.memo,
+                    isMultiline: true,
+                    defaultHeight: 40
+                )
+            }
+            .background(Color.cardBackground)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
             )
-            
-            Spacer()
+            .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
         }
-        .padding(.horizontal, 0)
+        .padding(.horizontal, 16)
     }
     
     // Add date formatter for birthday display
@@ -474,46 +438,66 @@ struct SocialContactDetailView: View {
     
     // MARK: - Notes Section
     private var notesSectionView: some View {
-        VStack {
-            if isLoading {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle())
-                    .scaleEffect(1.5)
-                    .padding()
-            } else if let error = errorMessage {
-                Text(error)
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .padding()
+        VStack(alignment: .leading, spacing: 0) {
+            // Section Header
+            HStack {
+                Text("相关笔记")
+                    .font(.headline)
+                    .foregroundColor(.primaryText)
                 
-                Button("Retry") {
-                    loadContactNotes()
-                }
-                .padding()
-            } else if notes.isEmpty {
-                VStack(spacing: 12) {
-                    Spacer()
-                    Text("还没有关于\(contact.name ?? "该联系人")的笔记")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ForEach(notes, id: \.noteId) { note in
-                    NavigationLink(destination: SocialNoteDetailView(note: note)) {
-                        NoteCardView(note: note)
-                    }
-                    .buttonStyle(PlainButtonStyle())
+                Spacer()
+                
+                Button(action: {
+                    showingNoteModal = true
+                }) {
+                    Text("新增笔记")
+                        .font(.subheadline)
+                        .foregroundColor(.green)
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
             
-            // Spacer at the bottom for better scrolling
-            Spacer().frame(height: 40)
+            // Content
+            VStack {
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .scaleEffect(1.5)
+                        .padding()
+                } else if let error = errorMessage {
+                    Text(error)
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .padding()
+                    
+                    Button("Retry") {
+                        loadContactNotes()
+                    }
+                    .padding()
+                } else if notes.isEmpty {
+                    VStack(spacing: 12) {
+                        Text("还没有关于\(contact.name ?? "该联系人")的笔记")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 40)
+                } else {
+                    ForEach(notes, id: \.noteId) { note in
+                        NavigationLink(destination: SocialNoteDetailView(note: note)) {
+                            NoteCardView(note: note)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+            }
+            .background(Color.cardBackground)
+            .cornerRadius(12)
         }
-        .padding(.top, 16)
+        .padding(.horizontal, 16)
     }
     
     // MARK: - Mock Data
@@ -616,14 +600,13 @@ struct NoteCardView: View {
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
         .shadow(color: Color.primaryText.opacity(0.05), radius: 2, x: 0, y: 1)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 8)
                 .stroke(Color.divider, lineWidth: 0.5)
         )
-        .padding(.horizontal, 16)
         .padding(.bottom, 8)
     }
     
@@ -933,6 +916,73 @@ struct ContactInfoField: View {
                         .frame(height: minHeight, alignment: .leading)
                         .padding(.horizontal, horizontalPadding)
                         .padding(.vertical, 4)
+                        .background(Color.clear)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Compact Contact Info Field
+struct CompactContactInfoField: View {
+    let placeholder: String
+    let text: String?
+    let isMultiline: Bool
+    let defaultHeight: CGFloat?
+    
+    // Constants for compact sizing
+    private let minHeight: CGFloat = 32
+    private let maxHeight: CGFloat = 120
+    private let horizontalPadding: CGFloat = 16
+    private let verticalPadding: CGFloat = 8
+    
+    init(placeholder: String, text: String?, isMultiline: Bool, defaultHeight: CGFloat? = nil) {
+        self.placeholder = placeholder
+        self.text = text
+        self.isMultiline = isMultiline
+        self.defaultHeight = defaultHeight
+    }
+    
+    private var displayText: String {
+        let trimmedText = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmedText.isEmpty ? "未设置" : trimmedText
+    }
+    
+    private var isEmpty: Bool {
+        let trimmedText = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmedText.isEmpty
+    }
+    
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            // Background
+            Color(.systemBackground)
+                .cornerRadius(0)
+            
+            VStack(alignment: .leading, spacing: 0) {
+                // Fixed label - keep original size
+                Text(placeholder)
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+                    .padding(.top, verticalPadding)
+                    .padding(.leading, horizontalPadding)
+                
+                // Text display area - make content smaller
+                if isMultiline {
+                    Text(displayText)
+                        .font(.subheadline)
+                        .foregroundColor(isEmpty ? .secondary : .primary)
+                        .frame(minHeight: defaultHeight ?? minHeight, maxHeight: maxHeight, alignment: .topLeading)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.vertical, 2)
+                        .background(Color.clear)
+                } else {
+                    Text(displayText)
+                        .font(.subheadline)
+                        .foregroundColor(isEmpty ? .secondary : .primary)
+                        .frame(height: minHeight, alignment: .leading)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.vertical, 2)
                         .background(Color.clear)
                 }
             }
