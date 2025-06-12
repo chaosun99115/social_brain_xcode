@@ -84,7 +84,7 @@ class ContactManager: ObservableObject {
     
     func fetchContact(withName name: String) -> Contact? {
         let request: NSFetchRequest<Contact> = Contact.fetchRequest()
-        request.predicate = NSPredicate(format: "name == %@", name)
+        request.predicate = NSPredicate(format: "name == %@ AND (isArchived == NO OR isArchived == nil)", name)
         request.fetchLimit = 1
         
         do {

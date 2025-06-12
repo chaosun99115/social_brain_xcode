@@ -18,6 +18,19 @@ struct SocialContactView: View {
     @State private var showingConfigurationSheet = false
     @State private var isViewActive = false
     
+    // Drag-to-back gesture state
+    @State private var dragOffset: CGFloat = 0
+    @State private var isDragging = false
+    @Environment(\.presentationMode) var presentationMode
+    
+    // Sample mode state
+    @State private var showingSampleDialog = false
+    @State private var showingCreateContact = false // Placeholder for create action
+    @State private var isImportingSample = false
+    @State private var errorMessageSample: String? = nil
+    @Environment(\.managedObjectContext) private var viewContext
+    @State private var refreshTrigger = false
+    
     // Fetch contacts from CoreData (initial load)
     private func loadContacts() async {
         // Only set isLoading for initial load
@@ -182,6 +195,38 @@ struct SocialContactView: View {
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .animation(.easeInOut(duration: 0.4), value: selectedTab)
                 }
+                .offset(x: dragOffset)
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            // Only allow dragging from the left edge (first 50 points)
+                            let startLocation = value.startLocation
+                            if startLocation.x < 50 && value.translation.width > 0 {
+                                isDragging = true
+                                // Limit drag to positive values (rightward movement)
+                                dragOffset = min(value.translation.width, UIScreen.main.bounds.width * 0.3)
+                            }
+                        }
+                        .onEnded { value in
+                            isDragging = false
+                            let threshold: CGFloat = 100
+                            
+                            if dragOffset > threshold {
+                                // Dismiss the view
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    dragOffset = UIScreen.main.bounds.width
+                                }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    presentationMode.wrappedValue.dismiss()
+                                }
+                            } else {
+                                // Snap back to original position
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    dragOffset = 0
+                                }
+                            }
+                        }
+                )
                 
                 // Floating Action Button as overlay
                 Button(action: {
@@ -209,6 +254,18 @@ struct SocialContactView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle())
                         .scaleEffect(1.5)
+                }
+                
+                // Visual feedback during drag
+                if isDragging && dragOffset > 0 {
+                    HStack {
+                        // Semi-transparent overlay on the left
+                        Color.black.opacity(0.3 * (dragOffset / UIScreen.main.bounds.width))
+                            .frame(width: dragOffset)
+                            .ignoresSafeArea()
+                        
+                        Spacer()
+                    }
                 }
             }
             .navigationTitle("社交关系")
@@ -310,13 +367,6 @@ struct SocialContactView: View {
             }
         }
     }
-    
-    @State private var showingSampleDialog = false
-    @State private var showingCreateContact = false // Placeholder for create action
-    @State private var isImportingSample = false
-    @State private var errorMessageSample: String? = nil
-    @Environment(\.managedObjectContext) private var viewContext
-    @State private var refreshTrigger = false
     
     private func handleSampleModeSelection(_ mode: SampleModeConfig.ModeDefinition) async {
         isImportingSample = true

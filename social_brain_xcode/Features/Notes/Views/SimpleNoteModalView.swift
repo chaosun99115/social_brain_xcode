@@ -409,7 +409,8 @@ struct SimpleNoteModalView: View {
                 var unmatchedCircles: [String] = []
                 for (type, name) in mentionsWithType {
                     if type == "contact" {
-                        if ContactManager.shared.fetchContact(withName: name) == nil {
+                        // Check for active contacts only (isArchived = false)
+                        if !contactExistsAndActive(withName: name) {
                             unmatchedContacts.append(name)
                         }
                     } else if type == "circle" {
@@ -442,7 +443,8 @@ struct SimpleNoteModalView: View {
             var unmatchedCircles: [String] = []
             for (type, name) in mentionsWithType {
                 if type == "contact" {
-                    if ContactManager.shared.fetchContact(withName: name) == nil {
+                    // Check for active contacts only (isArchived = false)
+                    if !contactExistsAndActive(withName: name) {
                         unmatchedContacts.append(name)
                     }
                 } else if type == "circle" {
@@ -459,6 +461,21 @@ struct SimpleNoteModalView: View {
             } else {
                 saveNoteWithMentions(mentions: mentionsWithType.map { $0.name })
             }
+        }
+    }
+    
+    // Helper function to check if a contact exists and is active (not archived)
+    private func contactExistsAndActive(withName name: String) -> Bool {
+        let request: NSFetchRequest<Contact> = Contact.fetchRequest()
+        request.predicate = NSPredicate(format: "name == %@ AND (isArchived == NO OR isArchived == nil)", name)
+        request.fetchLimit = 1
+        
+        do {
+            let contact = try CoreDataManager.shared.viewContext.fetch(request).first
+            return contact != nil
+        } catch {
+            print("Error checking contact existence: \(error)")
+            return false
         }
     }
     
