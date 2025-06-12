@@ -64,77 +64,75 @@ struct EditCircleContactsSheet: View {
     
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Circle name field
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("圈子名称")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 16)
-                    
-                    HStack {
-                        TextField("圈子名称", text: $circleName)
-                            .font(.body)
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 12)
-                            // Ensure proper Chinese input support
-                            .textInputAutocapitalization(.words)
-                            .disableAutocorrection(false)
-                    }
-                    .background(Color.white)
-                    .cornerRadius(0)
-                }
-                .padding(.top, 16)
-                
-                // Contacts list
-                Text("熟人列表")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 16)
-                
-                if allContacts.isEmpty {
-                    VStack(spacing: 0) {
-                        Spacer()
-                        Text("您还没有添加熟人")
-                            .font(.body)
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // Circle name field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("圈子名称")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 16)
+                            HStack {
+                                TextField("圈子名称", text: $circleName)
+                                    .font(.body)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 12)
+                                    .textInputAutocapitalization(.words)
+                                    .disableAutocorrection(false)
+                            }
+                            .background(Color.white)
+                            .cornerRadius(0)
+                        }
+                        .padding(.top, 16)
+                        // Contacts list
+                        Text("熟人列表")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding()
-                        Spacer()
-                        Divider()
-                            .padding(.leading, 16)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .background(Color.white)
-                } else {
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            ForEach(allContacts, id: \.contactId) { contact in
-                                HStack {
-                                    Text(contact.name ?? "")
-                                        .foregroundColor(.primary)
-                                        .padding(.vertical, 12)
-                                        .padding(.horizontal, 16)
-                                    Spacer()
-                                    CheckboxView(isChecked: selectedContactIds.contains(contact.contactId ?? UUID())) {
-                                        toggleContact(contact)
-                                    }
-                                    .padding(.trailing, 16)
-                                }
-                                .background(Color.white)
+                            .padding(.horizontal, 16)
+                        if allContacts.isEmpty {
+                            VStack(spacing: 0) {
+                                Spacer()
+                                Text("您还没有添加熟人")
+                                    .font(.body)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding()
+                                Spacer()
                                 Divider()
                                     .padding(.leading, 16)
                             }
+                            .frame(maxWidth: .infinity)
+                            .background(Color.white)
+                        } else {
+                            VStack(spacing: 0) {
+                                ForEach(allContacts, id: \ .contactId) { contact in
+                                    HStack {
+                                        Text(contact.name ?? "")
+                                            .foregroundColor(.primary)
+                                            .padding(.vertical, 12)
+                                            .padding(.horizontal, 16)
+                                        Spacer()
+                                        CheckboxView(isChecked: selectedContactIds.contains(contact.contactId ?? UUID())) {
+                                            toggleContact(contact)
+                                        }
+                                        .padding(.trailing, 16)
+                                    }
+                                    .background(Color.white)
+                                    Divider()
+                                        .padding(.leading, 16)
+                                }
+                            }
+                            .background(Color.white)
+                            .cornerRadius(0)
+                            .frame(height: min(CGFloat(allContacts.count) * 44, UIScreen.main.bounds.height * 0.6))
                         }
+                        Spacer(minLength: 0)
                     }
-                    .background(Color.white)
-                    .cornerRadius(0)
-                    .frame(height: min(CGFloat(allContacts.count) * 44, UIScreen.main.bounds.height * 0.6)) // Each item is 44pt high, max 60% of screen height
+                    .background(backgroundColor.ignoresSafeArea())
                 }
-                
-                Spacer()
-                
-                // Delete button at the bottom
+                .ignoresSafeArea(.keyboard, edges: .bottom)
+                // Fixed delete button at the bottom
                 VStack(spacing: 0) {
                     Divider()
                     Button(action: {
@@ -163,11 +161,11 @@ struct EditCircleContactsSheet: View {
                         isPresented = false
                     }
                 }
-                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("保存") {
                         updateCircle()
                     }
+                    .foregroundColor(.green)
                 }
             }
             .alert("确认删除圈子", isPresented: $showingDeleteConfirmation) {
@@ -184,7 +182,6 @@ struct EditCircleContactsSheet: View {
                 loadContacts()
             }
             .onChange(of: appModeManager.isSampleMode) { _ in
-                // Refresh contacts when sample mode changes
                 loadContacts()
             }
         }

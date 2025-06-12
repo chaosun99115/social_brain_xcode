@@ -127,7 +127,7 @@ struct ConfigurationSheetView: View {
                 }
                 
                 // Advanced Features Section
-                Section(header: Text("高级功能")) {
+                Section(header: Text("Pro功能")) {
                     // iCloud Sync Option
                     ICloudSyncView()
 
