@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */; };
+		AF22C52E2DFA839D00442C52 /* launch_screen .storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AF22C52D2DFA839D00442C52 /* launch_screen .storyboard */; };
 		AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */; };
 		AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A42DF346E1000F4F17 /* EditContactView.swift */; };
 		AF4501C52DF38503000F4F17 /* PromptGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501C42DF38503000F4F17 /* PromptGenerator.swift */; };
@@ -89,6 +90,7 @@
 
 /* Begin PBXFileReference section */
 		AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KIMIChatService.swift; sourceTree = "<group>"; };
+		AF22C52D2DFA839D00442C52 /* launch_screen .storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "launch_screen .storyboard"; sourceTree = "<group>"; };
 		AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditCircleContactsSheet.swift; sourceTree = "<group>"; };
 		AF4501A42DF346E1000F4F17 /* EditContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditContactView.swift; sourceTree = "<group>"; };
 		AF4501C42DF38503000F4F17 /* PromptGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptGenerator.swift; sourceTree = "<group>"; };
@@ -373,6 +375,7 @@
 			children = (
 				AFA276292DB03EA800C29B81 /* Localization */,
 				AFF98BBA2DA075730001DD70 /* Assets.xcassets */,
+				AF22C52D2DFA839D00442C52 /* launch_screen .storyboard */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -639,6 +642,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF22C52E2DFA839D00442C52 /* launch_screen .storyboard in Resources */,
 				AFE504D52DF8D670006B110F /* app-privacy_en.html in Resources */,
 				AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */,
 				AFAE47262DE79D3E00DD10E0 /* Configuration.storekit in Resources */,
@@ -879,9 +883,9 @@
 				INFOPLIST_FILE = social_brain_xcode/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "社交大脑";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "社交大脑使用 Face ID 来保护您的个人关系数据，确保只有您能访问您的社交笔记和联系人。";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "launch_screen .storyboard";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -912,9 +916,9 @@
 				INFOPLIST_FILE = social_brain_xcode/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "社交大脑";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "社交大脑使用 Face ID 来保护您的个人关系数据，确保只有您能访问您的社交笔记和联系人。";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "launch_screen .storyboard";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
