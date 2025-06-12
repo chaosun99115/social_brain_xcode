@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */; };
 		AF22C52E2DFA839D00442C52 /* launch_screen .storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AF22C52D2DFA839D00442C52 /* launch_screen .storyboard */; };
+		AF22C5462DFB145600442C52 /* LaunchScreenManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5422DFB145500442C52 /* LaunchScreenManager.swift */; };
+		AF22C5472DFB145600442C52 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AF22C5432DFB145500442C52 /* README.md */; };
+		AF22C5482DFB145600442C52 /* LaunchScreenConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5442DFB145500442C52 /* LaunchScreenConfiguration.swift */; };
+		AF22C5492DFB145600442C52 /* LaunchScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5452DFB145500442C52 /* LaunchScreenView.swift */; };
 		AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */; };
 		AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A42DF346E1000F4F17 /* EditContactView.swift */; };
 		AF4501C52DF38503000F4F17 /* PromptGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501C42DF38503000F4F17 /* PromptGenerator.swift */; };
@@ -90,6 +94,10 @@
 /* Begin PBXFileReference section */
 		AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KIMIChatService.swift; sourceTree = "<group>"; };
 		AF22C52D2DFA839D00442C52 /* launch_screen .storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "launch_screen .storyboard"; sourceTree = "<group>"; };
+		AF22C5422DFB145500442C52 /* LaunchScreenManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LaunchScreenManager.swift; sourceTree = "<group>"; };
+		AF22C5432DFB145500442C52 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AF22C5442DFB145500442C52 /* LaunchScreenConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LaunchScreenConfiguration.swift; sourceTree = "<group>"; };
+		AF22C5452DFB145500442C52 /* LaunchScreenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LaunchScreenView.swift; sourceTree = "<group>"; };
 		AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditCircleContactsSheet.swift; sourceTree = "<group>"; };
 		AF4501A42DF346E1000F4F17 /* EditContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditContactView.swift; sourceTree = "<group>"; };
 		AF4501C42DF38503000F4F17 /* PromptGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptGenerator.swift; sourceTree = "<group>"; };
@@ -183,6 +191,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AF22C5412DFB145500442C52 /* LaunchScreen */ = {
+			isa = PBXGroup;
+			children = (
+				AF22C5422DFB145500442C52 /* LaunchScreenManager.swift */,
+				AF22C5432DFB145500442C52 /* README.md */,
+				AF22C5442DFB145500442C52 /* LaunchScreenConfiguration.swift */,
+				AF22C5452DFB145500442C52 /* LaunchScreenView.swift */,
+			);
+			path = LaunchScreen;
+			sourceTree = "<group>";
+		};
 		AF56DC212DCBE13D00F56D6E /* SeedData */ = {
 			isa = PBXGroup;
 			children = (
@@ -242,6 +261,7 @@
 		AFA2761D2DB03BAF00C29B81 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				AF22C5412DFB145500442C52 /* LaunchScreen */,
 				AF57FBEF2DF9E91100617C0A /* iCloud */,
 				AFE504CA2DF8CCB0006B110F /* Web */,
 				AFAE47392DF1DEB000DD10E0 /* Prompts */,
@@ -641,6 +661,7 @@
 				AFE504CC2DF8CCB1006B110F /* app-privacy.html in Resources */,
 				AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */,
 				AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */,
+				AF22C5472DFB145600442C52 /* README.md in Resources */,
 				AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */,
 				AF56DC292DCBE13D00F56D6E /* seed_data.json in Resources */,
 				AFE504D82DF8D880006B110F /* support.html in Resources */,
@@ -667,6 +688,7 @@
 				AF56DC272DCBE13D00F56D6E /* SeedDataManager.swift in Sources */,
 				AFAE47432DF1F76B00DD10E0 /* CreatePromptView.swift in Sources */,
 				AFAE46E52DE4E57F00DD10E0 /* ContactSelectionView.swift in Sources */,
+				AF22C5482DFB145600442C52 /* LaunchScreenConfiguration.swift in Sources */,
 				AFF98BB72DA075720001DD70 /* social_brain_xcodeApp.swift in Sources */,
 				AFDDDCA22DD531F900425764 /* SampleModePrompts.swift in Sources */,
 				AFF98BC32DA075730001DD70 /* social_brain_xcode.xcdatamodeld in Sources */,
@@ -694,8 +716,10 @@
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
 				AFAE47222DE799ED00DD10E0 /* SubscriptionStatusView.swift in Sources */,
 				AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */,
+				AF22C5492DFB145600442C52 /* LaunchScreenView.swift in Sources */,
 				AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */,
 				AFDDDC9E2DD393F100425764 /* CircleDetailView.swift in Sources */,
+				AF22C5462DFB145600442C52 /* LaunchScreenManager.swift in Sources */,
 				AFAE46FC2DE77A3800DD10E0 /* SocialBrainSheetView.swift in Sources */,
 				AF57FBF52DF9E91100617C0A /* ICloudSyncView.swift in Sources */,
 				AFAE473D2DF1DEB000DD10E0 /* PromptService.swift in Sources */,
@@ -873,6 +897,7 @@
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "社交大脑使用 Face ID 来保护您的个人关系数据，确保只有您能访问您的社交笔记和联系人。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "launch_screen .storyboard";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -905,6 +930,7 @@
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "社交大脑使用 Face ID 来保护您的个人关系数据，确保只有您能访问您的社交笔记和联系人。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "launch_screen .storyboard";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (

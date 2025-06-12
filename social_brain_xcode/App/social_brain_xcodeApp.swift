@@ -86,6 +86,7 @@ struct social_brain_xcodeApp: App {
     @StateObject private var appModeManager = AppModeManager()
     @StateObject private var appSettingsManager = AppSettingsManager.shared
     @StateObject private var featureFlagManager = FeatureFlagManager.shared
+    @StateObject private var launchScreenManager = LaunchScreenManager()
     @State private var isAuthenticated = false
     @State private var authError: String?
     
@@ -115,15 +116,32 @@ struct social_brain_xcodeApp: App {
     
     var body: some Scene {
         WindowGroup {
-            if !appSettingsManager.isFaceIDEnabled || isAuthenticated {
-                MainTabView()
-                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
-                    .environmentObject(noteManager)
-                    .environmentObject(appModeManager)
-                    .environmentObject(appSettingsManager)
-                    .environmentObject(featureFlagManager)
-            } else {
-                FaceIDAuthView(isAuthenticated: $isAuthenticated, authError: $authError)
+            ZStack {
+                // Main app content
+                if !appSettingsManager.isFaceIDEnabled || isAuthenticated {
+                    MainTabView()
+                        .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                        .environmentObject(noteManager)
+                        .environmentObject(appModeManager)
+                        .environmentObject(appSettingsManager)
+                        .environmentObject(featureFlagManager)
+                        .opacity(launchScreenManager.shouldShowLaunchScreen ? 0 : 1)
+                        .animation(.easeOut(duration: 0.3), value: launchScreenManager.shouldShowLaunchScreen)
+                } else {
+                    FaceIDAuthView(isAuthenticated: $isAuthenticated, authError: $authError)
+                        .opacity(launchScreenManager.shouldShowLaunchScreen ? 0 : 1)
+                        .animation(.easeOut(duration: 0.3), value: launchScreenManager.shouldShowLaunchScreen)
+                }
+                
+                // Launch screen overlay
+                if launchScreenManager.shouldShowLaunchScreen {
+                    LaunchScreenView()
+                        .transition(.opacity)
+                        .zIndex(1)
+                        .onAppear {
+                            launchScreenManager.startLaunchSequence()
+                        }
+                }
             }
         }
     }

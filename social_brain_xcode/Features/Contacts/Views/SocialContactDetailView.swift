@@ -25,10 +25,6 @@ struct SocialContactDetailView: View {
     @State private var showingNoteModal = false
     @State private var currentContact: Contact // Add state to track the current contact
     
-    // Drag gesture state
-    @State private var dragOffset: CGFloat = 0
-    @State private var isDragging = false
-    
     init(contact: Contact) {
         self.contact = contact
         self._currentContact = State(initialValue: contact)
@@ -94,69 +90,9 @@ struct SocialContactDetailView: View {
                         .ignoresSafeArea(edges: .bottom)
                 )
             }
-            .offset(x: dragOffset)
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        // Only allow dragging from the left edge - increased from 50 to 100 for easier triggering
-                        let startLocation: CGPoint = value.startLocation
-                        if startLocation.x < 100 {
-                            isDragging = true
-                            // Limit drag to positive values (rightward movement)
-                            dragOffset = max(0, value.translation.width)
-                        }
-                    }
-                    .onEnded { value in
-                        isDragging = false
-                        let threshold: CGFloat = 100
-                        
-                        if dragOffset > threshold {
-                            // Dismiss the view
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                dragOffset = UIScreen.main.bounds.width
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                presentationMode.wrappedValue.dismiss()
-                            }
-                        } else {
-                            // Snap back to original position
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                dragOffset = 0
-                            }
-                        }
-                    }
-            )
-            
-            // Visual feedback during drag
-            if isDragging && dragOffset > 0 {
-                HStack {
-                    // Semi-transparent overlay on the left
-                    Color.black.opacity(0.3 * (dragOffset / UIScreen.main.bounds.width))
-                        .frame(width: dragOffset)
-                        .ignoresSafeArea()
-                    
-                    Spacer()
-                }
-            }
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(currentContact.name ?? "联系人")
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: {
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .semibold))
-                        Text("返回")
-                            .font(.system(size: 17))
-                    }
-                    .foregroundColor(.accentColor)
-                }
-            }
-        }
         .sheet(isPresented: $showingSocialBrain) {
             SocialBrainSheetView(
                 sourceType: socialBrainContext.sourceType,
@@ -382,26 +318,26 @@ struct SocialContactDetailView: View {
                 // Birthday Field - Show with placeholder if nil
                 VStack(alignment: .leading, spacing: 0) {
                     Text("生日")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.black)
                         .font(.subheadline)
-                        .padding(.top, 6)
+                        .padding(.top, 8)
                         .padding(.leading, 16)
                     
                     HStack {
                         if let birthday = contact.birthday {
                             Text(dateFormatter.string(from: birthday))
-                                .foregroundColor(.primary)
+                                .foregroundColor(.gray)
                                 .font(.subheadline)
                         } else {
                             Text("未设置")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.gray)
                                 .font(.subheadline)
                         }
                         Spacer()
                     }
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                    .frame(height: 28)
+                    .padding(.vertical, 2)
+                    .frame(height: 32)
                 }
                 .background(Color(.systemBackground))
                 
@@ -960,18 +896,18 @@ struct CompactContactInfoField: View {
                 .cornerRadius(0)
             
             VStack(alignment: .leading, spacing: 0) {
-                // Fixed label - keep original size
+                // Fixed label - use system black color
                 Text(placeholder)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.black)
                     .font(.subheadline)
                     .padding(.top, verticalPadding)
                     .padding(.leading, horizontalPadding)
                 
-                // Text display area - make content smaller
+                // Text display area - use system grey color for values
                 if isMultiline {
                     Text(displayText)
                         .font(.subheadline)
-                        .foregroundColor(isEmpty ? .secondary : .primary)
+                        .foregroundColor(.gray)
                         .frame(minHeight: defaultHeight ?? minHeight, maxHeight: maxHeight, alignment: .topLeading)
                         .padding(.horizontal, horizontalPadding)
                         .padding(.vertical, 2)
@@ -979,7 +915,7 @@ struct CompactContactInfoField: View {
                 } else {
                     Text(displayText)
                         .font(.subheadline)
-                        .foregroundColor(isEmpty ? .secondary : .primary)
+                        .foregroundColor(.gray)
                         .frame(height: minHeight, alignment: .leading)
                         .padding(.horizontal, horizontalPadding)
                         .padding(.vertical, 2)
