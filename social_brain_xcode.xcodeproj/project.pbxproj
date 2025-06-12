@@ -183,6 +183,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AF22C5262DFA6CF200442C52 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
 		AF56DC212DCBE13D00F56D6E /* SeedData */ = {
 			isa = PBXGroup;
 			children = (
@@ -409,6 +416,7 @@
 		AFAE46F52DE75D7900DD10E0 /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				AF22C5262DFA6CF200442C52 /* Managers */,
 				AFAE46F62DE75D7900DD10E0 /* Views */,
 			);
 			path = Common;

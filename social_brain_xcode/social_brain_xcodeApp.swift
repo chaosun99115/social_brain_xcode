@@ -13,7 +13,7 @@ struct social_brain_xcodeApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
                 .environmentObject(appModeManager)
         }
     }

@@ -116,6 +116,14 @@ struct ConfigurationSheetView: View {
                         }
                     }
                     .foregroundColor(.primary)
+                    
+                    // Social Knowledge Base
+                    NavigationLink(destination: getPromptListViewMode()) {
+                        HStack {
+                            Text("人际经验库")
+                            Spacer()
+                        }
+                    }
                 }
                 
                 // Advanced Features Section
@@ -135,14 +143,6 @@ struct ConfigurationSheetView: View {
                         }
                     ))
                     .disabled(isAuthenticating)
-                    
-                    // Social Knowledge Base
-                    NavigationLink(destination: getPromptListViewMode()) {
-                        HStack {
-                            Text("人际互动经验库")
-                            Spacer()
-                        }
-                    }
                 }
                 
                 // About Section
