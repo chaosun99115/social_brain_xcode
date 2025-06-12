@@ -53,7 +53,7 @@ struct SocialContactDetailView: View {
             VStack(spacing: 0) {
                 // Single scrollable content view
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(spacing: 40) {
                         // Basic Info Section
                         basicInfoSectionView
                         
@@ -423,7 +423,7 @@ struct SocialContactDetailView: View {
                     .padding(.vertical, 40)
                 } else {
                     ForEach(notes, id: \.noteId) { note in
-                        NavigationLink(destination: SocialNoteDetailView(note: note)) {
+                        NavigationLink(destination: NoteDetailNav(note: note)) {
                             NoteCardView(note: note)
                         }
                         .buttonStyle(PlainButtonStyle())

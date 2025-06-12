@@ -1,6 +1,14 @@
 import SwiftUI
 import CoreData
 
+// MARK: - SocialContactView
+// Optimized refresh logic to reduce frequent refresh splashes:
+// 1. Debounced refresh operations (1 second interval)
+// 2. Separate initial load from refresh operations
+// 3. Smart refresh on view activation (only when returning from detail views)
+// 4. Consolidated notification observers
+// 5. Removed redundant refresh calls from child views
+
 struct SocialContactView: View {
     @State private var searchText = ""
     @State private var selectedTab = 0 // 0 for 熟人, 1 for 圈子
@@ -30,6 +38,11 @@ struct SocialContactView: View {
     @State private var errorMessageSample: String? = nil
     @Environment(\.managedObjectContext) private var viewContext
     @State private var refreshTrigger = false
+    
+    // Add debouncing for refresh operations
+    @State private var lastRefreshTime: Date = Date.distantPast
+    private let refreshDebounceInterval: TimeInterval = 1.0 // 1 second debounce
+    @State private var needsRefreshOnAppear = false
     
     // Fetch contacts from CoreData (initial load)
     private func loadContacts() async {
@@ -94,11 +107,28 @@ struct SocialContactView: View {
         }
     }
     
-    // Pull-to-refresh
+    // Consolidated refresh function with debouncing
     private func refreshContacts() async {
-        await MainActor.run { isRefreshing = true }
+        // Check if we should debounce this refresh
+        let now = Date()
+        if now.timeIntervalSince(lastRefreshTime) < refreshDebounceInterval {
+            return
+        }
+        
+        await MainActor.run { 
+            isRefreshing = true 
+            lastRefreshTime = now
+        }
+        
         // Add a small delay to ensure the refresh control is in the correct state
         try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+        await loadContacts()
+        await loadCircles()
+    }
+    
+    // Separate function for initial load (no debouncing)
+    private func initialLoad() async {
+        await MainActor.run { isLoading = true }
         await loadContacts()
         await loadCircles()
     }
@@ -268,7 +298,7 @@ struct SocialContactView: View {
                     }
                 }
             }
-            .navigationTitle("社交关系")
+            .navigationTitle("关系")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbarBackground(Color.primaryBackground, for: .navigationBar)
@@ -320,19 +350,18 @@ struct SocialContactView: View {
                 Button("取消", role: .cancel) {}
             }
             .task {
-                await loadContacts()
-                await loadCircles()
+                await initialLoad()
             }
             .onChange(of: refreshTrigger) { _ in
                 Task {
-                    await loadContacts()
+                    await refreshContacts()
                 }
             }
             .sheet(isPresented: $showingAddContact) {
                 AddContactSheet(refreshTrigger: $refreshTrigger)
             }
             .sheet(isPresented: $showingAddCircleSheet, onDismiss: {
-                Task { await loadCircles() }
+                Task { await refreshContacts() }
             }) {
                 AddCircleView()
                     .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
@@ -349,11 +378,8 @@ struct SocialContactView: View {
             // Setup sample mode change observer
             setupSampleModeObserver()
             
-            // Refresh contacts when view appears (e.g., when returning from detail view)
-            Task {
-                await loadContacts()
-                await loadCircles()
-            }
+            // Only refresh if this is the first appearance or if we're returning from a detail view
+            // The initial load is handled by .task modifier
         }
         .onDisappear {
             isViewActive = false
@@ -364,6 +390,16 @@ struct SocialContactView: View {
         .onChange(of: isViewActive) { newValue in
             if newValue {
                 updateLayout()
+                // If we need to refresh when becoming active, do it now
+                if needsRefreshOnAppear {
+                    Task {
+                        await refreshContacts()
+                        needsRefreshOnAppear = false
+                    }
+                }
+            } else {
+                // Set flag to refresh when we become active again (returning from detail view)
+                needsRefreshOnAppear = true
             }
         }
     }
@@ -387,7 +423,7 @@ struct SocialContactView: View {
             }
         }
         isImportingSample = false
-        // Optionally trigger refresh in parent
+        // Use debounced refresh instead of direct call
         await refreshContacts()
     }
     
@@ -432,8 +468,7 @@ struct SocialContactView: View {
         ) { _ in
             // Refresh contacts and circles when sample mode changes
             Task {
-                await self.loadContacts()
-                await self.loadCircles()
+                await self.refreshContacts()
             }
         }
         
@@ -445,8 +480,7 @@ struct SocialContactView: View {
         ) { _ in
             // Refresh contacts and circles when iCloud sync completes
             Task {
-                await self.loadContacts()
-                await self.loadCircles()
+                await self.refreshContacts()
             }
         }
         
@@ -458,7 +492,7 @@ struct SocialContactView: View {
         ) { _ in
             // Refresh circles when iCloud sync completes
             Task {
-                await self.loadCircles()
+                await self.refreshContacts()
             }
         }
     }
@@ -532,10 +566,6 @@ struct ContactListView: View {
                     // Force layout update when list appears
                     DispatchQueue.main.async {
                         UIApplication.shared.windows.first?.layoutIfNeeded()
-                    }
-                    // Refresh contacts when view appears (e.g., when returning from detail view)
-                    Task {
-                        await onRefresh()
                     }
                 }
             }
@@ -655,7 +685,7 @@ struct ContactListView: View {
             }
         }
         isImportingSample = false
-        // Optionally trigger refresh in parent
+        // Use debounced refresh instead of direct call
         await onSampleModeSelected()
     }
     
@@ -907,7 +937,7 @@ struct CircleListView: View {
             }
         }
         isImportingSample = false
-        // Optionally trigger refresh in parent
+        // Use debounced refresh instead of direct call
         await onSampleModeSelected()
     }
     

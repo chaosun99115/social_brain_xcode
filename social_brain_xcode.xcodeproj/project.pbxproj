@@ -10,9 +10,10 @@
 		AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */; };
 		AF22C52E2DFA839D00442C52 /* launch_screen .storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AF22C52D2DFA839D00442C52 /* launch_screen .storyboard */; };
 		AF22C5462DFB145600442C52 /* LaunchScreenManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5422DFB145500442C52 /* LaunchScreenManager.swift */; };
-		AF22C5472DFB145600442C52 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AF22C5432DFB145500442C52 /* README.md */; };
 		AF22C5482DFB145600442C52 /* LaunchScreenConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5442DFB145500442C52 /* LaunchScreenConfiguration.swift */; };
 		AF22C5492DFB145600442C52 /* LaunchScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5452DFB145500442C52 /* LaunchScreenView.swift */; };
+		AF22C54B2DFB1C2200442C52 /* ContactSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C54A2DFB1C2200442C52 /* ContactSelectionView.swift */; };
+		AF22C54D2DFB1C4B00442C52 /* NoteDetailNav.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C54C2DFB1C4B00442C52 /* NoteDetailNav.swift */; };
 		AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */; };
 		AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A42DF346E1000F4F17 /* EditContactView.swift */; };
 		AF4501C52DF38503000F4F17 /* PromptGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501C42DF38503000F4F17 /* PromptGenerator.swift */; };
@@ -95,9 +96,10 @@
 		AF1C4FB92DCBA5D90080DBA9 /* KIMIChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KIMIChatService.swift; sourceTree = "<group>"; };
 		AF22C52D2DFA839D00442C52 /* launch_screen .storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "launch_screen .storyboard"; sourceTree = "<group>"; };
 		AF22C5422DFB145500442C52 /* LaunchScreenManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LaunchScreenManager.swift; sourceTree = "<group>"; };
-		AF22C5432DFB145500442C52 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		AF22C5442DFB145500442C52 /* LaunchScreenConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LaunchScreenConfiguration.swift; sourceTree = "<group>"; };
 		AF22C5452DFB145500442C52 /* LaunchScreenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LaunchScreenView.swift; sourceTree = "<group>"; };
+		AF22C54A2DFB1C2200442C52 /* ContactSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactSelectionView.swift; sourceTree = "<group>"; };
+		AF22C54C2DFB1C4B00442C52 /* NoteDetailNav.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteDetailNav.swift; sourceTree = "<group>"; };
 		AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditCircleContactsSheet.swift; sourceTree = "<group>"; };
 		AF4501A42DF346E1000F4F17 /* EditContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditContactView.swift; sourceTree = "<group>"; };
 		AF4501C42DF38503000F4F17 /* PromptGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptGenerator.swift; sourceTree = "<group>"; };
@@ -195,7 +197,6 @@
 			isa = PBXGroup;
 			children = (
 				AF22C5422DFB145500442C52 /* LaunchScreenManager.swift */,
-				AF22C5432DFB145500442C52 /* README.md */,
 				AF22C5442DFB145500442C52 /* LaunchScreenConfiguration.swift */,
 				AF22C5452DFB145500442C52 /* LaunchScreenView.swift */,
 			);
@@ -286,6 +287,8 @@
 		AFA2761F2DB03BD400C29B81 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				AF22C54C2DFB1C4B00442C52 /* NoteDetailNav.swift */,
+				AF22C54A2DFB1C2200442C52 /* ContactSelectionView.swift */,
 				AFDDDC972DD289A100425764 /* ConfirmationDialog.swift */,
 				AFAE46E42DE4E57E00DD10E0 /* ContactSelectionView.swift */,
 				AF8398942DB98E9600382EA6 /* SimpleNoteModalView.swift */,
@@ -661,7 +664,6 @@
 				AFE504CC2DF8CCB1006B110F /* app-privacy.html in Resources */,
 				AFBD50EE2DA70C770066907B /* InfoPlist.strings in Resources */,
 				AFBD50ED2DA70C770066907B /* Localizable.strings in Resources */,
-				AF22C5472DFB145600442C52 /* README.md in Resources */,
 				AFF98BBB2DA075730001DD70 /* Assets.xcassets in Resources */,
 				AF56DC292DCBE13D00F56D6E /* seed_data.json in Resources */,
 				AFE504D82DF8D880006B110F /* support.html in Resources */,
@@ -676,6 +678,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFAE47242DE79A7900DD10E0 /* SharedComponents.swift in Sources */,
+				AF22C54B2DFB1C2200442C52 /* ContactSelectionView.swift in Sources */,
 				AF4501C72DF38DDE000F4F17 /* PromptFlow.swift in Sources */,
 				AFDDDCA42DDCDDBC00425764 /* SampleModeConfig.swift in Sources */,
 				AFDDDC9B2DD393DF00425764 /* CircleManager.swift in Sources */,
@@ -718,6 +721,7 @@
 				AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */,
 				AF22C5492DFB145600442C52 /* LaunchScreenView.swift in Sources */,
 				AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */,
+				AF22C54D2DFB1C4B00442C52 /* NoteDetailNav.swift in Sources */,
 				AFDDDC9E2DD393F100425764 /* CircleDetailView.swift in Sources */,
 				AF22C5462DFB145600442C52 /* LaunchScreenManager.swift in Sources */,
 				AFAE46FC2DE77A3800DD10E0 /* SocialBrainSheetView.swift in Sources */,
@@ -893,7 +897,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = social_brain_xcode/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "社交大脑";
+				INFOPLIST_KEY_CFBundleDisplayName = "人际大脑";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "社交大脑使用 Face ID 来保护您的个人关系数据，确保只有您能访问您的社交笔记和联系人。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -926,7 +930,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = social_brain_xcode/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "社交大脑";
+				INFOPLIST_KEY_CFBundleDisplayName = "人际大脑";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "社交大脑使用 Face ID 来保护您的个人关系数据，确保只有您能访问您的社交笔记和联系人。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

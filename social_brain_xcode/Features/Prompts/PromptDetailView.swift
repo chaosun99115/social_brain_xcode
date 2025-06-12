@@ -60,7 +60,7 @@ struct PromptDetailView: View {
                     
                     // Display (editable, always shown)
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("包含问题")
+                        Text("显示文案")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         TextField("请输入显示文案", text: $display)
@@ -75,7 +75,7 @@ struct PromptDetailView: View {
                     if prompt.type == 0 {
                         // Intro (non-editable, multiline)
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("简介")
+                            Text("经验简介")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                             Text(intro)
@@ -121,7 +121,7 @@ struct PromptDetailView: View {
             .background(Color(.systemBackground))
         }
         .background(Color.white)
-        .navigationTitle("编辑提示")
+        .navigationTitle("编辑经验")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

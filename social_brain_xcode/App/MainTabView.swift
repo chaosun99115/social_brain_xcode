@@ -13,19 +13,19 @@ struct MainTabView: View {
             )
             .environmentObject(appModeManager)
             .tabItem {
-                Label("社交大脑", systemImage: "sparkles")
+                Label("人际大脑", systemImage: "sparkles")
             }
             .tag(0)
             
             SocialContactView()
                 .tabItem {
-                    Label("社交关系", systemImage: "person.2")
+                    Label("关系", systemImage: "person.2")
                 }
                 .tag(1)
             
             SocialNotesView()
                 .tabItem {
-                    Label("社交笔记", systemImage: "doc.text")
+                    Label("笔记", systemImage: "doc.text")
                 }
                 .tag(2)
         }

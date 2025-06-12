@@ -53,7 +53,7 @@ struct PromptListView: View {
                 }
             }
         }
-        .navigationTitle(LocalizedStringKey("设置"))
+        .navigationTitle("经验库")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

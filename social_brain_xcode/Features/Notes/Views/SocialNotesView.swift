@@ -125,7 +125,7 @@ struct SocialNotesView: View {
                     // Tab selector
                     HStack(spacing: 0) {
                         TabButton(
-                            title: "互动记录",
+                            title: "人际互动",
                             isSelected: selectedTab == 0,
                             action: { 
                                 withAnimation(.easeInOut(duration: 0.4)) { 
@@ -149,7 +149,7 @@ struct SocialNotesView: View {
                     
                     // TabView for content
                     TabView(selection: $selectedTab) {
-                        // 互动记录 Tab
+                        // 人际互动 Tab
                         notesListView
                             .tag(0)
                         
@@ -169,7 +169,7 @@ struct SocialNotesView: View {
                         Button(action: {
                             showingSimpleNoteModal = true
                         }) {
-                            Image(systemName: "plus")
+                            Image(systemName: "square.and.pencil")
                                 .font(.system(size: 24, weight: .medium))
                                 .foregroundColor(.white)
                                 .frame(width: 56, height: 56)
@@ -182,7 +182,7 @@ struct SocialNotesView: View {
                     }
                 }
             }
-            .navigationTitle("社交笔记")
+            .navigationTitle("笔记")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbarBackground(Color.primaryBackground, for: .navigationBar)
@@ -289,7 +289,7 @@ struct SocialNotesView: View {
                 VStack(spacing: 32) {
                     Spacer()
                     VStack(spacing: 12) {
-                        Text(selectedTab == 0 ? "在这里记录您的社交互动" : "在这里记录您的社交话题")
+                        Text(selectedTab == 0 ? "在这里记录您的人际互动" : "在这里记录您的社交话题")
                             .font(.body)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -304,7 +304,7 @@ struct SocialNotesView: View {
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: selectedTab == 0 ? "person.2.fill" : "lightbulb.fill")
-                                Text(selectedTab == 0 ? "查看示例记录" : "查看示例话题")
+                                Text(selectedTab == 0 ? "查看示例互动" : "查看示例话题")
                             }
                             .font(.subheadline)
                             .foregroundColor(Color.primaryAction)
@@ -428,7 +428,7 @@ struct SocialNotesView: View {
         SimpleNoteModalView(
             initialText: "",
             subType: selectedTab == 0 ? .interactionRecord : .topicCollection,
-            modalTitle: selectedTab == 0 ? "记录互动" : "收集话题"
+            modalTitle: selectedTab == 0 ? "记录人际互动" : "收集话题"
         ) { _ in
             Task { @MainActor in
                 await refreshNotes()

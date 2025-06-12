@@ -226,7 +226,7 @@ struct SimpleNoteModalView: View {
                                     
                                     // Placeholder text with matching font size
                                     if textState.text.isEmpty {
-                                        Text(subType == .topicCollection ? "记录话题想法" : "记录社交笔记")
+                                        Text(subType == .topicCollection ? "收集互动话题" : "记录社交笔记")
                                             .font(.system(size: 17, weight: .regular))
                                             .foregroundColor(.secondary)
                                             .padding(.horizontal, 16)
@@ -243,7 +243,7 @@ struct SimpleNoteModalView: View {
                                     Button("取消") {
                                         dismiss()
                                     }
-                                    .foregroundColor(.green)
+                                    .foregroundColor(.secondary)
                                 }
                                 ToolbarItem(placement: .navigationBarTrailing) {
                                     Button("保存") {

@@ -9,7 +9,7 @@ enum DefaultPrompts {
             // 0*: sample mode, 1: regular mode
             identifiers: [1], // This prompt can be used for both sample and regular mode
             name: "收集互动话题",
-            intro: "回顾最近的社交互动，整理互动话题",
+            intro: "这是一条系统内置互动经验。这条经验可以帮助你回顾人际互动，收集各类互动话题",
             display: "回顾一下最近聊过的互动话题",
             // 0: hidden, 1: open
             type: Int16(0),
@@ -115,7 +115,7 @@ enum DefaultPrompts {
         (
             identifiers: [2], // This prompt can be used for both sample and regular mode
             name: "跟进人际事务",
-            intro: "跟进人际事务，不在繁忙的日程中错过联络时机",
+            intro: "这是一条系统内置互动经验。这条经验可以帮助你跟进各种人际事务，不在繁忙的日程中错过联络时机",
             display: "最近有哪些适合联络的朋友？",
             // 0: hidden, 1: open
             type: Int16(0),
@@ -415,8 +415,11 @@ enum DefaultPrompts {
             2.2 针对 分享/询问/请教 的建议，你要判断对方可能的回应，并分析不同回应可能体现出对方的那些决策偏好，然后在此基础上并给出针对不同回应的的后续建议。
 
             对于决策偏好主要判断对方是关注与人还是事。关注人就会比较多关注感受，那么以后的沟通可以更注重具体感受。关注事就会比较多关注结果，那么以后的沟通可以更注重实用信息。你要据此判断，但不要直接使用原话，而是用你自己的话来分析和描述。
+            
+            — — — —      
 
-            — — — —            
+            在你的回复最后要询问用户关于当前的特定人物有什么想要继续问的问题。
+
             """,
             isArchived: false
         ),

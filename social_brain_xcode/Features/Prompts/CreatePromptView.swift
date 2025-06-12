@@ -40,7 +40,7 @@ struct CreatePromptView: View {
                     Text("经验名称")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    TextField("请输入名称", text: $name)
+                    TextField("请输入经验名称", text: $name)
                         .font(.body)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         // Ensure proper Chinese input support
@@ -50,10 +50,10 @@ struct CreatePromptView: View {
                 
                 // Display field
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("包含问题")
+                    Text("显示文案")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    TextField("请输入显示文案", text: $display)
+                    TextField("显示文案将展示在\"人际大脑\"页面", text: $display)
                         .font(.body)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         // Ensure proper Chinese input support
@@ -63,32 +63,38 @@ struct CreatePromptView: View {
                 
                 // Content field
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("提示词设定")
+                    Text("经验细节")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     TextEditor(text: $content)
                         .font(.body)
                         .frame(minHeight: 120)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.3)))
+                        .overlay(
+                            ZStack(alignment: .topLeading) {
+                                RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.3))
+                                if content.isEmpty {
+                                    Text("请详细描述经验细节，系统将基于这些细节进行思考然后回答你的问题")
+                                        .font(.body)
+                                        .foregroundColor(Color(.placeholderText))
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 8)
+                                        .allowsHitTesting(false)
+                                }
+                            }
+                        )
                 }
             }
             .padding()
         }
-        .navigationTitle("新建提示")
+        .navigationTitle("新建经验")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("保存") {
                     savePrompt()
                 }
-                .foregroundColor(.green)
+                .foregroundColor(name.isEmpty ? .gray : .green)
                 .disabled(name.isEmpty || display.isEmpty || content.isEmpty)
-            }
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button("测试") {
-                    testPromptCreation()
-                }
-                .foregroundColor(.blue)
             }
         }
         .background(Color.clear)
@@ -128,43 +134,6 @@ struct CreatePromptView: View {
         } catch {
             logger.error("Failed to save new prompt: \(error.localizedDescription)")
             // You might want to show an alert to the user here
-        }
-    }
-    
-    /// Test method to verify prompt creation and retrieval
-    private func testPromptCreation() {
-        // Create a test prompt
-        let testPrompt = Prompt(context: viewContext)
-        testPrompt.id = UUID()
-        testPrompt.name = "Test Prompt \(Date())"
-        testPrompt.display = "Test Display"
-        testPrompt.content = "Test Content"
-        testPrompt.identifier = 999
-        testPrompt.type = 1
-        testPrompt.createdAt = Date()
-        testPrompt.updatedAt = Date()
-        testPrompt.order = 0
-        testPrompt.recordStatus = 0
-        testPrompt.intro = ""
-        testPrompt.isArchived = false // Set isArchived to false for test prompts
-        
-        do {
-            try viewContext.save()
-            
-            // Verify the prompt was saved
-            let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "identifier == 999")
-            let savedPrompts = try viewContext.fetch(fetchRequest)
-            
-            // Test the PromptConfigurationManager
-            let promptManager = PromptConfigurationManager.shared
-            let testPrompts = promptManager.getPromptsForSourceType("general", sampleMode: nil, context: viewContext)
-            
-            // Post notification to refresh
-            NotificationCenter.default.post(name: Notification.Name("RefreshPromptList"), object: nil)
-            
-        } catch {
-            logger.error("🔧 CreatePromptView: Test failed - \(error.localizedDescription)")
         }
     }
 }

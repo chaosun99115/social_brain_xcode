@@ -126,6 +126,7 @@ struct AddCircleView: View {
                     Button("取消") {
                         dismiss()
                     }
+                    .foregroundColor(.secondary)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -133,6 +134,7 @@ struct AddCircleView: View {
                         createCircle()
                     }
                     .disabled(!isNameValid || isLoading)
+                    .foregroundColor(isNameValid ? .green : .secondary)
                 }
             }
             .alert("错误", isPresented: $showingErrorAlert) {

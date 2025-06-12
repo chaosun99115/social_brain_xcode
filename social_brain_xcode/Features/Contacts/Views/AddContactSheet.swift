@@ -268,7 +268,7 @@ struct AddContactSheet: View {
                         focusedField = nil // Dismiss keyboard before dismissing sheet
                         dismiss()
                     }
-                    .foregroundColor(.green)
+                    .foregroundColor(.gray)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {

@@ -10,11 +10,11 @@
 		<string>AppIcon</string>
 	</dict>
 	<key>CFBundleIdentifier</key>
-	<string>社交大脑</string>
+	<string>人际大脑</string>
 	<key>CFBundleName</key>
-	<string>社交大脑</string>
+	<string>人际大脑</string>
 	<key>CFBundleDisplayName</key>
-	<string>社交大脑</string>
+	<string>人际大脑</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
