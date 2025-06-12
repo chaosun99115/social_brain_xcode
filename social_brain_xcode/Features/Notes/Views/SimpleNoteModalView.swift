@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import CoreData
 
 // Add this new view before SimpleNoteModalView
 struct MentionConfirmationModal: View {
