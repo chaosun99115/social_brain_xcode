@@ -247,7 +247,7 @@ struct AddContactSheet: View {
                         
                         // Memo Field
                         ContactInputField(
-                            placeholder: "备注",
+                            placeholder: "其他信息",
                             text: $memo,
                             isMultiline: true,
                             defaultHeight: 88

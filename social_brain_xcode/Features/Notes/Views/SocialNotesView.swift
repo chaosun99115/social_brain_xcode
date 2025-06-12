@@ -135,7 +135,7 @@ struct SocialNotesView: View {
                         )
                         
                         TabButton(
-                            title: "话题库",
+                            title: "人际话题",
                             isSelected: selectedTab == 1,
                             action: { 
                                 withAnimation(.easeInOut(duration: 0.4)) { 

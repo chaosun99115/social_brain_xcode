@@ -347,7 +347,7 @@ struct SocialContactDetailView: View {
                 
                 // Memo Section - Always show but with placeholder if empty
                 CompactContactInfoField(
-                    placeholder: "备注",
+                    placeholder: "其他信息",
                     text: contact.memo,
                     isMultiline: true,
                     defaultHeight: 40

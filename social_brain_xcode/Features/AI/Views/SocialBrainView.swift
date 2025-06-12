@@ -89,12 +89,46 @@ struct SocialBrainView: View {
                 // PromptFlow.swift (with centralized update logic)
                 
                 // Get prompts based on source type and sample mode
-                let prompts = promptManager.getPromptsForSourceType(
+                var prompts = promptManager.getPromptsForSourceType(
                     sourceType,
                     sampleMode: appModeManager.sampleModeType,
                     context: context,
                     contact: contextContact  // Pass the contact for dynamic text replacement
                 )
+                
+                // Apply the rule for regular mode: check entity counts and filter prompts accordingly
+                if appModeManager.sampleModeType == nil { // Regular mode
+                    let entityCounts = await getEntityCounts(context: context)
+                    
+                    // Check if any entity has more than 1 record
+                    let hasMultipleRecords = entityCounts.contactCount > 1 || 
+                                           entityCounts.noteCount > 1 || 
+                                           entityCounts.circleCount > 1
+                    
+                    // Check if all entities have no records
+                    let allEmpty = entityCounts.contactCount == 0 && 
+                                  entityCounts.noteCount == 0 && 
+                                  entityCounts.circleCount == 0
+                    
+                    if hasMultipleRecords {
+                        // Hide prompt with identifier 9, show other configured prompts
+                        prompts = prompts.filter { prompt in
+                            if let adapter = prompt as? PromptAdapter {
+                                return adapter.identifier != 9
+                            }
+                            return true
+                        }
+                    } else if allEmpty {
+                        // Only show prompt with identifier 9
+                        prompts = prompts.filter { prompt in
+                            if let adapter = prompt as? PromptAdapter {
+                                return adapter.identifier == 9
+                            }
+                            return false
+                        }
+                    }
+                    // If neither condition is met, show all prompts (default behavior)
+                }
                 
                 // Create suggested questions from all prompts, storing the identifier
                 let questions = prompts.map { prompt in
@@ -116,6 +150,31 @@ struct SocialBrainView: View {
                     suggestedQuestions = []
                 }
             }
+        }
+    }
+    
+    // Helper function to get entity counts
+    private func getEntityCounts(context: NSManagedObjectContext) async -> (contactCount: Int, noteCount: Int, circleCount: Int) {
+        do {
+            // Count active contacts (not archived)
+            let contactRequest: NSFetchRequest<Contact> = Contact.fetchRequest()
+            contactRequest.predicate = NSPredicate(format: "isArchived == NO OR isArchived == nil")
+            let contactCount = try context.count(for: contactRequest)
+            
+            // Count active notes (not archived)
+            let noteRequest: NSFetchRequest<Note> = Note.fetchRequest()
+            noteRequest.predicate = NSPredicate(format: "isArchived == NO OR isArchived == nil")
+            let noteCount = try context.count(for: noteRequest)
+            
+            // Count active circles (not archived)
+            let circleRequest: NSFetchRequest<Circle> = Circle.fetchRequest()
+            circleRequest.predicate = NSPredicate(format: "isArchived == NO OR isArchived == nil")
+            let circleCount = try context.count(for: circleRequest)
+            
+            return (contactCount: contactCount, noteCount: noteCount, circleCount: circleCount)
+        } catch {
+            logger.error("Error counting entities: \(error.localizedDescription)")
+            return (contactCount: 0, noteCount: 0, circleCount: 0)
         }
     }
     
@@ -331,9 +390,21 @@ struct SocialBrainView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        showingConfigurationSheet = true
+                        if isConversationActive {
+                            // Reset conversation state and go back to default page
+                            withAnimation {
+                                isConversationActive = false
+                                messages.removeAll()
+                                inputText = ""
+                                isLoading = false
+                                initializeSuggestedQuestions()
+                            }
+                        } else {
+                            // Show configuration sheet
+                            showingConfigurationSheet = true
+                        }
                     }) {
-                        Image(systemName: "gearshape")
+                        Image(systemName: isConversationActive ? "xmark" : "gearshape")
                             .font(.system(size: 16))
                             .foregroundColor(.primary)
                     }
@@ -360,6 +431,24 @@ struct SocialBrainView: View {
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("RefreshPromptList"))) { _ in
             // Refresh suggested questions when new prompts are created
             initializeSuggestedQuestions()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("RefreshContactsList"))) { _ in
+            // Refresh suggested questions when contacts are added/removed
+            if !isConversationActive {
+                initializeSuggestedQuestions()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("RefreshNotesList"))) { _ in
+            // Refresh suggested questions when notes are added/removed
+            if !isConversationActive {
+                initializeSuggestedQuestions()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("RefreshCirclesList"))) { _ in
+            // Refresh suggested questions when circles are added/removed
+            if !isConversationActive {
+                initializeSuggestedQuestions()
+            }
         }
         .onChange(of: isLoading) { loading in
             if loading {
