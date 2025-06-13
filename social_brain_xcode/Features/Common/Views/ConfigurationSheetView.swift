@@ -46,6 +46,8 @@ import CoreData
     - Implement proper data migration
 */
 
+// MARK: - Subscription Status Helper
+
 struct ConfigurationSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var appModeManager: AppModeManager
@@ -77,191 +79,33 @@ struct ConfigurationSheetView: View {
     @State private var showingSubscriptionError = false
     @State private var subscriptionErrorMessage: String?
     
+    // Add state for subscription requirement alert
+    @State private var showingSubscriptionRequirementAlert = false
+    
     private var isProUser: Bool {
         featureFlagManager.canUseProFeatures
     }
     
-    // Add init to configure navigation bar appearance
+    // Simplified init - moved heavy operations to onAppear
     init() {
+        // Only configure navigation bar appearance here
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor(Color(.systemGray6))
-        appearance.shadowColor = .clear // Remove the divider line
+        appearance.shadowColor = .clear
         
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
-        
-        // Check and re-ingest prompts if needed
-        let context = PersistenceController.shared.container.viewContext
-        let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
-        do {
-            let count = try context.count(for: fetchRequest)
-            if count == 0 {
-                // Only re-ingest if there are no prompts at all
-                PromptService.shared.ingestDefaultPrompts(in: context)
-            }
-        } catch {
-            print("Error checking prompt count: \(error)")
-        }
     }
     
     var body: some View {
         NavigationView {
             List {
-                // Sample Data Section
-                Section {
-                    Button(action: {
-                        showingSampleDataDialog = true
-                    }) {
-                        HStack {
-                            Text("查看示例数据")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                    }
-                    .foregroundColor(.primary)
-                    
-                    // Social Knowledge Base
-                    NavigationLink(destination: getPromptListViewMode()) {
-                        HStack {
-                            Text("人际经验库")
-                            Spacer()
-                        }
-                    }
-                }
-                
-                // Subscription Section
-                Section(header: Text("订阅状态")) {
-                    // Current subscription status
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("当前状态")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            
-                            HStack(spacing: 8) {
-                                Image(systemName: subscriptionStatusIcon)
-                                    .foregroundColor(subscriptionStatusColor)
-                                Text(subscriptionStatusText)
-                                    .font(.headline)
-                                    .foregroundColor(subscriptionStatusColor)
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        if storeManager.subscriptionStatus == .inactive {
-                            Button("升级") {
-                                showingSubscriptionView = true
-                            }
-                            .font(.subheadline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.primaryAction)
-                            .cornerRadius(8)
-                        }
-                    }
-                    
-                    // Restore purchases button
-                    if storeManager.subscriptionStatus == .inactive {
-                        Button("恢复购买") {
-                            Task {
-                                await restorePurchases()
-                            }
-                        }
-                        .foregroundColor(.primary)
-                    }
-                }
-                
-                // Advanced Features Section
-                Section(header: Text("Pro功能")) {
-                    // iCloud Sync Option
-                    ICloudSyncView()
-
-                    // Face ID Toggle
-                    Toggle("Face ID锁定", isOn: Binding(
-                        get: { appSettingsManager.isFaceIDEnabled },
-                        set: { newValue in
-                            if newValue {
-                                authenticateWithFaceID()
-                            } else {
-                                appSettingsManager.setFaceIDEnabled(false)
-                            }
-                        }
-                    ))
-                    .disabled(isAuthenticating)
-                }
-                
-                // Developer Section (only show in debug builds)
-                #if DEBUG
-                Section(header: Text("开发者选项")) {
-                    Toggle("启用订阅要求", isOn: Binding(
-                        get: { featureFlagManager.requireSubscriptionForProFeatures },
-                        set: { newValue in
-                            featureFlagManager.setRequireSubscriptionForProFeatures(newValue)
-                        }
-                    ))
-                    .onChange(of: featureFlagManager.requireSubscriptionForProFeatures) { newValue in
-                        print("Subscription requirement changed to: \(newValue)")
-                    }
-                    
-                    HStack {
-                        Text("当前Pro状态")
-                        Spacer()
-                        Text(isProUser ? "已激活" : "未激活")
-                            .foregroundColor(isProUser ? .green : .red)
-                    }
-                    
-                    // Subscription testing buttons
-                    VStack(spacing: 8) {
-                        Button("重置订阅状态为未激活") {
-                            storeManager.resetSubscriptionStatus()
-                        }
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                        
-                        Button("设置订阅状态为已激活") {
-                            storeManager.setSubscriptionActive()
-                        }
-                        .font(.caption)
-                        .foregroundColor(.green)
-                        
-                        Button("重置为首启动状态") {
-                            featureFlagManager.resetToFirstLaunch()
-                        }
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        
-                        Button("诊断StoreKit问题") {
-                            storeManager.diagnoseStoreKitIssues()
-                        }
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                    }
-                    .padding(.top, 4)
-                }
-                #endif
-                
-                // About Section
-                Section(header: Text("关于")) {
-                    NavigationLink(destination: AboutView()) {
-                        Text("关于社交大脑")
-                    }
-                }
-                
-                // Version Section
-                Section {
-                    HStack {
-                        Text("版本")
-                        Spacer()
-                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
-                            .foregroundColor(.secondary)
-                    }
-                }
+                sampleDataSection
+                advancedFeaturesSection
+                aboutSection
+                versionSection
             }
             .navigationTitle("设置")
             .navigationBarTitleDisplayMode(.inline)
@@ -273,151 +117,156 @@ struct ConfigurationSheetView: View {
                     .foregroundColor(.green)
                 }
             }
-            .confirmationDialog(
-                SampleModeConfig.selectionDialogMessage,
-                isPresented: $showingSampleDataDialog,
-                titleVisibility: .visible
-            ) {
-                ForEach(SampleModeConfig.availableModes, id: \.id) { mode in
-                    Button(mode.title) {
-                        Task {
-                            await handleSampleModeSelection(mode)
-                        }
-                    }
-                }
-                Button("取消", role: .cancel) {}
-            }
-            .sheet(isPresented: $showingSubscriptionView) {
-                SubscriptionView()
-                    .onDisappear {
-                        // Handle pending actions after subscription view is dismissed
-                        if let pendingSync = pendingICloudSyncAction {
-                            if isProUser {
-                                handleICloudSyncToggle(pendingSync)
-                            }
-                            pendingICloudSyncAction = nil
-                        }
-                        
-                        if let pendingFaceID = pendingFaceIDAction {
-                            if isProUser {
-                                if pendingFaceID {
-                                    authenticateWithFaceID()
-                                } else {
-                                    appSettingsManager.setFaceIDEnabled(false)
-                                }
-                            }
-                            pendingFaceIDAction = nil
-                        }
-                    }
-            }
-            .sheet(isPresented: $showingProUpgrade) {
-                SubscriptionView()
-                    .onDisappear {
-                        // Handle pending actions after subscription view is dismissed
-                        if let pendingSync = pendingICloudSyncAction {
-                            if isProUser {
-                                handleICloudSyncToggle(pendingSync)
-                            }
-                            pendingICloudSyncAction = nil
-                        }
-                        
-                        if let pendingFaceID = pendingFaceIDAction {
-                            if isProUser {
-                                if pendingFaceID {
-                                    authenticateWithFaceID()
-                                } else {
-                                    appSettingsManager.setFaceIDEnabled(false)
-                                }
-                            }
-                            pendingFaceIDAction = nil
-                        }
-                    }
-            }
-            .alert("Face ID错误", isPresented: $showingFaceIDError) {
-                Button("确定", role: .cancel) {
-                    appSettingsManager.setFaceIDEnabled(false)
-                }
-            } message: {
-                Text(faceIDError ?? "无法启用Face ID")
-            }
-            .alert("恢复购买结果", isPresented: $showingRestoreAlert) {
-                Button("确定", role: .cancel) { }
-            } message: {
-                Text(restoreResult ?? "恢复购买完成")
-            }
-            .alert("订阅错误", isPresented: $showingSubscriptionError) {
-                Button("确定", role: .cancel) { }
-                Button("重试") {
-                    Task {
-                        await restorePurchases()
-                    }
-                }
-            } message: {
-                Text(subscriptionErrorMessage ?? "发生未知错误")
-            }
-            .alert("同步错误", isPresented: $showingSyncError) {
-                Button("确定", role: .cancel) { }
-                if let error = syncError as NSError?,
-                   let recoverySuggestion = error.userInfo[NSLocalizedRecoverySuggestionErrorKey] as? String {
-                    Button("查看帮助") {
-                        // Show a sheet with detailed instructions
-                        // TODO: Implement a help sheet with formatted instructions
-                    }
-                }
-            } message: {
-                if let error = syncError as NSError? {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(error.localizedDescription)
-                            .font(.headline)
-                        if let recoverySuggestion = error.userInfo[NSLocalizedRecoverySuggestionErrorKey] as? String {
-                            Text(recoverySuggestion)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-            }
+            .modifier(ConfigurationSheetModifiers(
+                showingSampleDataDialog: $showingSampleDataDialog,
+                showingSubscriptionView: $showingSubscriptionView,
+                showingProUpgrade: $showingProUpgrade,
+                showingFaceIDError: $showingFaceIDError,
+                showingRestoreAlert: $showingRestoreAlert,
+                showingSubscriptionError: $showingSubscriptionError,
+                showingSyncError: $showingSyncError,
+                showingSubscriptionRequirementAlert: $showingSubscriptionRequirementAlert,
+                faceIDError: faceIDError,
+                restoreResult: restoreResult,
+                subscriptionErrorMessage: subscriptionErrorMessage,
+                syncError: syncError,
+                appSettingsManager: appSettingsManager,
+                handleSampleModeSelection: handleSampleModeSelection,
+                handlePendingActions: handlePendingActions,
+                restorePurchases: restorePurchases
+            ))
         }
         .onAppear {
-            // Ensure new users start with inactive subscription status
+            // Move heavy initialization here
+            checkAndIngestPrompts()
             Task {
                 await storeManager.updateSubscriptionStatus()
             }
         }
     }
     
-    // MARK: - Computed Properties for Subscription Status
+    // MARK: - View Components
     
-    private var subscriptionStatusIcon: String {
-        switch storeManager.subscriptionStatus {
-        case .active:
-            return "star.fill"
-        case .inactive:
-            return "star"
-        case .unknown:
-            return "questionmark.circle"
+    @ViewBuilder
+    private var sampleDataSection: some View {
+        Section {
+            Button(action: {
+                showingSampleDataDialog = true
+            }) {
+                HStack {
+                    Text("查看示例数据")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 14, weight: .semibold))
+                }
+            }
+            .foregroundColor(.primary)
+            
+            // Social Knowledge Base
+            NavigationLink(destination: getPromptListViewMode()) {
+                HStack {
+                    Text("人际经验库")
+                    Spacer()
+                }
+            }
         }
     }
     
-    private var subscriptionStatusColor: Color {
-        switch storeManager.subscriptionStatus {
-        case .active:
-            return .yellow
-        case .inactive:
-            return .gray
-        case .unknown:
-            return .orange
+    @ViewBuilder
+    private var advancedFeaturesSection: some View {
+        Section(header: Text("Pro功能")) {
+            // iCloud Sync Option
+            ICloudSyncView(onSubscriptionRequired: {
+                showingSubscriptionView = true
+            })
+
+            // Face ID Toggle
+            Toggle("Face ID锁定", isOn: Binding(
+                get: { appSettingsManager.isFaceIDEnabled },
+                set: { newValue in
+                    if newValue {
+                        if isProUser {
+                            authenticateWithFaceID()
+                        } else {
+                            showingSubscriptionRequirementAlert = true
+                        }
+                    } else {
+                        appSettingsManager.setFaceIDEnabled(false)
+                    }
+                }
+            ))
+            .disabled(isAuthenticating)
+            
+            // Pro Features Button
+            Button(action: {
+                showingSubscriptionView = true
+            }) {
+                HStack {
+                    Text("解锁高级功能")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 14, weight: .semibold))
+                }
+            }
+            .foregroundColor(.primary)
         }
     }
     
-    private var subscriptionStatusText: String {
-        switch storeManager.subscriptionStatus {
-        case .active:
-            return "Pro会员"
-        case .inactive:
-            return "免费用户"
-        case .unknown:
-            return "检查中..."
+    @ViewBuilder
+    private var aboutSection: some View {
+        Section(header: Text("关于")) {
+            NavigationLink(destination: AboutView()) {
+                Text("关于社交大脑")
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var versionSection: some View {
+        Section {
+            HStack {
+                Text("版本")
+                Spacer()
+                Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func checkAndIngestPrompts() {
+        let context = PersistenceController.shared.container.viewContext
+        let fetchRequest: NSFetchRequest<Prompt> = Prompt.fetchRequest()
+        do {
+            let count = try context.count(for: fetchRequest)
+            if count == 0 {
+                PromptService.shared.ingestDefaultPrompts(in: context)
+            }
+        } catch {
+            print("Error checking prompt count: \(error)")
+        }
+    }
+    
+    private func handlePendingActions() {
+        if let pendingSync = pendingICloudSyncAction {
+            if isProUser {
+                handleICloudSyncToggle(pendingSync)
+            }
+            pendingICloudSyncAction = nil
+        }
+        
+        if let pendingFaceID = pendingFaceIDAction {
+            if isProUser {
+                if pendingFaceID {
+                    authenticateWithFaceID()
+                } else {
+                    appSettingsManager.setFaceIDEnabled(false)
+                }
+            }
+            pendingFaceIDAction = nil
         }
     }
     
@@ -436,7 +285,6 @@ struct ConfigurationSheetView: View {
             }
         } catch {
             await MainActor.run {
-                // Provide user-friendly error messages
                 let errorMessage = getSubscriptionErrorMessage(error)
                 subscriptionErrorMessage = errorMessage
                 showingSubscriptionError = true
@@ -505,19 +353,14 @@ struct ConfigurationSheetView: View {
     
     private func handleSampleModeSelection(_ mode: SampleModeConfig.ModeDefinition) async {
         do {
-            // Use the SeedDataManager method to switch scenarios while preserving user data
             try await SeedDataManager.shared.switchToScenario(mode.scenario, in: persistenceController.container.viewContext)
             
-            // Update UI on main thread
             await MainActor.run {
                 appModeManager.isSampleMode = true
                 appModeManager.sampleModeType = (mode.id == "indie") ? "indieDev" : mode.id
-                
-                // Dismiss the configuration sheet
                 dismiss()
             }
         } catch {
-            // Handle error - you might want to show an alert here
             print("Error switching to sample mode: \(error)")
         }
     }
@@ -531,15 +374,23 @@ struct ConfigurationSheetView: View {
         if appModeManager.isSampleMode {
             switch appModeManager.sampleModeType {
             case "changedJob":
-                return AnyView(PromptListView(mode: .changedJob))
+                return PromptListView(mode: .changedJob)
             case "indieDev":
-                return AnyView(PromptListView(mode: .indieDev))
+                return PromptListView(mode: .indieDev)
             default:
-                return AnyView(PromptListView(mode: .regular))
+                return PromptListView(mode: .regular)
             }
         } else {
-            return AnyView(PromptListView(mode: .regular))
+            return PromptListView(mode: .regular)
         }
+    }
+    
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        formatter.locale = Locale(identifier: "zh_CN")
+        return formatter.string(from: date)
     }
 }
 
@@ -717,5 +568,108 @@ struct SocialKnowledgeBaseView_Previews: PreviewProvider {
         NavigationView {
             SocialKnowledgeBaseView()
         }
+    }
+}
+
+// MARK: - Configuration Sheet Modifiers
+struct ConfigurationSheetModifiers: ViewModifier {
+    @Binding var showingSampleDataDialog: Bool
+    @Binding var showingSubscriptionView: Bool
+    @Binding var showingProUpgrade: Bool
+    @Binding var showingFaceIDError: Bool
+    @Binding var showingRestoreAlert: Bool
+    @Binding var showingSubscriptionError: Bool
+    @Binding var showingSyncError: Bool
+    @Binding var showingSubscriptionRequirementAlert: Bool
+    
+    let faceIDError: String?
+    let restoreResult: String?
+    let subscriptionErrorMessage: String?
+    let syncError: Error?
+    let appSettingsManager: AppSettingsManager
+    let handleSampleModeSelection: (SampleModeConfig.ModeDefinition) async -> Void
+    let handlePendingActions: () -> Void
+    let restorePurchases: () async -> Void
+    
+    func body(content: Content) -> some View {
+        content
+            .confirmationDialog(
+                SampleModeConfig.selectionDialogMessage,
+                isPresented: $showingSampleDataDialog,
+                titleVisibility: .visible
+            ) {
+                ForEach(SampleModeConfig.availableModes, id: \.id) { mode in
+                    Button(mode.title) {
+                        Task {
+                            await handleSampleModeSelection(mode)
+                        }
+                    }
+                }
+                Button("取消", role: .cancel) {}
+            }
+            .sheet(isPresented: $showingSubscriptionView) {
+                SubscriptionView()
+                    .onDisappear {
+                        handlePendingActions()
+                    }
+            }
+            .sheet(isPresented: $showingProUpgrade) {
+                SubscriptionView()
+                    .onDisappear {
+                        handlePendingActions()
+                    }
+            }
+            .alert("Face ID错误", isPresented: $showingFaceIDError) {
+                Button("确定", role: .cancel) {
+                    appSettingsManager.setFaceIDEnabled(false)
+                }
+            } message: {
+                Text(faceIDError ?? "无法启用Face ID")
+            }
+            .alert("恢复购买结果", isPresented: $showingRestoreAlert) {
+                Button("确定", role: .cancel) { }
+            } message: {
+                Text(restoreResult ?? "恢复购买完成")
+            }
+            .alert("订阅错误", isPresented: $showingSubscriptionError) {
+                Button("确定", role: .cancel) { }
+                Button("重试") {
+                    Task {
+                        await restorePurchases()
+                    }
+                }
+            } message: {
+                Text(subscriptionErrorMessage ?? "发生未知错误")
+            }
+            .alert("同步错误", isPresented: $showingSyncError) {
+                Button("确定", role: .cancel) { }
+                if let error = syncError as NSError?,
+                   let _ = error.userInfo[NSLocalizedRecoverySuggestionErrorKey] as? String {
+                    Button("查看帮助") {
+                        // Show a sheet with detailed instructions
+                        // TODO: Implement a help sheet with formatted instructions
+                    }
+                }
+            } message: {
+                if let error = syncError as NSError? {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(error.localizedDescription)
+                            .font(.headline)
+                        if let recoverySuggestion = error.userInfo[NSLocalizedRecoverySuggestionErrorKey] as? String {
+                            Text(recoverySuggestion)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+            .alert("尚未订阅", isPresented: $showingSubscriptionRequirementAlert) {
+                Button("取消", role: .cancel) { }
+                Button("去订阅") {
+                    showingSubscriptionView = true
+                }
+            } message: {
+                Text("需要订阅后使用该功能")
+            }
     }
 } 

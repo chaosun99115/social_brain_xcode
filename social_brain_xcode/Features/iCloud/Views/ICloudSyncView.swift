@@ -3,11 +3,23 @@ import CloudKit
 
 struct ICloudSyncView: View {
     @StateObject private var syncManager = ICloudSyncManager.shared
+    @EnvironmentObject var featureFlagManager: FeatureFlagManager
     @State private var showingErrorAlert = false
     @State private var showingAccountAlert = false
     @State private var showingSuccessAlert = false
     @State private var showingAccountChangeAlert = false
+    @State private var showingSubscriptionRequirementAlert = false
     @State private var currentError: Error?
+    
+    let onSubscriptionRequired: (() -> Void)?
+    
+    private var isProUser: Bool {
+        featureFlagManager.canUseProFeatures
+    }
+    
+    init(onSubscriptionRequired: (() -> Void)? = nil) {
+        self.onSubscriptionRequired = onSubscriptionRequired
+    }
     
     var body: some View {
         VStack(spacing: 12) {
@@ -15,8 +27,12 @@ struct ICloudSyncView: View {
             Toggle("启用iCloud同步", isOn: Binding(
                 get: { syncManager.isCloudKitEnabled },
                 set: { newValue in
-                    Task {
-                        await handleSyncToggle(newValue)
+                    if newValue && !isProUser {
+                        showingSubscriptionRequirementAlert = true
+                    } else {
+                        Task {
+                            await handleSyncToggle(newValue)
+                        }
                     }
                 }
             ))
@@ -122,6 +138,14 @@ struct ICloudSyncView: View {
         } message: {
             Text("检测到iCloud账户状态发生变化。同步功能可能受到影响，请检查您的iCloud设置。")
         }
+        .alert("尚未订阅", isPresented: $showingSubscriptionRequirementAlert) {
+            Button("取消", role: .cancel) { }
+            Button("去订阅") {
+                onSubscriptionRequired?()
+            }
+        } message: {
+            Text("需要订阅后使用该功能")
+        }
     }
     
     // MARK: - Private Methods
@@ -172,6 +196,7 @@ struct ICloudSyncView_Previews: PreviewProvider {
     static var previews: some View {
         VStack {
             ICloudSyncView()
+                .environmentObject(FeatureFlagManager.shared)
                 .padding()
         }
         .previewLayout(.sizeThatFits)

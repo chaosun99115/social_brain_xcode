@@ -70,7 +70,6 @@ class FeatureFlagManager: ObservableObject {
             requireSubscriptionForProFeatures = true
             UserDefaults.standard.set(true, forKey: "requireSubscriptionForProFeatures")
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
-            print("First app launch: Subscription requirement enabled for new user")
         } else {
             // For existing users, load saved setting
             requireSubscriptionForProFeatures = UserDefaults.standard.bool(forKey: "requireSubscriptionForProFeatures")

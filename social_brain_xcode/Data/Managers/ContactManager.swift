@@ -101,7 +101,7 @@ class ContactManager: ObservableObject {
     
     func fetchContacts(byType type: Int16) -> [Contact] {
         let request: NSFetchRequest<Contact> = Contact.fetchRequest()
-        request.predicate = NSPredicate(format: "type == %d", type)
+        request.predicate = NSPredicate(format: "type == %d AND (isArchived == NO OR isArchived == nil)", type)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Contact.updatedAt, ascending: false)]
         
         do {

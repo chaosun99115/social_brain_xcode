@@ -15,6 +15,20 @@ class StoreKitManager: ObservableObject {
     private var retryCount = 0
     private let maxRetries = 3
     
+    // Invitation codes for lifetime access
+    private let validInvitationCodes = [
+        "XKKMNRNJ74X7",
+        "JKXNNWYAM3WP", 
+        "H6X79FANXAFW",
+        "LNAW3TTREPPL",
+        "NLNL9JW77LRX",
+        "H7RYAPXKF6XJ",
+        "7MTKFMTJLAEW",
+        "JET3M3P69P37",
+        "KTMK6PJKNK4F",
+        "NK3Y6JXT66YY"
+    ]
+    
     private init() {
         updateListenerTask = listenForTransactions()
         Task {
@@ -50,17 +64,29 @@ class StoreKitManager: ObservableObject {
         isLoading = true
         error = nil
         
+        // Use different Product IDs based on environment
+        let productIdentifiers: [String]
+        #if DEBUG
+        // Use sandbox Product IDs for development testing
+        productIdentifiers = ["relate_monthly", "relate_lifetime_premium"]
+        #else
+        // Use production Product IDs for release builds
+        productIdentifiers = ["relate_monthly", "relate_lifetime_premium"]
+        #endif
+        
         do {
-            let productIdentifiers = ["socialbrainbeta"]
             subscriptions = try await withRetry {
                 try await Product.products(for: productIdentifiers)
             }
             
-            // Log successful product loading
-            print("✅ StoreKit: Successfully loaded \(subscriptions.count) products")
-            for product in subscriptions {
-                print("   - \(product.displayName): \(product.displayPrice)")
+            // Perform detailed environment analysis
+            logEnvironmentDetails()
+            
+            // Additional analysis based on product details
+            if let firstProduct = subscriptions.first {
+                // Product analysis logic can be kept for debugging if needed
             }
+            
         } catch {
             self.error = .loadFailed(error)
             print("❌ StoreKit: Failed to load products: \(error)")
@@ -96,8 +122,6 @@ class StoreKitManager: ObservableObject {
         defer { isLoading = false }
         
         do {
-            print("🔄 StoreKit: Attempting to purchase \(product.displayName)")
-            
             let result = try await withRetry {
                 try await product.purchase()
             }
@@ -105,29 +129,23 @@ class StoreKitManager: ObservableObject {
             switch result {
             case .success(let verification):
                 guard case .verified(let transaction) = verification else {
-                    print("❌ StoreKit: Purchase verification failed")
                     throw StoreKitError.verificationFailed
                 }
                 
-                print("✅ StoreKit: Purchase successful for \(transaction.productID)")
                 await transaction.finish()
                 await updateSubscriptionStatus()
                 
             case .userCancelled:
-                print("ℹ️  StoreKit: Purchase cancelled by user")
                 throw StoreKitError.userCancelled
                 
             case .pending:
-                print("⏳ StoreKit: Purchase pending")
                 throw StoreKitError.pending
                 
             @unknown default:
-                print("❓ StoreKit: Unknown purchase result")
                 throw StoreKitError.unknown
             }
         } catch {
             self.error = .purchaseFailed(error)
-            print("❌ StoreKit: Purchase failed: \(error)")
             
             // Provide specific guidance for common errors
             if let urlError = error as? URLError {
@@ -144,15 +162,12 @@ class StoreKitManager: ObservableObject {
         defer { isLoading = false }
         
         do {
-            print("🔄 StoreKit: Attempting to restore purchases")
             try await withRetry {
                 try await AppStore.sync()
             }
             await updateSubscriptionStatus()
-            print("✅ StoreKit: Purchase restoration completed")
         } catch {
             self.error = .restoreFailed(error)
-            print("❌ StoreKit: Restore failed: \(error)")
             
             // Provide specific guidance for common errors
             if let urlError = error as? URLError {
@@ -166,38 +181,32 @@ class StoreKitManager: ObservableObject {
     func updateSubscriptionStatus() async {
         var hasActiveSubscription = false
         
+        // First check if user has lifetime access via invitation code
+        if hasLifetimeAccess() {
+            hasActiveSubscription = true
+        }
+        
         do {
-            print("🔄 StoreKit: Checking subscription status...")
-            
             for await result in StoreKit.Transaction.currentEntitlements {
                 guard case .verified(let transaction) = result else {
-                    print("⚠️  StoreKit: Unverified transaction found")
                     continue
                 }
                 
-                if transaction.productType == .autoRenewable {
+                // Check for both auto-renewable subscriptions and non-consumable purchases (lifetime)
+                if transaction.productType == .autoRenewable || transaction.productType == .nonConsumable {
                     hasActiveSubscription = true
-                    print("✅ StoreKit: Found active subscription for \(transaction.productID)")
                     break
                 }
             }
             
             let newStatus = hasActiveSubscription ? SubscriptionStatus.active : .inactive
             if subscriptionStatus != newStatus {
-                print("🔄 StoreKit: Subscription status changed from \(subscriptionStatus) to \(newStatus)")
+                subscriptionStatus = newStatus
             }
-            subscriptionStatus = newStatus
-            
         } catch {
-            self.error = .statusCheckFailed(error)
-            print("❌ StoreKit: Failed to update subscription status: \(error)")
-            
-            // If there's an error checking status, default to inactive for new users
-            subscriptionStatus = .inactive
-            
-            // Provide specific guidance for common errors
-            if let urlError = error as? URLError {
-                handleURLError(urlError)
+            // Keep current status if we can't check
+            if subscriptionStatus == .unknown {
+                subscriptionStatus = .inactive
             }
         }
     }
@@ -210,6 +219,31 @@ class StoreKitManager: ObservableObject {
         #else
         return false
         #endif
+    }
+    
+    private func isSandboxEnvironment() -> Bool {
+        // Check if we're running in sandbox environment
+        #if DEBUG
+        // In debug builds, check if we're using sandbox configuration
+        return true // Assume sandbox for testing
+        #else
+        return false
+        #endif
+    }
+    
+    private func detectActualStoreKitEnvironment() -> String {
+        // Try to detect the actual environment being used
+        #if targetEnvironment(simulator)
+        return "Simulator (Local Testing)"
+        #else
+        // On device, we need to check the actual configuration
+        // This is a heuristic based on behavior
+        return "Device (Environment Unknown)"
+        #endif
+    }
+    
+    private func logEnvironmentDetails() {
+        // Environment analysis logic can be kept for debugging if needed
     }
     
     private func handleURLError(_ error: URLError) {
@@ -227,6 +261,9 @@ class StoreKitManager: ObservableObject {
             if isSimulatorEnvironment() {
                 print("💡 Tip: StoreKit testing may not be properly configured in simulator")
                 print("💡 Tip: Check Xcode scheme settings for StoreKit configuration")
+            } else if isSandboxEnvironment() {
+                print("💡 Tip: Sandbox environment detected - ensure you're signed in with sandbox Apple ID")
+                print("💡 Tip: Check that your sandbox account has sufficient test balance")
             }
             
         case .badServerResponse:
@@ -253,6 +290,65 @@ class StoreKitManager: ObservableObject {
         print("Subscription status set to active for testing")
     }
     
+    /// Test invitation code validation (for testing purposes)
+    func testInvitationCode(_ code: String) {
+        print("🧪 Testing invitation code: \(code)")
+        let isValid = validateInvitationCode(code)
+        print("Result: \(isValid ? "Valid" : "Invalid")")
+        
+        if isValid {
+            print("✅ Lifetime access activated")
+            print("📅 Activated date: \(getLifetimeAccessActivatedDate() ?? Date())")
+            print("🔑 Used code: \(getActivatedInvitationCode() ?? "Unknown")")
+        }
+    }
+    
+    /// List all valid invitation codes (for testing purposes)
+    func listValidInvitationCodes() {
+        print("📋 Valid invitation codes:")
+        for (index, code) in validInvitationCodes.enumerated() {
+            print("   \(index + 1). \(code)")
+        }
+    }
+    
+    /// Debug StoreKit configuration and locale issues
+    func debugStoreKitLocalization() {
+        print("🔍 StoreKit Localization Debug")
+        print("================================")
+        
+        // Check current locale
+        let currentLocale = Locale.current
+        print("🌍 Current Locale: \(currentLocale.identifier)")
+        print("🌍 Language: \(currentLocale.language.languageCode?.identifier ?? "Unknown")")
+        print("🌍 Region: \(currentLocale.region?.identifier ?? "Unknown")")
+        
+        // Check preferred languages
+        let preferredLanguages = Locale.preferredLanguages
+        print("🌍 Preferred Languages: \(preferredLanguages)")
+        
+        // Check if we're using StoreKit Configuration File
+        let isUsingConfigurationFile = subscriptions.contains(where: { $0.price == 0 })
+        print("📄 Using StoreKit Configuration File: \(isUsingConfigurationFile)")
+        
+        // Log product details
+        print("📦 Products loaded: \(subscriptions.count)")
+        for product in subscriptions {
+            print("   Product ID: \(product.id)")
+            print("   Display Name: \(product.displayName)")
+            print("   Description: \(product.description)")
+            print("   Display Price: \(product.displayPrice)")
+            print("   Price: \(product.price)")
+            print("   ---")
+        }
+        
+        // Check environment
+        print("🔧 Environment:")
+        print("   - Simulator: \(isSimulatorEnvironment())")
+        print("   - Sandbox: \(isSandboxEnvironment())")
+        
+        print("================================")
+    }
+    
     /// Diagnose StoreKit issues and provide troubleshooting guidance
     func diagnoseStoreKitIssues() {
         print("🔍 StoreKit Diagnosis Report")
@@ -266,6 +362,15 @@ class StoreKitManager: ObservableObject {
             print("📱 Environment: Physical Device")
         }
         
+        // Sandbox environment check
+        if isSandboxEnvironment() {
+            print("🔐 Environment: Sandbox Mode")
+            print("💡 Note: Using sandbox Apple ID for testing")
+            print("💰 Note: Transactions use sandbox test balance")
+        } else {
+            print("🔐 Environment: Production Mode")
+        }
+        
         // Product status
         print("📦 Products loaded: \(subscriptions.count)")
         for product in subscriptions {
@@ -274,6 +379,15 @@ class StoreKitManager: ObservableObject {
         
         // Subscription status
         print("🔐 Subscription status: \(subscriptionStatus)")
+        
+        // Lifetime access status
+        if hasLifetimeAccess() {
+            print("🎉 Lifetime access: Active")
+            print("   - Activated code: \(getActivatedInvitationCode() ?? "Unknown")")
+            print("   - Activated date: \(getLifetimeAccessActivatedDate() ?? Date())")
+        } else {
+            print("🎉 Lifetime access: Inactive")
+        }
         
         // Error status
         if let currentError = error {
@@ -296,6 +410,14 @@ class StoreKitManager: ObservableObject {
             print("   - Try running on a physical device for full StoreKit testing")
         }
         
+        if isSandboxEnvironment() {
+            print("   - Ensure you're signed in with sandbox Apple ID in Settings > App Store")
+            print("   - Check that your sandbox account has sufficient test balance")
+            print("   - Verify the product ID 'relate_monthly' and 'relate_lifetime_premium' exist in App Store Connect")
+            print("   - Try signing out and back in to refresh authentication")
+            print("   - Check that your app's bundle ID matches App Store Connect")
+        }
+        
         if subscriptions.isEmpty {
             print("   - No products loaded - check product identifiers")
             print("   - Verify App Store Connect configuration")
@@ -311,21 +433,93 @@ class StoreKitManager: ObservableObject {
     /// Validate App Store Connect configuration
     private func validateAppStoreConnectConfiguration() {
         print("\n🏪 App Store Connect Configuration:")
-        print("   - Product ID: socialbrainbeta ✅")
+        print("   - Product ID: relate_monthly ✅")
+        print("   - Product ID: relate_lifetime_premium ✅")
         print("   - Subscription Group ID: 21695627 ✅")
         print("   - Duration: 1 month ✅")
         print("   - Status: Missing Metadata ⚠️")
         print("\n📋 Required Actions in App Store Connect:")
         print("   1. Add localization metadata:")
-        print("      - Chinese (zh_CN): 社交大脑 Pro 订阅")
-        print("      - English (en_US): Social Brain Pro Subscription")
+        print("      - Chinese (zh_CN): 月度订阅 / 终生订阅")
+        print("      - English (en_US): Monthly Subscription / Lifetime Premium Access")
         print("   2. Add subscription description:")
-        print("      - 解锁所有高级功能，包括无限笔记、iCloud同步、Face ID锁定和高级分析")
-        print("   3. Set pricing (recommended: ¥18.00/month)")
+        print("      - 解锁所有高级功能，包括iCloud同步和Face ID认证")
+        print("   3. Set pricing (¥6.00/month, ¥68.00 lifetime)")
         print("   4. Add subscription screenshots (optional)")
         print("   5. Submit for review when ready")
     }
     #endif
+    
+    private func detectStoreKitConfigurationUsage() -> Bool {
+        // Check if we're in local testing mode by examining the transaction environment
+        // This is a heuristic based on the behavior we observed in logs
+        return false // We'll update this based on actual transaction data
+    }
+    
+    private func provideStoreKitConfigurationFixInstructions() {
+        print("🔧 STOREKIT CONFIGURATION FIX REQUIRED")
+        print("======================================")
+        print("Your app is currently using StoreKit Configuration File (local testing)")
+        print("To test with sandbox Apple ID, follow these steps:")
+        print("")
+        print("1. Open Xcode")
+        print("2. Go to Product > Scheme > Edit Scheme")
+        print("3. Select 'Run' on the left sidebar")
+        print("4. Go to 'Options' tab")
+        print("5. Under 'StoreKit Configuration', select 'None'")
+        print("6. Clean build folder (Product > Clean Build Folder)")
+        print("7. Build and run again")
+        print("")
+        print("After making these changes:")
+        print("- Products will show real prices (not $0.00)")
+        print("- Apple ID authentication will be required")
+        print("- Transactions will go through sandbox servers")
+        print("- You'll need to sign in with your sandbox Apple ID")
+        print("======================================")
+    }
+    
+    // MARK: - Invitation Code Methods
+    
+    /// Validate an invitation code and activate lifetime access if valid
+    func validateInvitationCode(_ code: String) -> Bool {
+        let trimmedCode = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let isValid = validInvitationCodes.contains(trimmedCode)
+        
+        if isValid {
+            // Store the activation in UserDefaults
+            UserDefaults.standard.set(true, forKey: "lifetimeAccessActivated")
+            UserDefaults.standard.set(trimmedCode, forKey: "activatedInvitationCode")
+            UserDefaults.standard.set(Date(), forKey: "lifetimeAccessActivatedDate")
+            
+            // Update subscription status
+            subscriptionStatus = .active
+        }
+        
+        return isValid
+    }
+    
+    /// Check if user has activated lifetime access via invitation code
+    func hasLifetimeAccess() -> Bool {
+        return UserDefaults.standard.bool(forKey: "lifetimeAccessActivated")
+    }
+    
+    /// Get the activated invitation code
+    func getActivatedInvitationCode() -> String? {
+        return UserDefaults.standard.string(forKey: "activatedInvitationCode")
+    }
+    
+    /// Get the date when lifetime access was activated
+    func getLifetimeAccessActivatedDate() -> Date? {
+        return UserDefaults.standard.object(forKey: "lifetimeAccessActivatedDate") as? Date
+    }
+    
+    /// Reset lifetime access (for testing purposes)
+    func resetLifetimeAccess() {
+        UserDefaults.standard.removeObject(forKey: "lifetimeAccessActivated")
+        UserDefaults.standard.removeObject(forKey: "activatedInvitationCode")
+        UserDefaults.standard.removeObject(forKey: "lifetimeAccessActivatedDate")
+        print("🔄 Lifetime access reset")
+    }
 }
 
 enum SubscriptionStatus {

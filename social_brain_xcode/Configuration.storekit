@@ -4,31 +4,70 @@
 
   ],
   "products" : [
-
+    {
+      "displayPrice" : "68.00",
+      "familyShareable" : false,
+      "internalID" : "6747270583",
+      "localizations" : [
+        {
+          "description" : "终生订阅 - 解锁所有高级功能，包括iCloud同步和Face ID认证",
+          "displayName" : "终生订阅",
+          "locale" : "zh_CN"
+        },
+        {
+          "description" : "终生订阅 - 解锁所有高级功能，包括iCloud同步和Face ID认证",
+          "displayName" : "终生订阅",
+          "locale" : "zh"
+        },
+        {
+          "description" : "Lifetime Premium Access - Unlock all premium features including iCloud sync and Face ID authentication",
+          "displayName" : "Lifetime Premium Access",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "Lifetime Premium Access - Unlock all premium features including iCloud sync and Face ID authentication",
+          "displayName" : "Lifetime Premium Access",
+          "locale" : "en"
+        }
+      ],
+      "productID" : "relate_lifetime_premium",
+      "referenceName" : "Lifetime Premium Access",
+      "type" : "NonConsumable"
+    }
   ],
   "settings" : {
     "_applicationInternalID" : "com.socialbrain.app",
     "_developerTeamID" : "YOUR_TEAM_ID",
     "_lastSynchronizedDate" : 712345678.123456,
-    "_storeKitEnvironment" : "Xcode",
-    "_storeKitServerEnvironment" : "Local"
+    "_storeKitEnvironment" : "Sandbox",
+    "_storeKitServerEnvironment" : "Sandbox"
   },
   "subscriptionGroups" : [
     {
       "id" : "21695627",
       "localizations" : [
         {
-          "description" : "社交大脑 Pro 订阅 - 解锁所有高级功能，包括无限笔记、iCloud同步、Face ID锁定和高级分析",
-          "displayName" : "社交大脑 Pro",
+          "description" : "月度订阅 - 解锁所有高级功能，包括iCloud同步和Face ID认证",
+          "displayName" : "月度订阅",
           "locale" : "zh_CN"
         },
         {
-          "description" : "Social Brain Pro Subscription - Unlock all premium features including unlimited notes, iCloud sync, Face ID lock, and advanced analytics",
-          "displayName" : "Social Brain Pro",
+          "description" : "月度订阅 - 解锁所有高级功能，包括iCloud同步和Face ID认证",
+          "displayName" : "月度订阅",
+          "locale" : "zh"
+        },
+        {
+          "description" : "Monthly Subscription - Unlock all premium features including iCloud sync and Face ID authentication",
+          "displayName" : "Monthly Subscription",
           "locale" : "en_US"
+        },
+        {
+          "description" : "Monthly Subscription - Unlock all premium features including iCloud sync and Face ID authentication",
+          "displayName" : "Monthly Subscription",
+          "locale" : "en"
         }
       ],
-      "name" : "社交大脑 Pro",
+      "name" : "月度订阅",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -37,32 +76,36 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "¥18.00",
+          "displayPrice" : "6.00",
           "familyShareable" : false,
           "groupNumber" : 1,
-          "internalID" : "socialbrainbeta",
-          "introductoryOffer" : {
-            "internalID" : "socialbrainbeta_intro",
-            "numberOfPeriods" : 1,
-            "paymentMode" : "Free",
-            "recurringSubscriptionPeriod" : "P1M",
-            "subscriptionPeriod" : "P1M"
-          },
+          "internalID" : "6747268287",
+          "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "解锁所有高级功能，包括无限笔记、iCloud同步、Face ID锁定和高级分析",
-              "displayName" : "社交大脑 Pro 订阅",
+              "description" : "月度订阅 - 解锁所有高级功能，包括iCloud同步和Face ID认证",
+              "displayName" : "月度订阅",
               "locale" : "zh_CN"
             },
             {
-              "description" : "Unlock all premium features including unlimited notes, iCloud sync, Face ID lock, and advanced analytics",
-              "displayName" : "Social Brain Pro Subscription",
+              "description" : "月度订阅 - 解锁所有高级功能，包括iCloud同步和Face ID认证",
+              "displayName" : "月度订阅",
+              "locale" : "zh"
+            },
+            {
+              "description" : "Monthly Subscription - Unlock all premium features including iCloud sync and Face ID authentication",
+              "displayName" : "Monthly Subscription",
               "locale" : "en_US"
+            },
+            {
+              "description" : "Monthly Subscription - Unlock all premium features including iCloud sync and Face ID authentication",
+              "displayName" : "Monthly Subscription",
+              "locale" : "en"
             }
           ],
-          "productID" : "socialbrainbeta",
+          "productID" : "relate_monthly",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "socialbrainbeta_sub",
+          "referenceName" : "Monthly Subscription",
           "subscriptionGroupID" : "21695627",
           "type" : "RecurringSubscription"
         }

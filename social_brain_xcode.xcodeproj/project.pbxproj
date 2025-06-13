@@ -14,6 +14,7 @@
 		AF22C5492DFB145600442C52 /* LaunchScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5452DFB145500442C52 /* LaunchScreenView.swift */; };
 		AF22C54B2DFB1C2200442C52 /* ContactSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C54A2DFB1C2200442C52 /* ContactSelectionView.swift */; };
 		AF22C54D2DFB1C4B00442C52 /* NoteDetailNav.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C54C2DFB1C4B00442C52 /* NoteDetailNav.swift */; };
+		AF22C5532DFCC40600442C52 /* SubscriptionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5522DFCC40600442C52 /* SubscriptionStatusView.swift */; };
 		AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */; };
 		AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A42DF346E1000F4F17 /* EditContactView.swift */; };
 		AF4501C52DF38503000F4F17 /* PromptGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501C42DF38503000F4F17 /* PromptGenerator.swift */; };
@@ -43,7 +44,6 @@
 		AFAE46FC2DE77A3800DD10E0 /* SocialBrainSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE46FB2DE77A3800DD10E0 /* SocialBrainSheetView.swift */; };
 		AFAE47202DE799ED00DD10E0 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE471C2DE799ED00DD10E0 /* StoreKitManager.swift */; };
 		AFAE47212DE799ED00DD10E0 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE471E2DE799ED00DD10E0 /* SubscriptionView.swift */; };
-		AFAE47222DE799ED00DD10E0 /* SubscriptionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE471F2DE799ED00DD10E0 /* SubscriptionStatusView.swift */; };
 		AFAE47242DE79A7900DD10E0 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE47232DE79A7900DD10E0 /* SharedComponents.swift */; };
 		AFAE47262DE79D3E00DD10E0 /* Configuration.storekit in Resources */ = {isa = PBXBuildFile; fileRef = AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */; };
 		AFAE472A2DE7B2D400DD10E0 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFAE47292DE7B2D400DD10E0 /* StoreKit.framework */; };
@@ -100,6 +100,7 @@
 		AF22C5452DFB145500442C52 /* LaunchScreenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LaunchScreenView.swift; sourceTree = "<group>"; };
 		AF22C54A2DFB1C2200442C52 /* ContactSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactSelectionView.swift; sourceTree = "<group>"; };
 		AF22C54C2DFB1C4B00442C52 /* NoteDetailNav.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteDetailNav.swift; sourceTree = "<group>"; };
+		AF22C5522DFCC40600442C52 /* SubscriptionStatusView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubscriptionStatusView.swift; sourceTree = "<group>"; };
 		AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditCircleContactsSheet.swift; sourceTree = "<group>"; };
 		AF4501A42DF346E1000F4F17 /* EditContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditContactView.swift; sourceTree = "<group>"; };
 		AF4501C42DF38503000F4F17 /* PromptGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptGenerator.swift; sourceTree = "<group>"; };
@@ -128,7 +129,6 @@
 		AFAE46FB2DE77A3800DD10E0 /* SocialBrainSheetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SocialBrainSheetView.swift; sourceTree = "<group>"; };
 		AFAE471C2DE799ED00DD10E0 /* StoreKitManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		AFAE471E2DE799ED00DD10E0 /* SubscriptionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubscriptionView.swift; sourceTree = "<group>"; };
-		AFAE471F2DE799ED00DD10E0 /* SubscriptionStatusView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubscriptionStatusView.swift; sourceTree = "<group>"; };
 		AFAE47232DE79A7900DD10E0 /* SharedComponents.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
 		AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
 		AFAE47272DE7A2BA00DD10E0 /* social_brain_xcode.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = social_brain_xcode.entitlements; sourceTree = "<group>"; };
@@ -469,8 +469,8 @@
 		AFAE471D2DE799ED00DD10E0 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				AF22C5522DFCC40600442C52 /* SubscriptionStatusView.swift */,
 				AFAE471E2DE799ED00DD10E0 /* SubscriptionView.swift */,
-				AFAE471F2DE799ED00DD10E0 /* SubscriptionStatusView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -688,6 +688,7 @@
 				AFBF98952DCAA44300AF626E /* AIServiceManager.swift in Sources */,
 				AFF98BD92DA45DA00001DD70 /* AppTheme.swift in Sources */,
 				AFBD50F92DA715550066907B /* SocialBrainDialogView.swift in Sources */,
+				AF22C5532DFCC40600442C52 /* SubscriptionStatusView.swift in Sources */,
 				AF56DC272DCBE13D00F56D6E /* SeedDataManager.swift in Sources */,
 				AFAE47432DF1F76B00DD10E0 /* CreatePromptView.swift in Sources */,
 				AFAE46E52DE4E57F00DD10E0 /* ContactSelectionView.swift in Sources */,
@@ -717,7 +718,6 @@
 				AF4501C52DF38503000F4F17 /* PromptGenerator.swift in Sources */,
 				AFAE46EF2DE646B300DD10E0 /* AddCircleView.swift in Sources */,
 				AFF98BD32DA4453F0001DD70 /* SocialBrainView.swift in Sources */,
-				AFAE47222DE799ED00DD10E0 /* SubscriptionStatusView.swift in Sources */,
 				AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */,
 				AF22C5492DFB145600442C52 /* LaunchScreenView.swift in Sources */,
 				AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */,
@@ -890,6 +890,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = social_brain_xcode/social_brain_xcode.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_ASSET_PATHS = "\"social_brain_xcode/Preview Content\"";
@@ -911,6 +912,7 @@
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = socialbrainbeta;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -923,6 +925,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = social_brain_xcode/social_brain_xcode.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_ASSET_PATHS = "\"social_brain_xcode/Preview Content\"";
@@ -944,6 +947,7 @@
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = socialbrainbeta;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

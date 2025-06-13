@@ -40,7 +40,7 @@ struct SocialContactView: View {
     @State private var refreshTrigger = false
     
     // Add debouncing for refresh operations
-    @State private var lastRefreshTime: Date = Date(timeIntervalSince1970: 0)
+    @State private var lastRefreshTime: Date = Date(timeIntervalSince1970: 0.0)
     private let refreshDebounceInterval: TimeInterval = 1.0 // 1 second debounce
     
     // Fetch contacts from CoreData (initial load)
