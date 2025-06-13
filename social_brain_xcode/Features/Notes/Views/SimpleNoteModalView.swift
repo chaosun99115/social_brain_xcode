@@ -185,7 +185,7 @@ struct SimpleNoteModalView: View {
     @State private var showingMentionConfirmation = false
     @State private var isSaving = false
     
-    init(initialText: String, noteId: UUID? = nil, subType: NoteSubType = .interactionRecord, modalTitle: String = "新建想法", onSave: @escaping (String) -> Void) {
+    init(initialText: String, noteId: UUID? = nil, subType: NoteSubType = .interactionRecord, modalTitle: String = "更新笔记", onSave: @escaping (String) -> Void) {
         self.initialText = initialText
         self.noteId = noteId
         self.subType = subType
@@ -239,18 +239,14 @@ struct SimpleNoteModalView: View {
                             .navigationTitle(modalTitle)
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
-                                ToolbarItem(placement: .navigationBarLeading) {
-                                    Button("取消") {
-                                        dismiss()
-                                    }
-                                    .foregroundColor(.secondary)
-                                }
                                 ToolbarItem(placement: .navigationBarTrailing) {
-                                    Button("保存") {
-                                        saveNote()
+                                    Button(action: {
+                                        dismiss()
+                                    }) {
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(.secondary)
                                     }
-                                    .disabled(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                    .foregroundColor(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : .green)
                                 }
                             }
                         }
@@ -261,30 +257,59 @@ struct SimpleNoteModalView: View {
                             Divider()
                             
                             HStack(spacing: 0) {
-                                Button(action: {
-                                    showingContactSelection = true
-                                }) {
-                                    Text("@熟人")
-                                        .font(.system(size: 17))
-                                        .foregroundColor(.green)
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 44) // Standard iOS button height
+                                // Left unit: 熟人 and 圈子 buttons
+                                HStack(spacing: 0) {
+                                    Button(action: {
+                                        showingContactSelection = true
+                                    }) {
+                                        Text("@熟人")
+                                            .font(.system(size: 17))
+                                            .foregroundColor(.green)
+                                            .frame(maxWidth: .infinity)
+                                            .frame(height: 32) // Reduced from 44
+                                    }
+                                    
+                                    Divider()
+                                        .frame(height: 20) // Reduced from 24
+                                        .padding(.vertical, 6) // Reduced from 10
+                                    
+                                    Button(action: {
+                                        showingCircleSelection = true
+                                    }) {
+                                        Text("# 圈子")
+                                            .font(.system(size: 17))
+                                            .foregroundColor(.green)
+                                            .frame(maxWidth: .infinity)
+                                            .frame(height: 32) // Reduced from 44
+                                    }
                                 }
+                                .frame(maxWidth: .infinity)
                                 
-                                Divider()
-                                    .frame(height: 24)
-                                    .padding(.vertical, 10)
+                                // Spacing between units
+                                Spacer()
+                                    .frame(width: 16)
                                 
+                                // Right unit: Save button
                                 Button(action: {
-                                    showingCircleSelection = true
+                                    saveNote()
                                 }) {
-                                    Text("# 圈子")
-                                        .font(.system(size: 17))
-                                        .foregroundColor(.green)
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 44) // Standard iOS button height
+                                    Text("保存")
+                                        .font(.system(size: 17, weight: .medium))
+                                        .foregroundColor(.white)
+                                        .frame(height: 32)
+                                        .padding(.horizontal, 12)
+                                        .frame(minWidth: 80)
+                                        .background(
+                                            textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty 
+                                            ? Color.gray 
+                                            : Color.green
+                                        )
+                                        .cornerRadius(8)
                                 }
+                                .disabled(textState.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 6) // Reduced from 8
                             .background(Color(.systemBackground))
                         }
                         .background(Color(.systemBackground))
