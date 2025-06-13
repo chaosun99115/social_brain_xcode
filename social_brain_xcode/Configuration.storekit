@@ -15,12 +15,17 @@
   },
   "subscriptionGroups" : [
     {
-      "id" : "socialbrainbeta",
+      "id" : "21695627",
       "localizations" : [
         {
-          "description" : "社交大脑 Pro 订阅",
+          "description" : "社交大脑 Pro 订阅 - 解锁所有高级功能，包括无限笔记、iCloud同步、Face ID锁定和高级分析",
           "displayName" : "社交大脑 Pro",
           "locale" : "zh_CN"
+        },
+        {
+          "description" : "Social Brain Pro Subscription - Unlock all premium features including unlimited notes, iCloud sync, Face ID lock, and advanced analytics",
+          "displayName" : "Social Brain Pro",
+          "locale" : "en_US"
         }
       ],
       "name" : "社交大脑 Pro",
@@ -45,15 +50,20 @@
           },
           "localizations" : [
             {
-              "description" : "解锁所有高级功能",
+              "description" : "解锁所有高级功能，包括无限笔记、iCloud同步、Face ID锁定和高级分析",
               "displayName" : "社交大脑 Pro 订阅",
               "locale" : "zh_CN"
+            },
+            {
+              "description" : "Unlock all premium features including unlimited notes, iCloud sync, Face ID lock, and advanced analytics",
+              "displayName" : "Social Brain Pro Subscription",
+              "locale" : "en_US"
             }
           ],
           "productID" : "socialbrainbeta",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "socialbrainbeta_sub",
-          "subscriptionGroupID" : "socialbrainbeta",
+          "subscriptionGroupID" : "21695627",
           "type" : "RecurringSubscription"
         }
       ]

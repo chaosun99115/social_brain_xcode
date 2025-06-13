@@ -6,6 +6,7 @@ struct ICloudSyncView: View {
     @State private var showingErrorAlert = false
     @State private var showingAccountAlert = false
     @State private var showingSuccessAlert = false
+    @State private var showingAccountChangeAlert = false
     @State private var currentError: Error?
     
     var body: some View {
@@ -74,6 +75,9 @@ struct ICloudSyncView: View {
                 await syncManager.checkAccountStatus()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .iCloudAccountChanged)) { _ in
+            showingAccountChangeAlert = true
+        }
         .alert("同步错误", isPresented: $showingErrorAlert) {
             Button("确定", role: .cancel) { }
             if let error = currentError as? ICloudError,
@@ -107,6 +111,16 @@ struct ICloudSyncView: View {
             Button("确定", role: .cancel) { }
         } message: {
             Text("您的数据现在将在所有设备上自动同步")
+        }
+        .alert("iCloud账户已更改", isPresented: $showingAccountChangeAlert) {
+            Button("确定", role: .cancel) { }
+            Button("检查状态") {
+                Task {
+                    await syncManager.checkAccountStatus()
+                }
+            }
+        } message: {
+            Text("检测到iCloud账户状态发生变化。同步功能可能受到影响，请检查您的iCloud设置。")
         }
     }
     

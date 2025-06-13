@@ -40,9 +40,8 @@ struct SocialContactView: View {
     @State private var refreshTrigger = false
     
     // Add debouncing for refresh operations
-    @State private var lastRefreshTime: Date = Date.distantPast
+    @State private var lastRefreshTime: Date = Date(timeIntervalSince1970: 0)
     private let refreshDebounceInterval: TimeInterval = 1.0 // 1 second debounce
-    @State private var needsRefreshOnAppear = false
     
     // Fetch contacts from CoreData (initial load)
     private func loadContacts() async {
@@ -122,8 +121,15 @@ struct SocialContactView: View {
         
         // Add a small delay to ensure the refresh control is in the correct state
         try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+        
+        // Load contacts and circles
         await loadContacts()
         await loadCircles()
+        
+        await MainActor.run {
+            // Reset refresh state
+            isRefreshing = false
+        }
     }
     
     // Separate function for initial load (no debouncing)
@@ -361,7 +367,9 @@ struct SocialContactView: View {
                 AddContactSheet(refreshTrigger: $refreshTrigger)
             }
             .sheet(isPresented: $showingAddCircleSheet, onDismiss: {
-                Task { await refreshContacts() }
+                // Only refresh if we actually added a circle (we could add a flag for this)
+                // For now, let's be conservative and not refresh automatically
+                // The user can manually refresh if needed
             }) {
                 AddCircleView()
                     .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
@@ -378,8 +386,7 @@ struct SocialContactView: View {
             // Setup sample mode change observer
             setupSampleModeObserver()
             
-            // Only refresh if this is the first appearance or if we're returning from a detail view
-            // The initial load is handled by .task modifier
+            // Only do initial load, don't refresh on every appear
         }
         .onDisappear {
             isViewActive = false
@@ -390,16 +397,8 @@ struct SocialContactView: View {
         .onChange(of: isViewActive) { newValue in
             if newValue {
                 updateLayout()
-                // If we need to refresh when becoming active, do it now
-                if needsRefreshOnAppear {
-                    Task {
-                        await refreshContacts()
-                        needsRefreshOnAppear = false
-                    }
-                }
-            } else {
-                // Set flag to refresh when we become active again (returning from detail view)
-                needsRefreshOnAppear = true
+                // Only refresh if we have a specific reason to do so
+                // Remove the automatic refresh on every activation
             }
         }
     }
@@ -477,7 +476,7 @@ struct SocialContactView: View {
             forName: Notification.Name("RefreshContactsList"),
             object: nil,
             queue: .main
-        ) { _ in
+        ) { notification in
             // Refresh contacts and circles when iCloud sync completes
             Task {
                 await self.refreshContacts()
@@ -489,8 +488,8 @@ struct SocialContactView: View {
             forName: Notification.Name("RefreshCirclesList"),
             object: nil,
             queue: .main
-        ) { _ in
-            // Refresh circles when iCloud sync completes
+        ) { notification in
+            // Refresh contacts and circles when iCloud sync completes
             Task {
                 await self.refreshContacts()
             }

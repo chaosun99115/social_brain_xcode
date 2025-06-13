@@ -70,6 +70,13 @@ struct ConfigurationSheetView: View {
     @State private var pendingICloudSyncAction: Bool?
     @State private var pendingFaceIDAction: Bool?
     
+    // Add state for subscription management
+    @State private var showingSubscriptionView = false
+    @State private var showingRestoreAlert = false
+    @State private var restoreResult: String?
+    @State private var showingSubscriptionError = false
+    @State private var subscriptionErrorMessage: String?
+    
     private var isProUser: Bool {
         featureFlagManager.canUseProFeatures
     }
@@ -126,6 +133,50 @@ struct ConfigurationSheetView: View {
                     }
                 }
                 
+                // Subscription Section
+                Section(header: Text("订阅状态")) {
+                    // Current subscription status
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("当前状态")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            
+                            HStack(spacing: 8) {
+                                Image(systemName: subscriptionStatusIcon)
+                                    .foregroundColor(subscriptionStatusColor)
+                                Text(subscriptionStatusText)
+                                    .font(.headline)
+                                    .foregroundColor(subscriptionStatusColor)
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        if storeManager.subscriptionStatus == .inactive {
+                            Button("升级") {
+                                showingSubscriptionView = true
+                            }
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.primaryAction)
+                            .cornerRadius(8)
+                        }
+                    }
+                    
+                    // Restore purchases button
+                    if storeManager.subscriptionStatus == .inactive {
+                        Button("恢复购买") {
+                            Task {
+                                await restorePurchases()
+                            }
+                        }
+                        .foregroundColor(.primary)
+                    }
+                }
+                
                 // Advanced Features Section
                 Section(header: Text("Pro功能")) {
                     // iCloud Sync Option
@@ -144,6 +195,56 @@ struct ConfigurationSheetView: View {
                     ))
                     .disabled(isAuthenticating)
                 }
+                
+                // Developer Section (only show in debug builds)
+                #if DEBUG
+                Section(header: Text("开发者选项")) {
+                    Toggle("启用订阅要求", isOn: Binding(
+                        get: { featureFlagManager.requireSubscriptionForProFeatures },
+                        set: { newValue in
+                            featureFlagManager.setRequireSubscriptionForProFeatures(newValue)
+                        }
+                    ))
+                    .onChange(of: featureFlagManager.requireSubscriptionForProFeatures) { newValue in
+                        print("Subscription requirement changed to: \(newValue)")
+                    }
+                    
+                    HStack {
+                        Text("当前Pro状态")
+                        Spacer()
+                        Text(isProUser ? "已激活" : "未激活")
+                            .foregroundColor(isProUser ? .green : .red)
+                    }
+                    
+                    // Subscription testing buttons
+                    VStack(spacing: 8) {
+                        Button("重置订阅状态为未激活") {
+                            storeManager.resetSubscriptionStatus()
+                        }
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                        
+                        Button("设置订阅状态为已激活") {
+                            storeManager.setSubscriptionActive()
+                        }
+                        .font(.caption)
+                        .foregroundColor(.green)
+                        
+                        Button("重置为首启动状态") {
+                            featureFlagManager.resetToFirstLaunch()
+                        }
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        
+                        Button("诊断StoreKit问题") {
+                            storeManager.diagnoseStoreKitIssues()
+                        }
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                    }
+                    .padding(.top, 4)
+                }
+                #endif
                 
                 // About Section
                 Section(header: Text("关于")) {
@@ -186,6 +287,29 @@ struct ConfigurationSheetView: View {
                 }
                 Button("取消", role: .cancel) {}
             }
+            .sheet(isPresented: $showingSubscriptionView) {
+                SubscriptionView()
+                    .onDisappear {
+                        // Handle pending actions after subscription view is dismissed
+                        if let pendingSync = pendingICloudSyncAction {
+                            if isProUser {
+                                handleICloudSyncToggle(pendingSync)
+                            }
+                            pendingICloudSyncAction = nil
+                        }
+                        
+                        if let pendingFaceID = pendingFaceIDAction {
+                            if isProUser {
+                                if pendingFaceID {
+                                    authenticateWithFaceID()
+                                } else {
+                                    appSettingsManager.setFaceIDEnabled(false)
+                                }
+                            }
+                            pendingFaceIDAction = nil
+                        }
+                    }
+            }
             .sheet(isPresented: $showingProUpgrade) {
                 SubscriptionView()
                     .onDisappear {
@@ -216,6 +340,21 @@ struct ConfigurationSheetView: View {
             } message: {
                 Text(faceIDError ?? "无法启用Face ID")
             }
+            .alert("恢复购买结果", isPresented: $showingRestoreAlert) {
+                Button("确定", role: .cancel) { }
+            } message: {
+                Text(restoreResult ?? "恢复购买完成")
+            }
+            .alert("订阅错误", isPresented: $showingSubscriptionError) {
+                Button("确定", role: .cancel) { }
+                Button("重试") {
+                    Task {
+                        await restorePurchases()
+                    }
+                }
+            } message: {
+                Text(subscriptionErrorMessage ?? "发生未知错误")
+            }
             .alert("同步错误", isPresented: $showingSyncError) {
                 Button("确定", role: .cancel) { }
                 if let error = syncError as NSError?,
@@ -240,7 +379,100 @@ struct ConfigurationSheetView: View {
             }
         }
         .onAppear {
-            // Remove old iCloud sync initialization
+            // Ensure new users start with inactive subscription status
+            Task {
+                await storeManager.updateSubscriptionStatus()
+            }
+        }
+    }
+    
+    // MARK: - Computed Properties for Subscription Status
+    
+    private var subscriptionStatusIcon: String {
+        switch storeManager.subscriptionStatus {
+        case .active:
+            return "star.fill"
+        case .inactive:
+            return "star"
+        case .unknown:
+            return "questionmark.circle"
+        }
+    }
+    
+    private var subscriptionStatusColor: Color {
+        switch storeManager.subscriptionStatus {
+        case .active:
+            return .yellow
+        case .inactive:
+            return .gray
+        case .unknown:
+            return .orange
+        }
+    }
+    
+    private var subscriptionStatusText: String {
+        switch storeManager.subscriptionStatus {
+        case .active:
+            return "Pro会员"
+        case .inactive:
+            return "免费用户"
+        case .unknown:
+            return "检查中..."
+        }
+    }
+    
+    // MARK: - Subscription Methods
+    
+    private func restorePurchases() async {
+        do {
+            try await storeManager.restorePurchases()
+            await MainActor.run {
+                if storeManager.subscriptionStatus == .active {
+                    restoreResult = "购买恢复成功！您现在可以使用所有Pro功能。"
+                } else {
+                    restoreResult = "未找到可恢复的购买。"
+                }
+                showingRestoreAlert = true
+            }
+        } catch {
+            await MainActor.run {
+                // Provide user-friendly error messages
+                let errorMessage = getSubscriptionErrorMessage(error)
+                subscriptionErrorMessage = errorMessage
+                showingSubscriptionError = true
+            }
+        }
+    }
+    
+    private func getSubscriptionErrorMessage(_ error: Error) -> String {
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost:
+                return "网络连接中断。请检查您的网络连接后重试。"
+            case .timedOut:
+                return "请求超时。请稍后重试。"
+            case .cannotConnectToHost:
+                return "无法连接到App Store服务器。请稍后重试。"
+            case .badServerResponse:
+                return "服务器响应错误。请稍后重试。"
+            default:
+                return "网络错误：\(error.localizedDescription)"
+            }
+        } else if let storeKitError = error as? StoreKitError {
+            switch storeKitError {
+            case .verificationFailed:
+                return "购买验证失败。请稍后重试。"
+            case .userCancelled:
+                return "操作已取消。"
+            case .pending:
+                return "购买正在处理中，请稍候。"
+            case .unknown:
+                return "发生未知错误，请稍后重试。"
+            case .loadFailed, .purchaseFailed, .restoreFailed, .statusCheckFailed:
+                return "操作失败：\(error.localizedDescription)"
+            }
+        } else {
+            return "恢复购买失败：\(error.localizedDescription)"
         }
     }
     

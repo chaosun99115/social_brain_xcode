@@ -2,6 +2,7 @@ import Foundation
 import CloudKit
 import CoreData
 import Combine
+import UIKit
 
 @MainActor
 class ICloudSyncManager: ObservableObject {
@@ -71,6 +72,22 @@ class ICloudSyncManager: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleRemoteChanges()
+            }
+            .store(in: &cancellables)
+        
+        // Observe iCloud account status changes
+        NotificationCenter.default.publisher(for: .CKAccountChanged)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.handleAccountStatusChange()
+            }
+            .store(in: &cancellables)
+        
+        // Observe app lifecycle for account status checks
+        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.handleAppDidBecomeActive()
             }
             .store(in: &cancellables)
     }
@@ -144,9 +161,11 @@ class ICloudSyncManager: ObservableObject {
             
             if enabled {
                 syncStatus = .inProgress
+                storeSyncPreference(true)
             } else {
                 syncStatus = .notStarted
                 lastSyncError = nil
+                storeSyncPreference(false)
             }
         }
     }
@@ -235,23 +254,16 @@ class ICloudSyncManager: ObservableObject {
         
         switch cloudEvent.type {
         case .setup:
-            syncStatus = .inProgress
+            // CloudKit setup event - no action needed
+            break
         case .import:
+            // CloudKit import event - post refresh notifications
             syncStatus = .completed
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
-                NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
-                NotificationCenter.default.post(name: Notification.Name("RefreshCirclesList"), object: nil)
-                NotificationCenter.default.post(name: Notification.Name("RefreshPromptList"), object: nil)
-            }
+            postRefreshNotifications()
         case .export:
+            // CloudKit export event - post refresh notifications
             syncStatus = .completed
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
-                NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
-                NotificationCenter.default.post(name: Notification.Name("RefreshCirclesList"), object: nil)
-                NotificationCenter.default.post(name: Notification.Name("RefreshPromptList"), object: nil)
-            }
+            postRefreshNotifications()
         @unknown default:
             break
         }
@@ -282,12 +294,63 @@ class ICloudSyncManager: ObservableObject {
             self.persistenceController.container.viewContext.refreshAllObjects()
             
             DispatchQueue.main.async {
-                NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
-                NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
-                NotificationCenter.default.post(name: Notification.Name("RefreshCirclesList"), object: nil)
-                NotificationCenter.default.post(name: Notification.Name("RefreshPromptList"), object: nil)
+                self.postRefreshNotifications()
             }
         }
+    }
+    
+    private func postRefreshNotifications() {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("RefreshNotesList"), object: nil)
+            NotificationCenter.default.post(name: Notification.Name("RefreshContactsList"), object: nil)
+            NotificationCenter.default.post(name: Notification.Name("RefreshCirclesList"), object: nil)
+            NotificationCenter.default.post(name: Notification.Name("RefreshPromptList"), object: nil)
+        }
+    }
+    
+    // MARK: - Account Change Handling
+    
+    /// Handle iCloud account status changes
+    private func handleAccountStatusChange() {
+        Task {
+            await checkAccountStatus()
+            
+            // If sync is enabled but account is no longer available, disable sync
+            if isCloudKitEnabled && accountStatus != .available {
+                await MainActor.run {
+                    syncStatus = .failed(ICloudError.noAccount)
+                    lastSyncError = ICloudError.noAccount
+                }
+                
+                // Post notification for UI to show account change alert
+                NotificationCenter.default.post(name: .iCloudAccountChanged, object: nil)
+            }
+            
+            // If account becomes available and sync was previously enabled, re-enable
+            if accountStatus == .available && !isCloudKitEnabled {
+                // Check if user had sync enabled before
+                let wasSyncEnabled = UserDefaults.standard.bool(forKey: "iCloudSyncWasEnabled")
+                if wasSyncEnabled {
+                    do {
+                        try await toggleCloudKitSync(true)
+                    } catch {
+                        print("❌ Failed to re-enable sync after account change: \(error)")
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Handle app becoming active - check account status
+    private func handleAppDidBecomeActive() {
+        Task {
+            await checkAccountStatus()
+        }
+    }
+    
+    /// Store sync preference for account change recovery
+    private func storeSyncPreference(_ enabled: Bool) {
+        UserDefaults.standard.set(enabled, forKey: "iCloudSyncWasEnabled")
     }
 }
 
@@ -328,4 +391,9 @@ enum ICloudError: LocalizedError {
             return "请重启应用或联系支持"
         }
     }
+}
+
+// MARK: - Notification Names
+extension Notification.Name {
+    static let iCloudAccountChanged = Notification.Name("iCloudAccountChanged")
 } 

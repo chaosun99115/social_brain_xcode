@@ -62,13 +62,25 @@ class FeatureFlagManager: ObservableObject {
     @Published var requireSubscriptionForProFeatures: Bool = true
     
     private init() {
-        // Load saved feature flag setting
-        requireSubscriptionForProFeatures = UserDefaults.standard.bool(forKey: "requireSubscriptionForProFeatures")
+        // Check if this is the first launch
+        let isFirstLaunch = !UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+        
+        if isFirstLaunch {
+            // For new users, always require subscription
+            requireSubscriptionForProFeatures = true
+            UserDefaults.standard.set(true, forKey: "requireSubscriptionForProFeatures")
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+            print("First app launch: Subscription requirement enabled for new user")
+        } else {
+            // For existing users, load saved setting
+            requireSubscriptionForProFeatures = UserDefaults.standard.bool(forKey: "requireSubscriptionForProFeatures")
+        }
     }
     
     func setRequireSubscriptionForProFeatures(_ required: Bool) {
         requireSubscriptionForProFeatures = required
         UserDefaults.standard.set(required, forKey: "requireSubscriptionForProFeatures")
+        print("Subscription requirement changed to: \(required)")
     }
     
     var canUseProFeatures: Bool {
@@ -77,6 +89,20 @@ class FeatureFlagManager: ObservableObject {
         }
         return StoreKitManager.shared.subscriptionStatus == .active
     }
+    
+    // MARK: - Developer Methods (for testing)
+    
+    #if DEBUG
+    /// Reset to first launch state (for testing purposes)
+    func resetToFirstLaunch() {
+        UserDefaults.standard.removeObject(forKey: "hasLaunchedBefore")
+        UserDefaults.standard.removeObject(forKey: "requireSubscriptionForProFeatures")
+        requireSubscriptionForProFeatures = true
+        UserDefaults.standard.set(true, forKey: "requireSubscriptionForProFeatures")
+        UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+        print("Reset to first launch state for testing")
+    }
+    #endif
 }
 
 @main

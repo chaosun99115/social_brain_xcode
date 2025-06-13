@@ -16,6 +16,17 @@ struct SocialNotesView: View {
     @EnvironmentObject var appModeManager: AppModeManager
     @Environment(\.managedObjectContext) private var viewContext
     
+    // Add debouncing for refresh operations
+    @State private var lastRefreshTime: Date = Date.distantPast
+    private let refreshDebounceInterval: TimeInterval = 1.0 // 1 second debounce
+    
+    // Add state to track if we need to refresh on appear
+    @State private var needsRefreshOnAppear = true
+    
+    // Static notification observer that persists across view lifecycle
+    private static var notificationObserver: NSObjectProtocol?
+    private static var isObserverSetup = false
+    
     // MARK: - Note Filtering and Processing
     
     // Separate function to convert Core Data notes to SocialNote model
@@ -261,25 +272,39 @@ struct SocialNotesView: View {
         }
         .onChange(of: showingSimpleNoteModal) { newValue in
             if !newValue {
-                // Refresh when modal is dismissed
-                DispatchQueue.main.async {
-                    refreshTrigger.toggle()
-                }
+                // Only refresh if we actually added a note (we could add a flag for this)
+                // For now, let's be conservative and not refresh automatically
+                // The user can manually refresh if needed, or the modal can trigger refresh when needed
             }
         }
         .onAppear {
-            setupNotificationObservers()
-            // Initial refresh
-            refreshTrigger.toggle()
-            
-            // Setup sample mode change observer
+            // Setup sample mode change observer (includes iCloud sync observers)
             setupSampleModeObserver()
+            
+            // Force refresh when view becomes active to ensure latest data
+            if needsRefreshOnAppear {
+                Task {
+                    await refreshNotes()
+                    needsRefreshOnAppear = false
+                }
+            }
         }
         .onDisappear {
-            removeNotificationObservers()
-            
-            // Cleanup sample mode observer
+            // Cleanup sample mode observer (includes iCloud sync observers)
             cleanupSampleModeObserver()
+            
+            // Mark that we need to refresh next time we appear
+            needsRefreshOnAppear = true
+        }
+        .onChange(of: refreshTrigger) { _ in
+            // Force UI update by triggering a state change
+            Task { @MainActor in
+                // Small delay to ensure the trigger change is processed
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                // Force a UI update by toggling a state variable
+                needsRefreshOnAppear.toggle()
+                needsRefreshOnAppear.toggle()
+            }
         }
     }
     
@@ -344,17 +369,10 @@ struct SocialNotesView: View {
         }
     }
     
-    private func setupNotificationObservers() {
-        NotificationCenter.default.addObserver(forName: Notification.Name("RefreshNotesList"), object: nil, queue: .main) { _ in
-            refreshTrigger.toggle()
-        }
-    }
-    
-    private func removeNotificationObservers() {
-        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshNotesList"), object: nil)
-    }
-    
     private func setupSampleModeObserver() {
+        // Setup persistent notification observer (only once)
+        Self.setupPersistentNotificationObserver()
+        
         NotificationCenter.default.addObserver(
             forName: .sampleModeChanged,
             object: nil,
@@ -365,13 +383,49 @@ struct SocialNotesView: View {
                 await self.refreshNotes()
             }
         }
+        
+        // Add observer for local refresh notifications (from persistent observer)
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("LocalRefreshNotes"),
+            object: nil,
+            queue: .main
+        ) { notification in
+            // Refresh notes when local refresh is triggered
+            Task {
+                await self.refreshNotes()
+            }
+        }
+        
+        // Add observer for iCloud sync refresh notifications
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("RefreshNotesList"),
+            object: nil,
+            queue: .main
+        ) { notification in
+            // Refresh notes when iCloud sync completes or other refresh events occur
+            Task {
+                await self.refreshNotes()
+            }
+        }
     }
     
     private func cleanupSampleModeObserver() {
         NotificationCenter.default.removeObserver(self, name: .sampleModeChanged, object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshNotesList"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("LocalRefreshNotes"), object: nil)
     }
     
     private func refreshNotes() async {
+        // Check if we should debounce this refresh
+        let now = Date()
+        if now.timeIntervalSince(lastRefreshTime) < refreshDebounceInterval {
+            return
+        }
+        
+        await MainActor.run { 
+            lastRefreshTime = now
+        }
+        
         // Simulate a small delay to show the refresh animation
         try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
         
@@ -444,6 +498,30 @@ struct SocialNotesView: View {
                 await refreshNotes()
             }
         }
+    }
+    
+    // Static function to setup persistent notification observer
+    private static func setupPersistentNotificationObserver() {
+        guard !isObserverSetup else { return }
+        
+        notificationObserver = NotificationCenter.default.addObserver(
+            forName: Notification.Name("RefreshNotesList"),
+            object: nil,
+            queue: .main
+        ) { notification in
+            // Post a local notification to trigger refresh in active views
+            NotificationCenter.default.post(name: Notification.Name("LocalRefreshNotes"), object: nil)
+        }
+        isObserverSetup = true
+    }
+    
+    // Static function to cleanup persistent notification observer
+    private static func cleanupPersistentNotificationObserver() {
+        guard isObserverSetup, let observer = notificationObserver else { return }
+        
+        NotificationCenter.default.removeObserver(observer)
+        notificationObserver = nil
+        isObserverSetup = false
     }
 }
 
