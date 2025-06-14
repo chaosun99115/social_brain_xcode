@@ -430,6 +430,13 @@ struct SocialBrainView: View {
             // Setup keyboard observers for keyboard dismissal
             setupKeyboardObservers()
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            // Handle app returning from background - ensure proper state restoration
+            if !isConversationActive {
+                // Refresh suggested questions when returning from background
+                initializeSuggestedQuestions()
+            }
+        }
         .onDisappear {
             // Cleanup keyboard observers
             cleanupKeyboardObservers()

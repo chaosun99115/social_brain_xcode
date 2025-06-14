@@ -289,6 +289,14 @@ struct SocialNotesView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            // Handle app returning from background - ensure proper state restoration
+            Task {
+                // Small delay to ensure proper state restoration
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                await refreshNotes()
+            }
+        }
         .onDisappear {
             // Cleanup sample mode observer (includes iCloud sync observers)
             cleanupSampleModeObserver()
@@ -462,20 +470,6 @@ struct SocialNotesView: View {
         formatter.timeStyle = .none
         formatter.doesRelativeDateFormatting = true
         return formatter.string(from: date)
-    }
-    
-    // Add helper function to get tab bar height
-    private func getTabBarHeight() -> CGFloat {
-        let standardTabBarHeight: CGFloat = 49
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-        
-        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
-        return standardTabBarHeight + bottomInset
     }
     
     private var simpleNoteModalView: some View {

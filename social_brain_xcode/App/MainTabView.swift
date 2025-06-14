@@ -34,6 +34,10 @@ struct MainTabView: View {
             // Set unselected tab color to system gray
             UITabBar.appearance().unselectedItemTintColor = UIColor.systemGray
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            // Handle app returning from background - ensure proper tab bar state restoration
+            // SwiftUI TabView automatically manages tab bar visibility, no manual intervention needed
+        }
     }
 }
 
