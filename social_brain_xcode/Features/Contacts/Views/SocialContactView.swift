@@ -154,13 +154,50 @@ struct SocialContactView: View {
             }
         }
         
+        // Apply search filter
+        let searchFiltered: [Contact]
         if searchText.isEmpty {
-            return filtered
+            searchFiltered = filtered
+        } else {
+            searchFiltered = filtered.filter { contact in
+                guard let name = contact.name else { return false }
+                return name.localizedCaseInsensitiveContains(searchText)
+            }
         }
-        return filtered.filter { contact in
-            guard let name = contact.name else { return false }
-            return name.localizedCaseInsensitiveContains(searchText)
+        
+        // Sort contacts by latest note update time (descending - newest first)
+        return searchFiltered.sorted { contact1, contact2 in
+            let latestDate1 = getLatestNoteUpdateDate(for: contact1)
+            let latestDate2 = getLatestNoteUpdateDate(for: contact2)
+            
+            // Handle cases where contacts have no notes
+            // Contacts with notes should come before contacts without notes
+            if latestDate1 == nil && latestDate2 == nil {
+                // Both have no notes, sort by name
+                return (contact1.name ?? "") < (contact2.name ?? "")
+            } else if latestDate1 == nil {
+                return false // contact1 goes after contact2
+            } else if latestDate2 == nil {
+                return true // contact1 goes before contact2
+            } else {
+                // Both have notes, sort by latest update time (descending)
+                return latestDate1! > latestDate2!
+            }
         }
+    }
+    
+    // Helper function to get the latest note update date for a contact
+    private func getLatestNoteUpdateDate(for contact: Contact) -> Date? {
+        guard let contactId = contact.contactId else { return nil }
+        
+        let notes = contactManager.getActiveNotesForContact(contactId: contactId)
+        guard let latestNote = notes.max(by: { 
+            ($0.updatedAt ?? Date.distantPast) < ($1.updatedAt ?? Date.distantPast) 
+        }) else {
+            return nil
+        }
+        
+        return latestNote.updatedAt
     }
     
     var body: some View {
@@ -603,7 +640,7 @@ struct ContactListView: View {
             Spacer()
             VStack(spacing: 12) {
                 if selectedTab == 0 {
-                    Text("在这里记录您的社交熟人")
+                    Text("在这里记录你人际网络里的熟人")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -612,7 +649,7 @@ struct ContactListView: View {
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 } else {
-                    Text("在这里记录您的社交圈子")
+                    Text("在这里记录你人际网络里的圈子")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)

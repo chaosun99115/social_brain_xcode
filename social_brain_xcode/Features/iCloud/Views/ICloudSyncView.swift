@@ -23,19 +23,23 @@ struct ICloudSyncView: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            // Main Toggle
-            Toggle("启用iCloud同步", isOn: Binding(
-                get: { syncManager.isCloudKitEnabled },
-                set: { newValue in
-                    if newValue && !isProUser {
-                        showingSubscriptionRequirementAlert = true
-                    } else {
-                        Task {
-                            await handleSyncToggle(newValue)
-                        }
+                    // Main Toggle
+        Toggle("启用iCloud同步", isOn: Binding(
+            get: { 
+                // Use the user's stored preference if available, otherwise fall back to sync manager state
+                let userPreference = UserDefaults.standard.bool(forKey: "UserWantsCloudKitSync")
+                return userPreference || syncManager.isCloudKitEnabled
+            },
+            set: { newValue in
+                if newValue && !isProUser {
+                    showingSubscriptionRequirementAlert = true
+                } else {
+                    Task {
+                        await handleSyncToggle(newValue)
                     }
                 }
-            ))
+            }
+        ))
             .disabled(syncManager.isSyncing() || syncManager.isCheckingAccount)
             
             // Progress Status (only shown when iCloud is enabled and actively syncing)
@@ -89,6 +93,18 @@ struct ICloudSyncView: View {
         .onAppear {
             Task {
                 await syncManager.checkAccountStatus()
+                
+                // Restore user's sync preference if they had it enabled before
+                let userWantsSync = UserDefaults.standard.bool(forKey: "UserWantsCloudKitSync")
+                if userWantsSync && !syncManager.isCloudKitEnabled {
+                    // Try to re-enable sync if user previously wanted it
+                    do {
+                        try await syncManager.toggleCloudKitSync(true)
+                    } catch {
+                        // If we can't restore it, clear the preference
+                        print("Failed to restore iCloud sync preference: \(error)")
+                    }
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .iCloudAccountChanged)) { _ in
@@ -152,6 +168,9 @@ struct ICloudSyncView: View {
     
     private func handleSyncToggle(_ enabled: Bool) async {
         do {
+            // Store the user's intent immediately to prevent automatic turn-off
+            UserDefaults.standard.set(enabled, forKey: "UserWantsCloudKitSync")
+            
             try await syncManager.toggleCloudKitSync(enabled)
             
             // Show success alert when sync is successfully enabled
@@ -161,19 +180,69 @@ struct ICloudSyncView: View {
                 }
             }
         } catch {
-            currentError = error
-            showingErrorAlert = true
+            // If sync fails, check if it's a temporary issue
+            let shouldRetry = await shouldRetrySync(for: error)
             
-            // If it's an account-related error, show account alert
-            if let iCloudError = error as? ICloudError,
-               [.noAccount, .restricted].contains(iCloudError) {
-                showingAccountAlert = true
+            if shouldRetry {
+                // For temporary issues, don't turn off the toggle completely
+                // Instead, show error but keep user's preference
+                currentError = error
+                showingErrorAlert = true
+                
+                // Schedule a retry after a delay
+                Task {
+                    try? await Task.sleep(for: .seconds(5))
+                    if UserDefaults.standard.bool(forKey: "UserWantsCloudKitSync") {
+                        do {
+                            try await syncManager.toggleCloudKitSync(enabled)
+                        } catch {
+                            // If retry also fails, then turn off the toggle
+                            await MainActor.run {
+                                UserDefaults.standard.set(false, forKey: "UserWantsCloudKitSync")
+                            }
+                        }
+                    }
+                }
+            } else {
+                // For permanent issues, turn off the toggle and store the preference
+                UserDefaults.standard.set(false, forKey: "UserWantsCloudKitSync")
+                currentError = error
+                showingErrorAlert = true
+                
+                // If it's an account-related error, show account alert
+                if let iCloudError = error as? ICloudError,
+                   [.noAccount, .restricted].contains(iCloudError) {
+                    showingAccountAlert = true
+                }
             }
         }
     }
     
+    private func shouldRetrySync(for error: Error) async -> Bool {
+        if let iCloudError = error as? ICloudError {
+            switch iCloudError {
+            case .temporarilyUnavailable, .couldNotDetermine:
+                return true
+            case .noAccount, .restricted, .unknown:
+                return false
+            }
+        }
+        
+        // For network errors, check if we can retry
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .timedOut, .networkConnectionLost, .notConnectedToInternet:
+                return true
+            default:
+                return false
+            }
+        }
+        
+        return false
+    }
+    
     private func retrySync() async {
-        if syncManager.isCloudKitEnabled {
+        if syncManager.isCloudKitEnabled || UserDefaults.standard.bool(forKey: "UserWantsCloudKitSync") {
             do {
                 try await syncManager.toggleCloudKitSync(false)
                 try await syncManager.toggleCloudKitSync(true)

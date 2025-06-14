@@ -136,7 +136,7 @@ struct SocialNotesView: View {
                     // Tab selector
                     HStack(spacing: 0) {
                         TabButton(
-                            title: "人际互动",
+                            title: "人际日志",
                             isSelected: selectedTab == 0,
                             action: { 
                                 withAnimation(.easeInOut(duration: 0.4)) { 
@@ -146,7 +146,7 @@ struct SocialNotesView: View {
                         )
                         
                         TabButton(
-                            title: "人际话题",
+                            title: "人际思考",
                             isSelected: selectedTab == 1,
                             action: { 
                                 withAnimation(.easeInOut(duration: 0.4)) { 
@@ -322,7 +322,7 @@ struct SocialNotesView: View {
                 VStack(spacing: 32) {
                     Spacer()
                     VStack(spacing: 12) {
-                        Text(selectedTab == 0 ? "在这里记录您的人际互动" : "在这里记录您的社交话题")
+                        Text(selectedTab == 0 ? "在这里记录你的人际日志" : "在这里记录你的人际思考")
                             .font(.body)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -337,7 +337,7 @@ struct SocialNotesView: View {
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: selectedTab == 0 ? "person.2.fill" : "lightbulb.fill")
-                                Text(selectedTab == 0 ? "查看示例互动" : "查看示例话题")
+                                Text(selectedTab == 0 ? "查看示例日志" : "查看示例思考")
                             }
                             .font(.subheadline)
                             .foregroundColor(Color.primaryAction)

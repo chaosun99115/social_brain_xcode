@@ -315,7 +315,10 @@ class ICloudSyncManager: ObservableObject {
         Task {
             await checkAccountStatus()
             
-            // If sync is enabled but account is no longer available, disable sync
+            // Check if user wants sync enabled
+            let userWantsSync = UserDefaults.standard.bool(forKey: "UserWantsCloudKitSync")
+            
+            // If sync is enabled but account is no longer available, show error but don't disable permanently
             if isCloudKitEnabled && accountStatus != .available {
                 await MainActor.run {
                     syncStatus = .failed(ICloudError.noAccount)
@@ -324,18 +327,17 @@ class ICloudSyncManager: ObservableObject {
                 
                 // Post notification for UI to show account change alert
                 NotificationCenter.default.post(name: .iCloudAccountChanged, object: nil)
+                
+                // Don't disable sync permanently if user wants it - just show the error
+                // The sync will be re-attempted when account becomes available again
             }
             
-            // If account becomes available and sync was previously enabled, re-enable
-            if accountStatus == .available && !isCloudKitEnabled {
-                // Check if user had sync enabled before
-                let wasSyncEnabled = UserDefaults.standard.bool(forKey: "iCloudSyncWasEnabled")
-                if wasSyncEnabled {
-                    do {
-                        try await toggleCloudKitSync(true)
-                    } catch {
-                        print("❌ Failed to re-enable sync after account change: \(error)")
-                    }
+            // If account becomes available and user wants sync enabled, re-enable
+            if accountStatus == .available && !isCloudKitEnabled && userWantsSync {
+                do {
+                    try await toggleCloudKitSync(true)
+                } catch {
+                    print("❌ Failed to re-enable sync after account change: \(error)")
                 }
             }
         }
@@ -350,7 +352,7 @@ class ICloudSyncManager: ObservableObject {
     
     /// Store sync preference for account change recovery
     private func storeSyncPreference(_ enabled: Bool) {
-        UserDefaults.standard.set(enabled, forKey: "iCloudSyncWasEnabled")
+        UserDefaults.standard.set(enabled, forKey: "UserWantsCloudKitSync")
     }
 }
 
