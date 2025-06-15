@@ -19,6 +19,7 @@
 		AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A42DF346E1000F4F17 /* EditContactView.swift */; };
 		AF4501C52DF38503000F4F17 /* PromptGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501C42DF38503000F4F17 /* PromptGenerator.swift */; };
 		AF4501C72DF38DDE000F4F17 /* PromptFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501C62DF38DDE000F4F17 /* PromptFlow.swift */; };
+		AF4EB1F12DFF27D40048D3F3 /* TabBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4EB1F02DFF27D40048D3F3 /* TabBarManager.swift */; };
 		AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */; };
 		AF56DC272DCBE13D00F56D6E /* SeedDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC232DCBE13D00F56D6E /* SeedDataManager.swift */; };
 		AF56DC282DCBE13D00F56D6E /* SeedDataExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */; };
@@ -105,6 +106,7 @@
 		AF4501A42DF346E1000F4F17 /* EditContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditContactView.swift; sourceTree = "<group>"; };
 		AF4501C42DF38503000F4F17 /* PromptGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptGenerator.swift; sourceTree = "<group>"; };
 		AF4501C62DF38DDE000F4F17 /* PromptFlow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptFlow.swift; sourceTree = "<group>"; };
+		AF4EB1F02DFF27D40048D3F3 /* TabBarManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TabBarManager.swift; sourceTree = "<group>"; };
 		AF56DC1F2DCBB41600F56D6E /* DoubaoChatService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DoubaoChatService.swift; sourceTree = "<group>"; };
 		AF56DC232DCBE13D00F56D6E /* SeedDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeedDataManager.swift; sourceTree = "<group>"; };
 		AF56DC242DCBE13D00F56D6E /* SeedDataExample.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SeedDataExample.swift; sourceTree = "<group>"; };
@@ -380,6 +382,7 @@
 				AFF98BB62DA075720001DD70 /* social_brain_xcodeApp.swift */,
 				AFF98BD82DA45DA00001DD70 /* AppTheme.swift */,
 				AFF98BCB2DA0772F0001DD70 /* MainTabView.swift */,
+				AF4EB1F02DFF27D40048D3F3 /* TabBarManager.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -734,6 +737,7 @@
 				AFAE473C2DF1DEB000DD10E0 /* PromptListView.swift in Sources */,
 				AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */,
 				AF57FBF62DF9E91100617C0A /* ICloudSyncManager.swift in Sources */,
+				AF4EB1F12DFF27D40048D3F3 /* TabBarManager.swift in Sources */,
 				AF84F4262DC942E500BD66D5 /* ContactInsightManager.swift in Sources */,
 				AF56DC202DCBB41600F56D6E /* DoubaoChatService.swift in Sources */,
 				AFE504C92DF8BFD8006B110F /* AboutView.swift in Sources */,

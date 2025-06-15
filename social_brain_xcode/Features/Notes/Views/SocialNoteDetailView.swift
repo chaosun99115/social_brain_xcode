@@ -10,6 +10,7 @@ struct SocialNoteDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
     @EnvironmentObject var appModeManager: AppModeManager
+    @EnvironmentObject var tabBarManager: TabBarManager
     @StateObject private var insightManager = ContactInsightManager.shared
     @State private var contactInsights: [ContactInsight] = []
     @State private var isLoadingInsights = true
@@ -125,6 +126,7 @@ struct SocialNoteDetailView: View {
                 .background(Color.primaryBackground)
             }
         }
+        .hideTabBar() // Always hide tab bar for detail views
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
@@ -137,9 +139,6 @@ struct SocialNoteDetailView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(Color.primaryBackground, for: .navigationBar)
         .onAppear {
-            DispatchQueue.main.async {
-                hideTabBar(true)
-            }
             loadContactInsights()
             // Ensure proper layout when appearing
             DispatchQueue.main.async {
@@ -147,17 +146,9 @@ struct SocialNoteDetailView: View {
             }
         }
         .onDisappear {
-            DispatchQueue.main.async {
-                hideTabBar(false)
-            }
             // Ensure proper layout when disappearing
             DispatchQueue.main.async {
                 UIApplication.shared.windows.first?.layoutIfNeeded()
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            DispatchQueue.main.async {
-                hideTabBar(true)
             }
         }
         .edgesIgnoringSafeArea(.bottom)
@@ -241,27 +232,6 @@ struct SocialNoteDetailView: View {
     private func getTabBarHeight() -> CGFloat {
         let standardTabBarHeight: CGFloat = 49
         return standardTabBarHeight + getBottomSafeAreaInset()
-    }
-    
-    // Update hideTabBar function to handle layout updates
-    private func hideTabBar(_ hidden: Bool) {
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .map { $0 as? UIWindowScene }
-            .compactMap { $0 }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-            
-        if let keyWindow = keyWindow {
-            keyWindow.rootViewController?.children.forEach { child in
-                if let tabBarController = child as? UITabBarController {
-                    tabBarController.tabBar.isHidden = hidden
-                    // Force layout update
-                    tabBarController.view.layoutIfNeeded()
-                }
-            }
-        }
     }
     
     private func formattedTimestamp(date: Date) -> String {

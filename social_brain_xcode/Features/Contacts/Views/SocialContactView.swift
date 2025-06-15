@@ -13,6 +13,7 @@ struct SocialContactView: View {
     @State private var searchText = ""
     @State private var selectedTab = 0 // 0 for 熟人, 1 for 圈子
     @EnvironmentObject var appModeManager: AppModeManager
+    @EnvironmentObject var tabBarManager: TabBarManager
     @StateObject private var contactManager = ContactManager.shared
     @StateObject private var circleManager = CircleManager.shared
     @State private var contacts: [Contact] = []
@@ -201,14 +202,40 @@ struct SocialContactView: View {
     }
     
     var body: some View {
-        TabView(selection: $selectedTab) {
-            // 熟人 Tab
-            NavigationView {
-                ZStack(alignment: .bottomTrailing) {
-                    Color.primaryBackground
-                        .ignoresSafeArea()
+        NavigationView {
+            ZStack(alignment: .bottomTrailing) {
+                Color.primaryBackground
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Tab selector
+                    HStack(spacing: 0) {
+                        TabButton(
+                            title: "熟人",
+                            isSelected: selectedTab == 0,
+                            action: { 
+                                withAnimation(.easeInOut(duration: 0.4)) { 
+                                    selectedTab = 0 
+                                }
+                            }
+                        )
+                        
+                        TabButton(
+                            title: "圈子",
+                            isSelected: selectedTab == 1,
+                            action: { 
+                                withAnimation(.easeInOut(duration: 0.4)) { 
+                                    selectedTab = 1 
+                                }
+                            }
+                        )
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.top, 2)
                     
-                    VStack(spacing: 0) {
+                    // TabView for content
+                    TabView(selection: $selectedTab) {
+                        // 熟人 Tab
                         ContactListView(
                             contacts: filteredContacts,
                             isLoading: isLoading,
@@ -219,128 +246,9 @@ struct SocialContactView: View {
                             onSampleModeSelected: { await refreshContacts() },
                             selectedTab: 0
                         )
-                    }
-                    .offset(x: dragOffset)
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                // Only allow dragging from the left edge (first 50 points)
-                                let startLocation = value.startLocation
-                                if startLocation.x < 50 && value.translation.width > 0 {
-                                    isDragging = true
-                                    // Limit drag to positive values (rightward movement)
-                                    dragOffset = min(value.translation.width, UIScreen.main.bounds.width * 0.3)
-                                }
-                            }
-                            .onEnded { value in
-                                isDragging = false
-                                let threshold: CGFloat = 100
-                                
-                                if dragOffset > threshold {
-                                    // Dismiss the view
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        dragOffset = UIScreen.main.bounds.width
-                                    }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                        presentationMode.wrappedValue.dismiss()
-                                    }
-                                } else {
-                                    // Snap back to original position
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        dragOffset = 0
-                                    }
-                                }
-                            }
-                    )
-                    
-                    // Floating Action Button as overlay
-                    Button(action: {
-                        showingAddContact = true
-                    }) {
-                        Image(systemName: "person.badge.plus")
-                            .font(.system(size: 22, weight: .bold, design: .default))
-                            .foregroundColor(.white)
-                            .frame(width: 56, height: 56)
-                            .background(Color.green)
-                            .clipShape(SwiftUI.Circle())
-                            .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
-                    }
-                    .padding(.trailing, 16)
-                    .padding(.bottom, 16)
-                    
-                    // Show overlay spinner only during refresh
-                    if isRefreshing && !isLoading {
-                        Color.primaryBackground.opacity(0.3)
-                            .ignoresSafeArea()
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle())
-                            .scaleEffect(1.5)
-                    }
-                    
-                    // Visual feedback during drag
-                    if isDragging && dragOffset > 0 {
-                        HStack {
-                            // Semi-transparent overlay on the left
-                            Color.black.opacity(0.3 * (dragOffset / UIScreen.main.bounds.width))
-                                .frame(width: dragOffset)
-                                .ignoresSafeArea()
-                            
-                            Spacer()
-                        }
-                    }
-                }
-                .navigationTitle("熟人")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(.hidden, for: .navigationBar)
-                .toolbarBackground(Color.primaryBackground, for: .navigationBar)
-                .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索")
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        if appModeManager.isSampleMode {
-                            Button(action: {
-                                appModeManager.isSampleMode = false
-                                appModeManager.sampleModeType = nil
-                                Task {
-                                    await refreshContacts()
-                                }
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
-                                    Text(SampleModeConfig.UIConstants.exitButtonTitle)
-                                        .fontWeight(.bold)
-                                }
-                                .font(.footnote)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.green)
-                                .cornerRadius(8)
-                            }
-                        }
-                    }
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            showingConfigurationSheet = true
-                        }) {
-                            Image(systemName: "gearshape")
-                                .font(.system(size: 16))
-                                .foregroundColor(.primaryText)
-                        }
-                    }
-                }
-            }
-            .tabItem {
-                Label("熟人", systemImage: "person.3.sequence.fill")
-            }
-            .tag(0)
-            
-            // 圈子 Tab
-            NavigationView {
-                ZStack(alignment: .bottomTrailing) {
-                    Color.primaryBackground
-                        .ignoresSafeArea()
-                    
-                    VStack(spacing: 0) {
+                        .tag(0)
+                        
+                        // 圈子 Tab
                         CircleListView(
                             circles: circles,
                             isLoading: isLoading,
@@ -350,154 +258,157 @@ struct SocialContactView: View {
                             onRefresh: { await refreshContacts() },
                             onSampleModeSelected: { await refreshContacts() }
                         )
+                        .tag(1)
                     }
-                    .offset(x: dragOffset)
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                // Only allow dragging from the left edge (first 50 points)
-                                let startLocation = value.startLocation
-                                if startLocation.x < 50 && value.translation.width > 0 {
-                                    isDragging = true
-                                    // Limit drag to positive values (rightward movement)
-                                    dragOffset = min(value.translation.width, UIScreen.main.bounds.width * 0.3)
-                                }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .animation(.easeInOut(duration: 0.4), value: selectedTab)
+                }
+                .offset(x: dragOffset)
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            // Only allow dragging from the left edge (first 50 points)
+                            let startLocation = value.startLocation
+                            if startLocation.x < 50 && value.translation.width > 0 {
+                                isDragging = true
+                                // Limit drag to positive values (rightward movement)
+                                dragOffset = min(value.translation.width, UIScreen.main.bounds.width * 0.3)
                             }
-                            .onEnded { value in
-                                isDragging = false
-                                let threshold: CGFloat = 100
-                                
-                                if dragOffset > threshold {
-                                    // Dismiss the view
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        dragOffset = UIScreen.main.bounds.width
-                                    }
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                        presentationMode.wrappedValue.dismiss()
-                                    }
-                                } else {
-                                    // Snap back to original position
-                                    withAnimation(.easeOut(duration: 0.3)) {
-                                        dragOffset = 0
-                                    }
-                                }
-                            }
-                    )
-                    
-                    // Floating Action Button as overlay
-                    Button(action: {
-                        showingAddCircleSheet = true
-                    }) {
-                        Image(systemName: "person.badge.plus")
-                            .font(.system(size: 22, weight: .bold, design: .default))
-                            .foregroundColor(.white)
-                            .frame(width: 56, height: 56)
-                            .background(Color.green)
-                            .clipShape(SwiftUI.Circle())
-                            .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
-                    }
-                    .padding(.trailing, 16)
-                    .padding(.bottom, 16)
-                    
-                    // Show overlay spinner only during refresh
-                    if isRefreshing && !isLoading {
-                        Color.primaryBackground.opacity(0.3)
-                            .ignoresSafeArea()
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle())
-                            .scaleEffect(1.5)
-                    }
-                    
-                    // Visual feedback during drag
-                    if isDragging && dragOffset > 0 {
-                        HStack {
-                            // Semi-transparent overlay on the left
-                            Color.black.opacity(0.3 * (dragOffset / UIScreen.main.bounds.width))
-                                .frame(width: dragOffset)
-                                .ignoresSafeArea()
+                        }
+                        .onEnded { value in
+                            isDragging = false
+                            let threshold: CGFloat = 100
                             
-                            Spacer()
-                        }
-                    }
-                }
-                .navigationTitle("圈子")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(.hidden, for: .navigationBar)
-                .toolbarBackground(Color.primaryBackground, for: .navigationBar)
-                .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索")
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        if appModeManager.isSampleMode {
-                            Button(action: {
-                                appModeManager.isSampleMode = false
-                                appModeManager.sampleModeType = nil
-                                Task {
-                                    await refreshContacts()
+                            if dragOffset > threshold {
+                                // Dismiss the view
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    dragOffset = UIScreen.main.bounds.width
                                 }
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
-                                    Text(SampleModeConfig.UIConstants.exitButtonTitle)
-                                        .fontWeight(.bold)
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    presentationMode.wrappedValue.dismiss()
                                 }
-                                .font(.footnote)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.green)
-                                .cornerRadius(8)
+                            } else {
+                                // Snap back to original position
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    dragOffset = 0
+                                }
                             }
                         }
+                )
+                
+                // Floating Action Button as overlay
+                Button(action: {
+                    if selectedTab == 0 {
+                        showingAddContact = true
+                    } else {
+                        showingAddCircleSheet = true
                     }
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                }) {
+                    Image(systemName: "person.badge.plus")
+                        .font(.system(size: 22, weight: .bold, design: .default))
+                        .foregroundColor(.white)
+                        .frame(width: 56, height: 56)
+                        .background(Color.green)
+                        .clipShape(SwiftUI.Circle())
+                        .shadow(color: Color.primaryText.opacity(0.2), radius: 5)
+                }
+                .padding(.trailing, 16)
+                .padding(.bottom, 16)
+                
+                // Show overlay spinner only during refresh
+                if isRefreshing && !isLoading {
+                    Color.primaryBackground.opacity(0.3)
+                        .ignoresSafeArea()
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .scaleEffect(1.5)
+                }
+                
+                // Visual feedback during drag
+                if isDragging && dragOffset > 0 {
+                    HStack {
+                        // Semi-transparent overlay on the left
+                        Color.black.opacity(0.3 * (dragOffset / UIScreen.main.bounds.width))
+                            .frame(width: dragOffset)
+                            .ignoresSafeArea()
+                        
+                        Spacer()
+                    }
+                }
+            }
+            .navigationTitle("关系")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarBackground(Color.primaryBackground, for: .navigationBar)
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if appModeManager.isSampleMode {
                         Button(action: {
-                            showingConfigurationSheet = true
+                            appModeManager.isSampleMode = false
+                            appModeManager.sampleModeType = nil
+                            Task {
+                                await refreshContacts()
+                            }
                         }) {
-                            Image(systemName: "gearshape")
-                                .font(.system(size: 16))
-                                .foregroundColor(.primaryText)
+                            HStack(spacing: 6) {
+                                Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
+                                Text(SampleModeConfig.UIConstants.exitButtonTitle)
+                                    .fontWeight(.bold)
+                            }
+                            .font(.footnote)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.green)
+                            .cornerRadius(8)
                         }
                     }
                 }
-            }
-            .tabItem {
-                Label("圈子", systemImage: "person.2.circle")
-            }
-            .tag(1)
-        }
-        .confirmationDialog(
-            SampleModeConfig.selectionDialogMessage,
-            isPresented: $showingSampleDialog,
-            titleVisibility: .visible
-        ) {
-            ForEach(SampleModeConfig.availableModes, id: \.id) { mode in
-                Button(mode.title) {
-                    Task { await handleSampleModeSelection(mode) }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showingConfigurationSheet = true
+                    }) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 16))
+                            .foregroundColor(.primaryText)
+                    }
                 }
             }
-            Button("取消", role: .cancel) {}
-        }
-        .task {
-            await initialLoad()
-        }
-        .onChange(of: refreshTrigger) { _ in
-            Task {
-                await refreshContacts()
+            .confirmationDialog(
+                SampleModeConfig.selectionDialogMessage,
+                isPresented: $showingSampleDialog,
+                titleVisibility: .visible
+            ) {
+                ForEach(SampleModeConfig.availableModes, id: \.id) { mode in
+                    Button(mode.title) {
+                        Task { await handleSampleModeSelection(mode) }
+                    }
+                }
+                Button("取消", role: .cancel) {}
             }
-        }
-        .sheet(isPresented: $showingAddContact) {
-            AddContactSheet(refreshTrigger: $refreshTrigger)
-        }
-        .sheet(isPresented: $showingAddCircleSheet, onDismiss: {
-            // Only refresh if we actually added a circle (we could add a flag for this)
-            // For now, let's be conservative and not refresh automatically
-            // The user can manually refresh if needed
-        }) {
-            AddCircleView()
-                .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
-        }
-        .sheet(isPresented: $showingConfigurationSheet) {
-            ConfigurationSheetView()
+            .task {
+                await initialLoad()
+            }
+            .onChange(of: refreshTrigger) { _ in
+                Task {
+                    await refreshContacts()
+                }
+            }
+            .sheet(isPresented: $showingAddContact) {
+                AddContactSheet(refreshTrigger: $refreshTrigger)
+            }
+            .sheet(isPresented: $showingAddCircleSheet, onDismiss: {
+                // Only refresh if we actually added a circle (we could add a flag for this)
+                // For now, let's be conservative and not refresh automatically
+                // The user can manually refresh if needed
+            }) {
+                AddCircleView()
+                    .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
+            }
+            .sheet(isPresented: $showingConfigurationSheet) {
+                ConfigurationSheetView()
+            }
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
@@ -553,25 +464,6 @@ struct SocialContactView: View {
         isImportingSample = false
         // Use debounced refresh instead of direct call
         await refreshContacts()
-    }
-    
-    // Add helper function to get tab bar height
-    private func getTabBarHeight() -> CGFloat {
-        // Standard tab bar height is 49 points
-        let standardTabBarHeight: CGFloat = 49
-        
-        // Get the bottom safe area inset
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-        
-        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
-        
-        // Return total height including safe area
-        return standardTabBarHeight + bottomInset
     }
     
     private func setupSampleModeObserver() {
@@ -635,6 +527,7 @@ struct ContactListView: View {
     @State private var errorMessageSample: String? = nil
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var appModeManager: AppModeManager
+    @EnvironmentObject var tabBarManager: TabBarManager
     @State private var refreshTrigger = false
     
     // Add a computed property to ensure we have valid contacts with IDs
@@ -662,7 +555,8 @@ struct ContactListView: View {
             } else {
                 List {
                     ForEach(validContacts, id: \.contactId) { contact in
-                        NavigationLink(destination: SocialContactDetailView(contact: contact)) {
+                        NavigationLink(destination: SocialContactDetailView(contact: contact)
+                            .environmentObject(tabBarManager)) {
                             ContactCardView(contact: contact)
                                 .contentShape(Rectangle())
                         }
@@ -874,6 +768,7 @@ struct CircleListView: View {
     @State private var errorMessageSample: String? = nil
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject var appModeManager: AppModeManager
+    @EnvironmentObject var tabBarManager: TabBarManager
     @State private var refreshTrigger = false
     
     var filteredCircles: [Circle] {
@@ -906,7 +801,8 @@ struct CircleListView: View {
             } else {
                 List {
                     ForEach(filteredCircles, id: \.circleId) { circle in
-                        NavigationLink(destination: CircleDetailView(circle: circle)) {
+                        NavigationLink(destination: CircleDetailView(circle: circle)
+                            .environmentObject(tabBarManager)) {
                             CircleCardView(circle: circle)
                                 .contentShape(Rectangle())
                         }

@@ -13,6 +13,7 @@ struct CircleDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject private var appModeManager: AppModeManager
+    @EnvironmentObject private var tabBarManager: TabBarManager
     
     // Add a UIKit appearance modifier
     init(circle: Circle) {
@@ -55,7 +56,8 @@ struct CircleDetailView: View {
                 } else {
                     List {
                         ForEach(filteredContacts, id: \.contactId) { contact in
-                            NavigationLink(destination: SocialContactDetailView(contact: contact)) {
+                            NavigationLink(destination: SocialContactDetailView(contact: contact)
+                                .environmentObject(tabBarManager)) {
                                 ContactCardView(contact: contact)
                                     .contentShape(Rectangle())
                             }
@@ -71,6 +73,7 @@ struct CircleDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("圈子熟人")
+        .hideTabBar() // Always hide tab bar for detail views
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
@@ -113,16 +116,11 @@ struct CircleDetailView: View {
             Task {
                 await loadCircleData()
             }
-            // Hide the tab bar
-            hideTabBar(true)
             
             // Setup notification observers for iCloud sync
             setupNotificationObservers()
         }
         .onDisappear {
-            // Show the tab bar again when leaving this view
-            hideTabBar(false)
-            
             // Cleanup notification observers
             cleanupNotificationObservers()
         }
@@ -164,39 +162,6 @@ struct CircleDetailView: View {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full
         return formatter.localizedString(for: date, relativeTo: Date())
-    }
-    
-    // Add helper function to get tab bar height
-    private func getTabBarHeight() -> CGFloat {
-        let standardTabBarHeight: CGFloat = 49
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-        
-        let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
-        return standardTabBarHeight + bottomInset
-    }
-    
-    // Function to hide/show the tab bar
-    private func hideTabBar(_ hidden: Bool) {
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .map { $0 as? UIWindowScene }
-            .compactMap { $0 }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-        
-        if let keyWindow = keyWindow {
-            keyWindow.rootViewController?.children.forEach { child in
-                if let tabBarController = child as? UITabBarController {
-                    tabBarController.tabBar.isHidden = hidden
-                }
-            }
-        }
     }
     
     private func setupNotificationObservers() {

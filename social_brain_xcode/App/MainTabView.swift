@@ -3,6 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @State private var selectedTab = 1 // Default to Social Contact (middle tab)
     @EnvironmentObject var appModeManager: AppModeManager
+    @StateObject private var tabBarManager = TabBarManager.shared
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -12,18 +13,24 @@ struct MainTabView: View {
                 sourceId: ""
             )
             .environmentObject(appModeManager)
+            .environmentObject(tabBarManager)
+            .showTabBar() // Always show tab bar for main tab views
             .tabItem {
                 Label("人际大脑", systemImage: "sparkles")
             }
             .tag(0)
             
             SocialContactView()
+                .environmentObject(tabBarManager)
+                .showTabBar() // Always show tab bar for main tab views
                 .tabItem {
                     Label("关系", systemImage: "person.2")
                 }
                 .tag(1)
             
             SocialNotesView()
+                .environmentObject(tabBarManager)
+                .showTabBar() // Always show tab bar for main tab views
                 .tabItem {
                     Label("笔记", systemImage: "doc.text")
                 }
@@ -33,10 +40,21 @@ struct MainTabView: View {
         .onAppear {
             // Set unselected tab color to system gray
             UITabBar.appearance().unselectedItemTintColor = UIColor.systemGray
+            
+            // Initialize TabBarManager with the tab bar controller
+            DispatchQueue.main.async {
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let window = windowScene.windows.first,
+                   let tabBarController = window.rootViewController?.children.first(where: { $0 is UITabBarController }) as? UITabBarController {
+                    tabBarManager.initialize(with: tabBarController)
+                }
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             // Handle app returning from background - ensure proper tab bar state restoration
-            // SwiftUI TabView automatically manages tab bar visibility, no manual intervention needed
+            DispatchQueue.main.async {
+                tabBarManager.forceUpdateTabBarVisibility()
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ struct SocialContactDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var appModeManager: AppModeManager
+    @EnvironmentObject var tabBarManager: TabBarManager
     @StateObject private var contactManager = ContactManager.shared
     @StateObject private var insightManager = ContactInsightManager.shared
     @State private var notes: [Note] = []
@@ -93,6 +94,7 @@ struct SocialContactDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(currentContact.name ?? "联系人")
+        .hideTabBar() // Always hide tab bar for detail views
         .sheet(isPresented: $showingSocialBrain) {
             SocialBrainSheetView(
                 sourceType: socialBrainContext.sourceType,
@@ -132,16 +134,11 @@ struct SocialContactDetailView: View {
         .onAppear {
             loadContactNotes()
             loadContactInsights()
-            // Hide the tab bar
-            hideTabBar(true)
             
             // Setup notification observers for iCloud sync
             setupNotificationObservers()
         }
         .onDisappear {
-            // Show the tab bar again when leaving this view
-            hideTabBar(false)
-            
             // Cleanup notification observers
             cleanupNotificationObservers()
         }
@@ -169,26 +166,6 @@ struct SocialContactDetailView: View {
         
         func updateUIView(_ uiView: UIVisualEffectView, context: UIViewRepresentableContext<Self>) {
             uiView.effect = effect
-        }
-    }
-    
-    // Function to hide/show the tab bar
-    private func hideTabBar(_ hidden: Bool) {
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .map { $0 as? UIWindowScene }
-            .compactMap { $0 }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-            
-        if let keyWindow = keyWindow {
-            keyWindow.rootViewController?.children.forEach { child in
-                // Find the UITabBarController and hide its tabBar
-                if let tabBarController = child as? UITabBarController {
-                    tabBarController.tabBar.isHidden = hidden
-                }
-            }
         }
     }
     
@@ -423,7 +400,8 @@ struct SocialContactDetailView: View {
                     .padding(.vertical, 40)
                 } else {
                     ForEach(notes, id: \.noteId) { note in
-                        NavigationLink(destination: NoteDetailNav(note: note)) {
+                        NavigationLink(destination: NoteDetailNav(note: note)
+                            .environmentObject(tabBarManager)) {
                             NoteCardView(note: note)
                         }
                         .buttonStyle(PlainButtonStyle())

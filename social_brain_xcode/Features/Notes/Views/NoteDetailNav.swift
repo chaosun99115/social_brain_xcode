@@ -10,6 +10,7 @@ struct NoteDetailNav: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var noteManager: NoteManager
     @EnvironmentObject var appModeManager: AppModeManager
+    @EnvironmentObject var tabBarManager: TabBarManager
     @StateObject private var insightManager = ContactInsightManager.shared
     @State private var contactInsights: [ContactInsight] = []
     @State private var isLoadingInsights = true
@@ -22,9 +23,6 @@ struct NoteDetailNav: View {
     // Keep state for tracking scroll position but remove debug logging
     @State private var scrollOffset: CGFloat = 0
     @State private var isScrolling = false
-    
-    // Add timer for continuous tab bar hiding
-    @State private var tabBarHideTimer: Timer?
     
     var body: some View {
         ZStack {
@@ -129,11 +127,7 @@ struct NoteDetailNav: View {
                 )
             }
         }
-        .overlay(
-            // Add a hidden view that directly manipulates the tab bar
-            TabBarHiderView()
-                .allowsHitTesting(false)
-        )
+        .hideTabBar() // Always hide tab bar for detail views
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
@@ -146,13 +140,6 @@ struct NoteDetailNav: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(Color.primaryBackground, for: .navigationBar)
         .onAppear {
-            // Multiple approaches to ensure tab bar is hidden
-            hideTabBarImmediately()
-            hideTabBarWithDelay()
-            
-            // Start timer to continuously hide tab bar
-            startTabBarHideTimer()
-            
             loadContactInsights()
             // Ensure proper layout when appearing
             DispatchQueue.main.async {
@@ -160,28 +147,9 @@ struct NoteDetailNav: View {
             }
         }
         .onDisappear {
-            // Stop timer and show tab bar again when leaving this view
-            stopTabBarHideTimer()
-            DispatchQueue.main.async {
-                showTabBar()
-            }
             // Ensure proper layout when disappearing
             DispatchQueue.main.async {
                 UIApplication.shared.windows.first?.layoutIfNeeded()
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            // Re-hide tab bar when app becomes active
-            DispatchQueue.main.async {
-                hideTabBarImmediately()
-                hideTabBarWithDelay()
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            // Re-hide tab bar when app enters foreground
-            DispatchQueue.main.async {
-                hideTabBarImmediately()
-                hideTabBarWithDelay()
             }
         }
         .edgesIgnoringSafeArea(.bottom)
@@ -256,53 +224,6 @@ struct NoteDetailNav: View {
         }
     }
     
-    // UIViewRepresentable to directly hide tab bar
-    struct TabBarHiderView: UIViewRepresentable {
-        func makeUIView(context: Context) -> UIView {
-            let view = UIView()
-            view.backgroundColor = .clear
-            
-            // Hide tab bar immediately when view is created
-            DispatchQueue.main.async {
-                hideTabBarInView(view)
-            }
-            
-            return view
-        }
-        
-        func updateUIView(_ uiView: UIView, context: Context) {
-            // Hide tab bar on every update
-            DispatchQueue.main.async {
-                hideTabBarInView(uiView)
-            }
-        }
-        
-        private func hideTabBarInView(_ view: UIView) {
-            // Find the tab bar controller by traversing up the view hierarchy
-            var currentView: UIView? = view
-            while currentView != nil {
-                if let viewController = currentView?.next as? UIViewController {
-                    if let tabBarController = viewController as? UITabBarController {
-                        tabBarController.tabBar.isHidden = true
-                        tabBarController.tabBar.alpha = 0
-                        tabBarController.view.layoutIfNeeded()
-                        break
-                    }
-                    // Check parent view controller
-                    if let parent = viewController.parent {
-                        if let tabBarController = parent as? UITabBarController {
-                            tabBarController.tabBar.isHidden = true
-                            tabBarController.tabBar.alpha = 0
-                            tabBarController.view.layoutIfNeeded()
-                            break
-                        }
-                    }
-                }
-                currentView = currentView?.superview
-            }
-        }
-    }
-    
     private func formattedTimestamp(date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy年MM月dd日"
@@ -321,88 +242,6 @@ struct NoteDetailNav: View {
         }
         
         isLoadingInsights = false
-    }
-    
-    // New function to hide tab bar immediately
-    private func hideTabBarImmediately() {
-        hideTabBar(true)
-    }
-    
-    // New function to hide tab bar with a delay
-    private func hideTabBarWithDelay() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            hideTabBar(true)
-        }
-    }
-    
-    // New function to show tab bar
-    private func showTabBar() {
-        hideTabBar(false)
-    }
-    
-    // Update hideTabBar function to handle layout updates
-    private func hideTabBar(_ hidden: Bool) {
-        // Multiple approaches to find and hide the tab bar
-        let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .map { $0 as? UIWindowScene }
-            .compactMap { $0 }
-            .first?.windows
-            .filter { $0.isKeyWindow }
-            .first
-        
-        if let keyWindow = keyWindow {
-            // Approach 1: Direct tab bar controller access
-            keyWindow.rootViewController?.children.forEach { child in
-                if let tabBarController = child as? UITabBarController {
-                    tabBarController.tabBar.isHidden = hidden
-                    tabBarController.tabBar.alpha = hidden ? 0 : 1
-                    // Force layout update
-                    tabBarController.view.layoutIfNeeded()
-                }
-            }
-            
-            // Approach 2: Search through all view controllers recursively
-            hideTabBarInViewController(keyWindow.rootViewController, hidden: hidden)
-            
-            // Approach 3: Force layout update on the entire window
-            keyWindow.layoutIfNeeded()
-        }
-    }
-    
-    // Recursive function to find and hide tab bar in any view controller
-    private func hideTabBarInViewController(_ viewController: UIViewController?, hidden: Bool) {
-        guard let viewController = viewController else { return }
-        
-        // Check if this is a tab bar controller
-        if let tabBarController = viewController as? UITabBarController {
-            tabBarController.tabBar.isHidden = hidden
-            tabBarController.tabBar.alpha = hidden ? 0 : 1
-            tabBarController.view.layoutIfNeeded()
-        }
-        
-        // Check child view controllers
-        viewController.children.forEach { child in
-            hideTabBarInViewController(child, hidden: hidden)
-        }
-        
-        // Check presented view controller
-        if let presented = viewController.presentedViewController {
-            hideTabBarInViewController(presented, hidden: hidden)
-        }
-    }
-    
-    // Add timer for continuous tab bar hiding
-    private func startTabBarHideTimer() {
-        tabBarHideTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
-            hideTabBar(true)
-        }
-    }
-    
-    // Stop timer for continuous tab bar hiding
-    private func stopTabBarHideTimer() {
-        tabBarHideTimer?.invalidate()
-        tabBarHideTimer = nil
     }
 }
 

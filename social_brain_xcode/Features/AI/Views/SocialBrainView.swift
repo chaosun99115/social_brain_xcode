@@ -40,6 +40,7 @@ struct SocialBrainView: View {
     
     private let aiServiceManager = AIServiceManager.shared
     @EnvironmentObject var appModeManager: AppModeManager
+    @EnvironmentObject var tabBarManager: TabBarManager
     
     @State private var textEditorHeight: CGFloat = 56
     let maxTextEditorHeight: CGFloat = 120
