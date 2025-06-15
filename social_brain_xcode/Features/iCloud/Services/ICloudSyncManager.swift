@@ -93,7 +93,23 @@ class ICloudSyncManager: ObservableObject {
     }
     
     private func loadCurrentStatus() {
-        isCloudKitEnabled = persistenceController.getCloudKitStatus()
+        // Load the actual CloudKit status from PersistenceController
+        let actualCloudKitStatus = persistenceController.getCloudKitStatus()
+        
+        // Get user preference
+        let userWantsSync = UserDefaults.standard.bool(forKey: "UserWantsCloudKitSync")
+        
+        // If there's a mismatch, prioritize user preference but log the discrepancy
+        if userWantsSync != actualCloudKitStatus {
+            print("⚠️ iCloud sync state mismatch - User wants: \(userWantsSync), Actual: \(actualCloudKitStatus)")
+            
+            // If user wants sync but it's not actually enabled, we'll try to enable it later
+            // If user doesn't want sync but it's enabled, we'll disable it
+            isCloudKitEnabled = userWantsSync
+        } else {
+            isCloudKitEnabled = actualCloudKitStatus
+        }
+        
         syncStatus = mapSyncStatus(persistenceController.syncStatus)
         lastSyncError = persistenceController.lastSyncError
     }
@@ -328,7 +344,7 @@ class ICloudSyncManager: ObservableObject {
                 // Post notification for UI to show account change alert
                 NotificationCenter.default.post(name: .iCloudAccountChanged, object: nil)
                 
-                // Don't disable sync permanently if user wants it - just show the error
+                // Keep the user preference but show the error state
                 // The sync will be re-attempted when account becomes available again
             }
             
@@ -338,6 +354,18 @@ class ICloudSyncManager: ObservableObject {
                     try await toggleCloudKitSync(true)
                 } catch {
                     print("❌ Failed to re-enable sync after account change: \(error)")
+                    // If we can't re-enable sync, update the user preference to match reality
+                    UserDefaults.standard.set(false, forKey: "UserWantsCloudKitSync")
+                    await MainActor.run {
+                        isCloudKitEnabled = false
+                    }
+                }
+            }
+            
+            // If account is not available and user wants sync, update the UI state to show the error
+            if accountStatus != .available && userWantsSync {
+                await MainActor.run {
+                    isCloudKitEnabled = false // Show as disabled in UI when account unavailable
                 }
             }
         }

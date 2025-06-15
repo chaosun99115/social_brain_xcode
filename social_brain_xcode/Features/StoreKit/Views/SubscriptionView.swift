@@ -14,6 +14,7 @@ struct SubscriptionView: View {
     @State private var invitationCodeAlertTitle = ""
     @State private var invitationCodeAlertMessage = ""
     @State private var isInvitationCodeSelected = false
+    @State private var showingSuccessAlert = false
     
     var body: some View {
         NavigationView {
@@ -143,6 +144,13 @@ struct SubscriptionView: View {
             } message: {
                 Text(invitationCodeAlertMessage)
             }
+            .alert("订阅成功", isPresented: $showingSuccessAlert) {
+                Button("确定") {
+                    dismiss()
+                }
+            } message: {
+                Text("现在可以使用所有高级功能")
+            }
             .onChange(of: isInvitationCodeSelected) { newValue in
                 // Remove automatic modal opening
                 // if newValue && invitationCode.isEmpty {
@@ -227,7 +235,7 @@ struct SubscriptionView: View {
         
         do {
             try await storeManager.purchase(product)
-            dismiss()
+            showingSuccessAlert = true
         } catch {
             errorMessage = error.localizedDescription
             showingError = true

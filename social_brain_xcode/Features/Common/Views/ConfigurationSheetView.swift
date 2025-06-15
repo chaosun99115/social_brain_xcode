@@ -198,19 +198,27 @@ struct ConfigurationSheetView: View {
             ))
             .disabled(isAuthenticating)
             
-            // Pro Features Button
-            Button(action: {
-                showingSubscriptionView = true
-            }) {
+            // Pro Features Row
+            if !isProUser {
+                Button(action: {
+                    showingSubscriptionView = true
+                }) {
+                    HStack {
+                        Text("解锁高级功能")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                }
+                .foregroundColor(.primary)
+            } else {
                 HStack {
-                    Text("解锁高级功能")
-                    Spacer()
-                    Image(systemName: "chevron.right")
+                    Text("已解锁所有高级功能")
                         .foregroundColor(.secondary)
-                        .font(.system(size: 14, weight: .semibold))
+                    Spacer()
                 }
             }
-            .foregroundColor(.primary)
         }
     }
     
