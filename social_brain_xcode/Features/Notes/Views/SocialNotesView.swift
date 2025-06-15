@@ -127,148 +127,195 @@ struct SocialNotesView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color.primaryBackground
-                    .ignoresSafeArea()
-                
-                VStack(spacing: 0) {
-                    // Tab selector
-                    HStack(spacing: 0) {
-                        TabButton(
-                            title: "人际日志",
-                            isSelected: selectedTab == 0,
-                            action: { 
-                                withAnimation(.easeInOut(duration: 0.4)) { 
-                                    selectedTab = 0 
-                                }
-                            }
-                        )
-                        
-                        TabButton(
-                            title: "人际思考",
-                            isSelected: selectedTab == 1,
-                            action: { 
-                                withAnimation(.easeInOut(duration: 0.4)) { 
-                                    selectedTab = 1 
-                                }
-                            }
-                        )
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.top, 2)
+        TabView(selection: $selectedTab) {
+            // 人际日志 Tab
+            NavigationView {
+                ZStack {
+                    Color.primaryBackground
+                        .ignoresSafeArea()
                     
-                    // TabView for content
-                    TabView(selection: $selectedTab) {
-                        // 人际互动 Tab
+                    VStack(spacing: 0) {
                         notesListView
-                            .tag(0)
-                        
-                        // 话题库 Tab
-                        notesListView
-                            .tag(1)
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
-                    .animation(.easeInOut(duration: 0.4), value: selectedTab)
-                }
-                
-                // Floating Action Button
-                VStack {
-                    Spacer()
-                    HStack {
+                    
+                    // Floating Action Button
+                    VStack {
                         Spacer()
-                        Button(action: {
-                            showingSimpleNoteModal = true
-                        }) {
-                            Image(systemName: "square.and.pencil")
-                                .font(.system(size: 24, weight: .medium))
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                showingSimpleNoteModal = true
+                            }) {
+                                Image(systemName: "square.and.pencil")
+                                    .font(.system(size: 24, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .frame(width: 56, height: 56)
+                                    .background(Color.green)
+                                    .clipShape(SwiftUI.Circle())
+                                    .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                            }
+                            .padding(.trailing, 16)
+                            .padding(.bottom, 16)
+                        }
+                    }
+                }
+                .navigationTitle("人际日志")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbarBackground(Color.primaryBackground, for: .navigationBar)
+                .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        if appModeManager.isSampleMode {
+                            Button(action: {
+                                appModeManager.isSampleMode = false
+                                appModeManager.sampleModeType = nil
+                                Task {
+                                    await refreshNotes()
+                                }
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
+                                    Text(SampleModeConfig.UIConstants.exitButtonTitle)
+                                        .fontWeight(.bold)
+                                }
+                                .font(.footnote)
                                 .foregroundColor(.white)
-                                .frame(width: 56, height: 56)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
                                 .background(Color.green)
-                                .clipShape(SwiftUI.Circle())
-                                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                .cornerRadius(8)
+                            }
                         }
-                        .padding(.trailing, 16)
-                        .padding(.bottom, 16)
                     }
-                }
-            }
-            .navigationTitle("笔记")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbarBackground(Color.primaryBackground, for: .navigationBar)
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if appModeManager.isSampleMode {
+                    ToolbarItem(placement: .navigationBarTrailing) {
                         Button(action: {
-                            appModeManager.isSampleMode = false
-                            appModeManager.sampleModeType = nil
-                            Task {
-                                await refreshNotes()
-                            }
+                            showingConfigurationSheet = true
                         }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
-                                Text(SampleModeConfig.UIConstants.exitButtonTitle)
-                                    .fontWeight(.bold)
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 16))
+                                .foregroundColor(.primaryText)
+                        }
+                    }
+                }
+            }
+            .tabItem {
+                Label("人际日志", systemImage: "person.2.fill")
+            }
+            .tag(0)
+            
+            // 人际思考 Tab
+            NavigationView {
+                ZStack {
+                    Color.primaryBackground
+                        .ignoresSafeArea()
+                    
+                    VStack(spacing: 0) {
+                        notesListView
+                    }
+                    
+                    // Floating Action Button
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                showingSimpleNoteModal = true
+                            }) {
+                                Image(systemName: "square.and.pencil")
+                                    .font(.system(size: 24, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .frame(width: 56, height: 56)
+                                    .background(Color.green)
+                                    .clipShape(SwiftUI.Circle())
+                                    .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
                             }
-                            .font(.footnote)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.green)
-                            .cornerRadius(8)
+                            .padding(.trailing, 16)
+                            .padding(.bottom, 16)
                         }
                     }
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingConfigurationSheet = true
-                    }) {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 16))
-                            .foregroundColor(.primaryText)
+                .navigationTitle("人际思考")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbarBackground(Color.primaryBackground, for: .navigationBar)
+                .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        if appModeManager.isSampleMode {
+                            Button(action: {
+                                appModeManager.isSampleMode = false
+                                appModeManager.sampleModeType = nil
+                                Task {
+                                    await refreshNotes()
+                                }
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: SampleModeConfig.UIConstants.exitButtonIcon)
+                                    Text(SampleModeConfig.UIConstants.exitButtonTitle)
+                                        .fontWeight(.bold)
+                                }
+                                .font(.footnote)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.green)
+                                .cornerRadius(8)
+                            }
+                        }
+                    }
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            showingConfigurationSheet = true
+                        }) {
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 16))
+                                .foregroundColor(.primaryText)
+                        }
                     }
                 }
             }
-            .confirmationDialog(
-                SampleModeConfig.selectionDialogMessage,
-                isPresented: $showingSampleNoteDialog,
-                titleVisibility: .visible
-            ) {
-                ForEach(SampleModeConfig.availableModes, id: \.id) { mode in
-                    Button(mode.title) {
-                        Task {
-                            await handleSampleModeSelection(mode)
-                        }
+            .tabItem {
+                Label("人际思考", systemImage: "lightbulb.fill")
+            }
+            .tag(1)
+        }
+        .confirmationDialog(
+            SampleModeConfig.selectionDialogMessage,
+            isPresented: $showingSampleNoteDialog,
+            titleVisibility: .visible
+        ) {
+            ForEach(SampleModeConfig.availableModes, id: \.id) { mode in
+                Button(mode.title) {
+                    Task {
+                        await handleSampleModeSelection(mode)
                     }
                 }
-                Button("取消", role: .cancel) {}
             }
-            .background(
-                NavigationLink(
-                    destination: Group {
-                        if let socialNote = selectedNote,
-                           let note = noteManager.fetchNote(withId: socialNote.id) {
-                            SocialNoteDetailView(note: note)
-                        } else {
-                            EmptyView()
-                        }
-                    },
-                    isActive: $showingNoteDetail,
-                    label: { EmptyView() }
-                )
+            Button("取消", role: .cancel) {}
+        }
+        .background(
+            NavigationLink(
+                destination: Group {
+                    if let socialNote = selectedNote,
+                       let note = noteManager.fetchNote(withId: socialNote.id) {
+                        SocialNoteDetailView(note: note)
+                    } else {
+                        EmptyView()
+                    }
+                },
+                isActive: $showingNoteDetail,
+                label: { EmptyView() }
             )
-            .sheet(isPresented: $showingConfigurationSheet) {
-                ConfigurationSheetView()
-            }
-            .sheet(isPresented: $showingSimpleNoteModal) {
-                simpleNoteModalView
-            }
-            .sheet(isPresented: $showingNoteModal) {
-                socialNoteModalView
-            }
+        )
+        .sheet(isPresented: $showingConfigurationSheet) {
+            ConfigurationSheetView()
+        }
+        .sheet(isPresented: $showingSimpleNoteModal) {
+            simpleNoteModalView
+        }
+        .sheet(isPresented: $showingNoteModal) {
+            socialNoteModalView
         }
         .onChange(of: showingSimpleNoteModal) { newValue in
             if !newValue {
