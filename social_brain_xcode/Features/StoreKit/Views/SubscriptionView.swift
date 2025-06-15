@@ -13,7 +13,7 @@ struct SubscriptionView: View {
     @State private var showingInvitationCodeAlert = false
     @State private var invitationCodeAlertTitle = ""
     @State private var invitationCodeAlertMessage = ""
-    @State private var isInvitationCodeSelected = false
+    @State private var isInvitationCodeSelected = true
     @State private var showingSuccessAlert = false
     
     var body: some View {
@@ -109,13 +109,13 @@ struct SubscriptionView: View {
                     .padding(.horizontal)
                     
                     // Restore Purchase
-                    Button("恢复购买") {
-                        Task {
-                            await restorePurchases()
-                        }
-                    }
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    // Button("恢复购买") {
+                    //     Task {
+                    //         await restorePurchases()
+                    //     }
+                    // }
+                    // .font(.subheadline)
+                    // .foregroundColor(.secondary)
                 }
                 .padding(.bottom, 40)
             }

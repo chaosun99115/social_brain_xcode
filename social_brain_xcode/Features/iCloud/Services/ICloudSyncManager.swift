@@ -101,8 +101,6 @@ class ICloudSyncManager: ObservableObject {
         
         // If there's a mismatch, prioritize user preference but log the discrepancy
         if userWantsSync != actualCloudKitStatus {
-            print("⚠️ iCloud sync state mismatch - User wants: \(userWantsSync), Actual: \(actualCloudKitStatus)")
-            
             // If user wants sync but it's not actually enabled, we'll try to enable it later
             // If user doesn't want sync but it's enabled, we'll disable it
             isCloudKitEnabled = userWantsSync
@@ -151,6 +149,22 @@ class ICloudSyncManager: ObservableObject {
     
     /// Enable or disable CloudKit sync
     func toggleCloudKitSync(_ enabled: Bool) async throws {
+        // Check if we're already in the desired state
+        if enabled == isCloudKitEnabled {
+            return
+        }
+        
+        // Check if we're currently syncing
+        if isSyncing() {
+            // Wait a moment for any ongoing operations to complete
+            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+            
+            // Check again
+            if isSyncing() {
+                throw NSError(domain: "com.socialbrain", code: 3, userInfo: [NSLocalizedDescriptionKey: "Sync operation already in progress"])
+            }
+        }
+        
         if enabled {
             await checkAccountStatus()
             
@@ -170,13 +184,18 @@ class ICloudSyncManager: ObservableObject {
             }
         }
         
+        // Set sync status to in progress before calling persistence controller
+        await MainActor.run {
+            syncStatus = .inProgress
+        }
+        
         try await persistenceController.setCloudKitEnabled(enabled)
         
         await MainActor.run {
             isCloudKitEnabled = enabled
             
             if enabled {
-                syncStatus = .inProgress
+                // Keep in progress status until CloudKit events complete
                 storeSyncPreference(true)
             } else {
                 syncStatus = .notStarted
@@ -250,6 +269,60 @@ class ICloudSyncManager: ObservableObject {
             return error
         }
         return lastSyncError
+    }
+    
+    /// Check if the current error is a Core Data store error
+    func isStoreError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSCocoaErrorDomain && nsError.code == 134060
+    }
+    
+    /// Attempt to recover from store errors
+    func attemptStoreRecovery() async -> Bool {
+        do {
+            // First, try to disable sync to reset the store state
+            if isCloudKitEnabled {
+                try await toggleCloudKitSync(false)
+            }
+            
+            // Wait for the system to stabilize
+            try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+            
+            // Check if user wants sync enabled
+            let userWantsSync = UserDefaults.standard.bool(forKey: "UserWantsCloudKitSync")
+            
+            if userWantsSync {
+                // Try to re-enable sync
+                try await toggleCloudKitSync(true)
+                return true
+            } else {
+                return true
+            }
+            
+        } catch {
+            await MainActor.run {
+                syncStatus = .failed(error)
+                lastSyncError = error
+            }
+            return false
+        }
+    }
+    
+    /// Reset sync status if it gets stuck
+    func resetSyncStatus() async {
+        await MainActor.run {
+            // Reset to match the actual CloudKit state
+            let actualCloudKitStatus = persistenceController.getCloudKitStatus()
+            isCloudKitEnabled = actualCloudKitStatus
+            
+            if actualCloudKitStatus {
+                syncStatus = .completed
+            } else {
+                syncStatus = .notStarted
+            }
+            
+            lastSyncError = nil
+        }
     }
     
     // MARK: - Private Methods
@@ -348,24 +421,50 @@ class ICloudSyncManager: ObservableObject {
                 // The sync will be re-attempted when account becomes available again
             }
             
-            // If account becomes available and user wants sync enabled, re-enable
+            // If account becomes available and user wants sync enabled, re-enable with retry logic
             if accountStatus == .available && !isCloudKitEnabled && userWantsSync {
-                do {
-                    try await toggleCloudKitSync(true)
-                } catch {
-                    print("❌ Failed to re-enable sync after account change: \(error)")
-                    // If we can't re-enable sync, update the user preference to match reality
-                    UserDefaults.standard.set(false, forKey: "UserWantsCloudKitSync")
-                    await MainActor.run {
-                        isCloudKitEnabled = false
-                    }
-                }
+                await retryEnableSyncAfterAccountChange()
             }
             
             // If account is not available and user wants sync, update the UI state to show the error
             if accountStatus != .available && userWantsSync {
                 await MainActor.run {
                     isCloudKitEnabled = false // Show as disabled in UI when account unavailable
+                }
+            }
+        }
+    }
+    
+    /// Retry enabling sync after account change with exponential backoff
+    private func retryEnableSyncAfterAccountChange() async {
+        let maxRetries = 3
+        var retryCount = 0
+        var delay: TimeInterval = 1.0 // Start with 1 second delay
+        
+        while retryCount < maxRetries {
+            do {
+                // Add delay before retry (except for first attempt)
+                if retryCount > 0 {
+                    try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                }
+                
+                try await toggleCloudKitSync(true)
+                return
+                
+            } catch {
+                retryCount += 1
+                
+                if retryCount >= maxRetries {
+                    // Final failure - update user preference to match reality
+                    UserDefaults.standard.set(false, forKey: "UserWantsCloudKitSync")
+                    await MainActor.run {
+                        isCloudKitEnabled = false
+                        syncStatus = .failed(error)
+                        lastSyncError = error
+                    }
+                } else {
+                    // Exponential backoff for next retry
+                    delay *= 2.0
                 }
             }
         }
@@ -381,6 +480,26 @@ class ICloudSyncManager: ObservableObject {
     /// Store sync preference for account change recovery
     private func storeSyncPreference(_ enabled: Bool) {
         UserDefaults.standard.set(enabled, forKey: "UserWantsCloudKitSync")
+    }
+    
+    /// Synchronize sync status with persistence controller
+    func synchronizeSyncStatus() async {
+        await MainActor.run {
+            // Get the actual status from persistence controller
+            let actualCloudKitStatus = persistenceController.getCloudKitStatus()
+            let actualSyncStatus = persistenceController.syncStatus
+            
+            // Update our status to match
+            isCloudKitEnabled = actualCloudKitStatus
+            
+            // Map the sync status
+            syncStatus = mapSyncStatus(actualSyncStatus)
+            
+            // Update last error if needed
+            if let error = persistenceController.lastSyncError {
+                lastSyncError = error
+            }
+        }
     }
 }
 

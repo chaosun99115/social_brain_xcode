@@ -3,7 +3,12 @@
 //  social_brain_xcode
 //
 //  Created by chao sun on 2025-04-04.
-
+//
+//  Note: When toggling CloudKit sync, you may see log messages like:
+//  "Told to tear down with reason: Store Removed" and "Stores Changed"
+//  These are normal and expected when the CloudKit mirroring delegate
+//  is cleaning up during store configuration changes.
+//
 
 import CoreData
 import CloudKit
@@ -261,88 +266,139 @@ class PersistenceController: ObservableObject {
             throw NSError(domain: "com.socialbrain", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve store description"])
         }
         
-        if enabled && !isCloudKitEnabled {
-            // Enable CloudKit sync
-            let cloudKitContainerIdentifier = "iCloud.socialbrainbeta"
+        // Check if we're already in the desired state
+        if enabled == isCloudKitEnabled {
+            return
+        }
+        
+        // Prevent concurrent store operations - but allow if we're just changing from one state to another
+        if case .inProgress = syncStatus {
+            // If we're currently in progress, wait a moment and check again
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
             
-            let cloudKitOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: cloudKitContainerIdentifier)
-            description.cloudKitContainerOptions = cloudKitOptions
-            
-            // Instead of replacePersistentStore, let's try a different approach
-            // First, let's check if we can access the CloudKit container
-            do {
+            if case .inProgress = syncStatus {
+                throw NSError(domain: "com.socialbrain", code: 3, userInfo: [NSLocalizedDescriptionKey: "Sync operation already in progress"])
+            }
+        }
+        
+        // Set sync status to in progress
+        await MainActor.run {
+            syncStatus = .inProgress
+        }
+        
+        do {
+            if enabled && !isCloudKitEnabled {
+                // Enable CloudKit sync
+                let cloudKitContainerIdentifier = "iCloud.socialbrainbeta"
+                
+                // Check CloudKit account status first
                 let ckContainer = CKContainer(identifier: cloudKitContainerIdentifier)
                 let accountStatus = try await ckContainer.accountStatus()
                 
-                if accountStatus == .available {
-                    // Reload the persistent store with CloudKit enabled
-                    if let url = description.url {
-                        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                            // First, remove the existing store
-                            if let existingStore = self.container.persistentStoreCoordinator.persistentStores.first {
-                                do {
-                                    try self.container.persistentStoreCoordinator.remove(existingStore)
-                                } catch {
-                                    continuation.resume(throwing: error)
-                                    return
-                                }
-                            }
-                            
-                            // Now add the store back with CloudKit enabled
-                            self.container.loadPersistentStores { _, error in
-                                if let error = error {
-                                    continuation.resume(throwing: error)
-                                } else {
-                                    continuation.resume()
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Update @Published properties on main thread
-                    await MainActor.run {
-                        isCloudKitEnabled = true
-                        syncStatus = .inProgress
-                    }
-                } else {
+                guard accountStatus == .available else {
                     throw NSError(domain: "com.socialbrain", code: 2, userInfo: [NSLocalizedDescriptionKey: "CloudKit account not available"])
                 }
-            } catch {
-                throw error
-            }
-            
-        } else if !enabled && isCloudKitEnabled {
-            // Disable CloudKit sync
-            description.cloudKitContainerOptions = nil
-            
-            // Reload the persistent store without CloudKit
-            if let url = description.url {
-                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                    // First, remove the existing store
-                    if let existingStore = self.container.persistentStoreCoordinator.persistentStores.first {
-                        do {
-                            try self.container.persistentStoreCoordinator.remove(existingStore)
-                        } catch {
-                            continuation.resume(throwing: error)
-                            return
-                        }
-                    }
-                    
-                    // Now add the store back without CloudKit
-                    self.container.loadPersistentStores { _, error in
-                        if let error = error {
-                            continuation.resume(throwing: error)
-                        } else {
-                            continuation.resume()
-                        }
-                    }
+                
+                // Configure CloudKit options
+                let cloudKitOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: cloudKitContainerIdentifier)
+                description.cloudKitContainerOptions = cloudKitOptions
+                
+                // Safely reload the persistent store
+                try await reloadPersistentStore()
+                
+                // Update @Published properties on main thread
+                await MainActor.run {
+                    isCloudKitEnabled = true
+                    syncStatus = .completed
+                }
+                
+            } else if !enabled && isCloudKitEnabled {
+                // Disable CloudKit sync
+                description.cloudKitContainerOptions = nil
+                
+                // Safely reload the persistent store
+                try await reloadPersistentStore()
+                
+                // Update @Published properties on main thread
+                await MainActor.run {
+                    isCloudKitEnabled = false
+                    syncStatus = .notStarted
                 }
             }
-            
-            // Update @Published properties on main thread
+        } catch {
+            // Reset sync status on error
             await MainActor.run {
-                isCloudKitEnabled = false
-                syncStatus = .notStarted
+                syncStatus = .failed(error)
+                lastSyncError = error
+            }
+            throw error
+        }
+    }
+    
+    // MARK: - Private Store Management
+    
+    private func reloadPersistentStore() async throws {
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            // Ensure we're on the main thread for coordinator operations
+            DispatchQueue.main.async {
+                self.performStoreReload(continuation: continuation)
+            }
+        }
+    }
+    
+    private func performStoreReload(continuation: CheckedContinuation<Void, Error>) {
+        // Get the current store description
+        guard let description = container.persistentStoreDescriptions.first,
+              let url = description.url else {
+            continuation.resume(throwing: NSError(domain: "com.socialbrain", code: 4, userInfo: [NSLocalizedDescriptionKey: "Invalid store description"]))
+            return
+        }
+        
+        // Ensure we're on the main thread for all coordinator operations
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async {
+                self.performStoreReload(continuation: continuation)
+            }
+            return
+        }
+        
+        // Find existing store
+        guard let existingStore = container.persistentStoreCoordinator.persistentStores.first else {
+            // No existing store, just load new one
+            container.loadPersistentStores { _, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
+                }
+            }
+            return
+        }
+        
+        // Remove existing store
+        do {
+            try container.persistentStoreCoordinator.remove(existingStore)
+        } catch {
+            continuation.resume(throwing: error)
+            return
+        }
+        
+        // Add store back with new configuration
+        container.loadPersistentStores { _, error in
+            if let error = error {
+                // If loading fails, try to recover by adding the store back without CloudKit
+                // Reset to non-CloudKit configuration
+                description.cloudKitContainerOptions = nil
+                
+                self.container.loadPersistentStores { _, recoveryError in
+                    if let recoveryError = recoveryError {
+                        continuation.resume(throwing: recoveryError)
+                    } else {
+                        continuation.resume()
+                    }
+                }
+            } else {
+                continuation.resume()
             }
         }
     }

@@ -93,6 +93,9 @@ struct ICloudSyncView: View {
             Task {
                 await syncManager.checkAccountStatus()
                 
+                // Synchronize sync status with persistence controller
+                await syncManager.synchronizeSyncStatus()
+                
                 // Ensure sync manager state matches user preference on app launch
                 let userWantsSync = UserDefaults.standard.bool(forKey: "UserWantsCloudKitSync")
                 if userWantsSync != syncManager.isCloudKitEnabled {
@@ -102,7 +105,6 @@ struct ICloudSyncView: View {
                             try await syncManager.toggleCloudKitSync(true)
                         } catch {
                             // If we can't enable sync, update the user preference to match reality
-                            print("Failed to enable iCloud sync on app launch: \(error)")
                             UserDefaults.standard.set(false, forKey: "UserWantsCloudKitSync")
                         }
                     }
@@ -199,9 +201,44 @@ struct ICloudSyncView: View {
         let userWantsSync = UserDefaults.standard.bool(forKey: "UserWantsCloudKitSync")
         if userWantsSync {
             do {
+                // First, try to reset any stuck sync status
+                if syncManager.isSyncing() {
+                    await syncManager.resetSyncStatus()
+                    
+                    // Wait a moment for the reset to take effect
+                    try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                }
+                
+                // Check if this is a store error and attempt recovery
+                if let error = syncManager.getSyncError(),
+                   syncManager.isStoreError(error) {
+                    let recoverySuccess = await syncManager.attemptStoreRecovery()
+                    if recoverySuccess {
+                        return
+                    } else {
+                        // Recovery failed, show error
+                        currentError = NSError(
+                            domain: "com.socialbrain",
+                            code: 5,
+                            userInfo: [
+                                NSLocalizedDescriptionKey: "数据存储错误",
+                                NSLocalizedRecoverySuggestionErrorKey: "请重启应用以恢复同步功能"
+                            ]
+                        )
+                        showingErrorAlert = true
+                        return
+                    }
+                }
+                
+                // For non-store errors, use the standard retry approach
                 // First disable, then re-enable to force a fresh sync
                 try await syncManager.toggleCloudKitSync(false)
+                
+                // Wait a moment before re-enabling
+                try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                
                 try await syncManager.toggleCloudKitSync(true)
+                
             } catch {
                 currentError = error
                 showingErrorAlert = true
