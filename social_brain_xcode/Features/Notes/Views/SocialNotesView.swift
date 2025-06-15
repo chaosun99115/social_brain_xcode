@@ -137,7 +137,7 @@ struct SocialNotesView: View {
                     // Tab selector
                     HStack(spacing: 0) {
                         TabButton(
-                            title: "人际日志",
+                            title: "记录",
                             isSelected: selectedTab == 0,
                             action: { 
                                 withAnimation(.easeInOut(duration: 0.4)) { 
@@ -147,7 +147,7 @@ struct SocialNotesView: View {
                         )
                         
                         TabButton(
-                            title: "人际思考",
+                            title: "思考",
                             isSelected: selectedTab == 1,
                             action: { 
                                 withAnimation(.easeInOut(duration: 0.4)) { 
