@@ -10,7 +10,7 @@
 		<string>AppIcon</string>
 	</dict>
 	<key>CFBundleIdentifier</key>
-	<string>人际大脑</string>
+	<string>socialbrainbeta</string>
 	<key>CFBundleName</key>
 	<string>人际大脑</string>
 	<key>CFBundleDisplayName</key>

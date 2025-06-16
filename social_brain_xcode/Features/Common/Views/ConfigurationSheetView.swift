@@ -226,7 +226,7 @@ struct ConfigurationSheetView: View {
     private var aboutSection: some View {
         Section(header: Text("关于")) {
             NavigationLink(destination: AboutView()) {
-                Text("关于社交大脑")
+                Text("关于人际大脑")
             }
         }
     }

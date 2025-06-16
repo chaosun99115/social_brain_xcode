@@ -47,7 +47,6 @@
 		AFAE47202DE799ED00DD10E0 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE471C2DE799ED00DD10E0 /* StoreKitManager.swift */; };
 		AFAE47212DE799ED00DD10E0 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE471E2DE799ED00DD10E0 /* SubscriptionView.swift */; };
 		AFAE47242DE79A7900DD10E0 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE47232DE79A7900DD10E0 /* SharedComponents.swift */; };
-		AFAE47262DE79D3E00DD10E0 /* Configuration.storekit in Resources */ = {isa = PBXBuildFile; fileRef = AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */; };
 		AFAE472A2DE7B2D400DD10E0 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFAE47292DE7B2D400DD10E0 /* StoreKit.framework */; };
 		AFAE473C2DF1DEB000DD10E0 /* PromptListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE473A2DF1DEB000DD10E0 /* PromptListView.swift */; };
 		AFAE473D2DF1DEB000DD10E0 /* PromptService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFAE473B2DF1DEB000DD10E0 /* PromptService.swift */; };
@@ -132,7 +131,6 @@
 		AFAE471C2DE799ED00DD10E0 /* StoreKitManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		AFAE471E2DE799ED00DD10E0 /* SubscriptionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubscriptionView.swift; sourceTree = "<group>"; };
 		AFAE47232DE79A7900DD10E0 /* SharedComponents.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
-		AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
 		AFAE47272DE7A2BA00DD10E0 /* social_brain_xcode.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = social_brain_xcode.entitlements; sourceTree = "<group>"; };
 		AFAE47292DE7B2D400DD10E0 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		AFAE473A2DF1DEB000DD10E0 /* PromptListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromptListView.swift; sourceTree = "<group>"; };
@@ -570,7 +568,6 @@
 			children = (
 				AFAE47272DE7A2BA00DD10E0 /* social_brain_xcode.entitlements */,
 				AFF98BC42DA075730001DD70 /* Info.plist */,
-				AFAE47252DE79D3E00DD10E0 /* Configuration.storekit */,
 				AFA276272DB03E6400C29B81 /* App */,
 				AFA2762C2DB03F4200C29B81 /* Components */,
 				AFA2762A2DB03ED900C29B81 /* Data */,
@@ -657,7 +654,6 @@
 				AF22C52E2DFA839D00442C52 /* launch_screen .storyboard in Resources */,
 				AFE504D52DF8D670006B110F /* app-privacy_en.html in Resources */,
 				AFF98BBE2DA075730001DD70 /* Preview Assets.xcassets in Resources */,
-				AFAE47262DE79D3E00DD10E0 /* Configuration.storekit in Resources */,
 				AFE504D62DF8D670006B110F /* app-privacy_zh.html in Resources */,
 				AFE504D02DF8D40C006B110F /* README_zh.md in Resources */,
 				AFE504D12DF8D40C006B110F /* README_en.md in Resources */,
@@ -892,14 +888,14 @@
 				CODE_SIGN_ENTITLEMENTS = social_brain_xcode/social_brain_xcode.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"social_brain_xcode/Preview Content\"";
 				DEVELOPMENT_TEAM = G2726ZZ85E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = social_brain_xcode/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "人际大脑";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "社交大脑使用 Face ID 来保护您的个人关系数据，确保只有您能访问您的社交笔记和联系人。";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "人际大脑使用 Face ID 来保护您的个人数据，确保只有您能访问您的人际关系数据。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "launch_screen .storyboard";
@@ -927,14 +923,14 @@
 				CODE_SIGN_ENTITLEMENTS = social_brain_xcode/social_brain_xcode.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"social_brain_xcode/Preview Content\"";
 				DEVELOPMENT_TEAM = G2726ZZ85E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = social_brain_xcode/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "人际大脑";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "社交大脑使用 Face ID 来保护您的个人关系数据，确保只有您能访问您的社交笔记和联系人。";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "人际大脑使用 Face ID 来保护您的个人数据，确保只有您能访问您的人际关系数据。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "launch_screen .storyboard";

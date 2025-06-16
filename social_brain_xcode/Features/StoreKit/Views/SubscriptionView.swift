@@ -116,15 +116,6 @@ struct SubscriptionView: View {
                     // }
                     // .font(.subheadline)
                     
-                    #if DEBUG
-                    // Debug Button
-                    Button("🔧 Debug StoreKit") {
-                        storeManager.quickStoreKitTest()
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 8)
-                    #endif
                 }
                 .padding(.bottom, 40)
             }
@@ -217,7 +208,7 @@ struct SubscriptionView: View {
             if storeManager.validateInvitationCode(trimmedCode) {
                 showInvitationCodeAlert(
                     title: "验证成功",
-                    message: "邀请码验证成功！您已获得终生订阅。"
+                    message: "邀请码验证成功！您已解锁所有高级功能。"
                 )
                 // Optionally auto-dismiss the subscription view after a delay
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -306,7 +297,7 @@ struct InvitationCodeOptionView: View {
         Button(action: onTap) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("输入邀请码")
+                    Text("输入邀请码解锁高级功能")
                         .font(.headline)
                 }
                 
@@ -344,7 +335,7 @@ struct InvitationCodeModalView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Text("请输入您的邀请码以获得终生订阅")
+                    Text("输入邀请码解锁高级功能")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)

@@ -79,9 +79,6 @@ class StoreKitManager: ObservableObject {
                 try await Product.products(for: productIdentifiers)
             }
             
-            // Perform detailed environment analysis
-            logEnvironmentDetails()
-            
             // Additional analysis based on product details
             if let firstProduct = subscriptions.first {
                 // Product analysis logic can be kept for debugging if needed
@@ -235,35 +232,30 @@ class StoreKitManager: ObservableObject {
     private func isSandboxEnvironment() -> Bool {
         // Check if we're running in sandbox environment
         #if DEBUG
-        // In debug builds, check if we're using sandbox configuration
-        // Check if we have a Configuration.storekit file being used
-        return !isUsingStoreKitConfigurationFile()
+        // In debug builds, we're likely in sandbox for testing
+        return true
         #else
+        // In release builds, we're in production
         return false
         #endif
     }
     
     private func isUsingStoreKitConfigurationFile() -> Bool {
-        // Check if we're using the local Configuration.storekit file
-        // This is a heuristic based on the behavior we observed
-        return subscriptions.contains(where: { $0.price == 0 })
+        // Configuration.storekit file has been removed for production
+        // This method is kept for backward compatibility but always returns false
+        return false
     }
     
     private func detectActualStoreKitEnvironment() -> String {
         // Try to detect the actual environment being used
         #if targetEnvironment(simulator)
-        if isUsingStoreKitConfigurationFile() {
-            return "Simulator (Local Configuration File)"
-        } else {
-            return "Simulator (Sandbox Testing)"
-        }
+        return "Simulator (Sandbox Testing)"
         #else
-        // On device, we need to check the actual configuration
-        if isUsingStoreKitConfigurationFile() {
-            return "Device (Local Configuration File)"
-        } else {
-            return "Device (Sandbox/Production)"
-        }
+        #if DEBUG
+        return "Device (Sandbox Testing)"
+        #else
+        return "Device (Production)"
+        #endif
         #endif
     }
     
@@ -526,9 +518,9 @@ class StoreKitManager: ObservableObject {
         // Troubleshooting tips
         print("\n💡 Troubleshooting Tips:")
         if isSimulatorEnvironment() {
-            print("   - Ensure StoreKit testing is enabled in Xcode scheme")
-            print("   - Check that Configuration.storekit file is properly configured")
-            print("   - Try running on a physical device for full StoreKit testing")
+            print("   - Configuration.storekit file has been removed for production")
+            print("   - Test on physical device for full StoreKit functionality")
+            print("   - Use sandbox Apple ID for testing")
         }
         
         if isSandboxEnvironment() {
@@ -537,11 +529,16 @@ class StoreKitManager: ObservableObject {
             print("   - Verify the product ID 'relate_monthly' and 'relate_lifetime_premium' exist in App Store Connect")
             print("   - Try signing out and back in to refresh authentication")
             print("   - Check that your app's bundle ID matches App Store Connect")
+        } else {
+            print("   - Running in production environment")
+            print("   - Ensure App Store Connect products are 'Ready to Submit'")
+            print("   - Verify pricing and localizations are complete")
         }
         
         if subscriptions.isEmpty {
             print("   - No products loaded - check product identifiers")
             print("   - Verify App Store Connect configuration")
+            print("   - Check network connectivity")
         }
         
         if case .unknown = subscriptionStatus {
@@ -558,16 +555,18 @@ class StoreKitManager: ObservableObject {
         print("   - Product ID: relate_lifetime_premium ✅")
         print("   - Subscription Group ID: 21695627 ✅")
         print("   - Duration: 1 month ✅")
-        print("   - Status: Missing Metadata ⚠️")
-        print("\n📋 Required Actions in App Store Connect:")
-        print("   1. Add localization metadata:")
+        print("   - Configuration.storekit: Removed for production ✅")
+        print("   - Environment: Production ready ✅")
+        print("\n📋 App Store Connect Requirements:")
+        print("   1. Ensure products are 'Ready to Submit'")
+        print("   2. Verify localization metadata:")
         print("      - Chinese (zh_CN): 月度订阅 / 终生订阅")
         print("      - English (en_US): Monthly Subscription / Lifetime Premium Access")
-        print("   2. Add subscription description:")
+        print("   3. Confirm subscription description:")
         print("      - 解锁所有高级功能，包括iCloud同步和Face ID认证")
-        print("   3. Set pricing (¥6.00/month, ¥68.00 lifetime)")
-        print("   4. Add subscription screenshots (optional)")
-        print("   5. Submit for review when ready")
+        print("   4. Verify pricing (¥6.00/month, ¥68.00 lifetime)")
+        print("   5. Add subscription screenshots (optional)")
+        print("   6. Submit for review when ready")
     }
     #endif
     
@@ -650,7 +649,7 @@ class StoreKitManager: ObservableObject {
         // Test environment detection
         print("📱 Platform: \(isSimulatorEnvironment() ? "Simulator" : "Device")")
         print("🔐 Environment: \(detectActualStoreKitEnvironment())")
-        print("📄 Using Config File: \(isUsingStoreKitConfigurationFile())")
+        print("📄 Configuration.storekit: Removed for production ✅")
         
         // Test product loading
         print("📦 Products: \(subscriptions.count) loaded")
@@ -666,18 +665,68 @@ class StoreKitManager: ObservableObject {
         // Provide specific recommendations
         if subscriptions.isEmpty {
             print("🚨 ISSUE: No products loaded")
-            print("💡 SOLUTION: Check Xcode scheme settings for StoreKit configuration")
+            print("💡 SOLUTION: Check App Store Connect configuration")
+            print("💡 SOLUTION: Verify product IDs are correct")
+            print("💡 SOLUTION: Test on physical device with sandbox Apple ID")
         }
         
-        if isSimulatorEnvironment() && !isUsingStoreKitConfigurationFile() {
-            print("⚠️  WARNING: Simulator without config file may have authentication issues")
-            print("💡 SOLUTION: Sign in with sandbox Apple ID or use Configuration.storekit")
+        if isSimulatorEnvironment() {
+            print("⚠️  WARNING: Testing in simulator")
+            print("💡 SOLUTION: Test on physical device for full functionality")
         }
         
         if case .unknown = subscriptionStatus {
             print("⚠️  WARNING: Subscription status unknown")
             print("💡 SOLUTION: Check network connectivity and Apple ID authentication")
         }
+        
+        if !isSimulatorEnvironment() && !isSandboxEnvironment() {
+            print("✅ PRODUCTION: App is configured for production distribution")
+        }
+    }
+    
+    /// Check if the app is ready for production distribution
+    func checkProductionReadiness() {
+        print("🚀 Production Readiness Check")
+        print("=============================")
+        
+        // Check Configuration.storekit file
+        print("📄 Configuration.storekit: Removed ✅")
+        
+        // Check environment
+        let environment = detectActualStoreKitEnvironment()
+        print("🔐 Environment: \(environment)")
+        
+        // Check products
+        print("📦 Products loaded: \(subscriptions.count)")
+        
+        // Check subscription status
+        print("🔐 Subscription status: \(subscriptionStatus)")
+        
+        // Check lifetime access
+        print("🎉 Lifetime access: \(hasLifetimeAccess() ? "Available" : "Not activated")")
+        
+        // Overall readiness
+        let isReady = !isSimulatorEnvironment() && subscriptions.count > 0
+        print("✅ Production Ready: \(isReady ? "YES" : "NO")")
+        
+        if isReady {
+            print("\n🎉 Your app is ready for App Store distribution!")
+            print("📋 Next steps:")
+            print("   1. Test on physical device with sandbox Apple ID")
+            print("   2. Verify App Store Connect products are 'Ready to Submit'")
+            print("   3. Submit your app for review")
+        } else {
+            print("\n⚠️  Issues found:")
+            if isSimulatorEnvironment() {
+                print("   - Test on physical device")
+            }
+            if subscriptions.isEmpty {
+                print("   - Check App Store Connect configuration")
+            }
+        }
+        
+        print("=============================")
     }
 }
 

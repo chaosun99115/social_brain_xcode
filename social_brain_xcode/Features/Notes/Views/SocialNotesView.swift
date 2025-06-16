@@ -328,7 +328,7 @@ struct SocialNotesView: View {
                             .font(.body)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
-                        Text("\"社交大脑\"将协助管理您的社交网络")
+                        Text("\"人际大脑\"将协助管理您的社交网络")
                             .font(.body)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)

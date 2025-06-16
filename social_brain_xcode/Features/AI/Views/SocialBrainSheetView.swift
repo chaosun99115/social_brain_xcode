@@ -336,7 +336,7 @@ struct SocialBrainSheetView: View {
                     LoadingModal()
                 }
             }
-            .navigationTitle("社交大脑")
+            .navigationTitle("人际大脑")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

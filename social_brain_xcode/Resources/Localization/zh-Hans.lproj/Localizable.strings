@@ -1,5 +1,5 @@
 /* Main Tab Items */
-"social_brain" = "社交大脑";
+"social_brain" = "人际大脑";
 "social_notes" = "社交笔记";
 "social_contacts" = "社交联系人";
 
@@ -30,7 +30,7 @@
 "face_id_lock" = "Face ID锁定";
 "unlock_pro_features" = "解锁高级功能";
 "all_pro_features_unlocked" = "已解锁所有高级功能";
-"about_social_brain" = "关于社交大脑";
+"about_social_brain" = "关于人际大脑";
 
 /* Pro Upgrade */
 "upgrade_to_pro" = "升级到Pro";
@@ -84,7 +84,7 @@
 "restore_purchase_failed" = "恢复购买失败：%@";
 
 /* Social Brain View */
-"ask_social_brain" = "询问社交大脑";
+"ask_social_brain" = "询问人际大脑";
 "hint_text" = "输入您的问题...";
 "searching_notes" = "正在检索笔记并生成答案...";
 "social_quote" = "在我看来，这种热衷于蜻蜓点水式的社交，只知道发名片的人根本没有掌握真诚社交的精髓。他们那一套根本不顶用，因为在建立关系时，真诚才是第一位的。";
@@ -130,6 +130,6 @@
 "just_now" = "刚刚";
 
 /* App Name */
-"CFBundleDisplayName" = "社交大脑";
+"CFBundleDisplayName" = "人际大脑";
 
 

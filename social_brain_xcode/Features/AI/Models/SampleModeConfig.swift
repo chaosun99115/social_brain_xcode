@@ -28,7 +28,7 @@ struct SampleModeConfig {
     
     // MARK: - Sample Mode Selection Dialog
     static let selectionDialogTitle = "选择一个社交场景"
-    static let selectionDialogMessage = "示例数据能够让你全面体验社交大脑的功能。示例模式不影响你的私有数据，退出示例模式后将恢复原状。"
+    static let selectionDialogMessage = "示例数据能够让你全面体验人际大脑的功能。示例模式不影响你的私有数据，退出示例模式后将恢复原状。"
     
     // MARK: - Helper Methods
     static func getModeDefinition(forId id: String) -> ModeDefinition? {
