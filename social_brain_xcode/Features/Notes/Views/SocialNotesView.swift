@@ -324,11 +324,7 @@ struct SocialNotesView: View {
                 VStack(spacing: 32) {
                     Spacer()
                     VStack(spacing: 12) {
-                        Text(selectedTab == 0 ? "在这里记录你的人际日志" : "在这里记录你的人际思考")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                        Text("\"人际大脑\"将协助管理您的社交网络")
+                        Text(selectedTab == 0 ? "在这里记录你的人际互动" : "在这里记录你对人际关系的思考")
                             .font(.body)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -339,7 +335,7 @@ struct SocialNotesView: View {
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: selectedTab == 0 ? "person.2.fill" : "lightbulb.fill")
-                                Text(selectedTab == 0 ? "查看示例日志" : "查看示例思考")
+                                Text(selectedTab == 0 ? "查看示例互动记录" : "查看示例人际思考")
                             }
                             .font(.subheadline)
                             .foregroundColor(Color.primaryAction)

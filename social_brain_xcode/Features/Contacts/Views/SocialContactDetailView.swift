@@ -344,8 +344,7 @@ struct SocialContactDetailView: View {
     // Add date formatter for birthday display
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateStyle = .long
-        formatter.timeStyle = .none
+        formatter.dateFormat = "M月d日"
         return formatter
     }()
     

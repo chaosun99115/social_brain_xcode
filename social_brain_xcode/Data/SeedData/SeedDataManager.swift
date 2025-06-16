@@ -246,6 +246,9 @@ final class SeedDataManager {
                 contact.contactId = contactUUID
                 contact.name = contactData.name
                 contact.type = contactData.type ?? 0
+                contact.birthday = contactData.birthday
+                contact.tel = contactData.tel
+                contact.memo = contactData.memo
                 contact.createdAt = contactData.createdAt
                 contact.updatedAt = contactData.updatedAt
                 contact.recordStatus = contactData.recordStatus
@@ -610,6 +613,9 @@ struct ContactData: Codable {
     let uniqueIdentifier: String  // Used to generate and track UUID
     let name: String
     let type: Int16?
+    let birthday: Date?
+    let tel: String?
+    let memo: String?
     let createdAt: Date
     let updatedAt: Date
     let recordStatus: Int16
@@ -620,6 +626,9 @@ struct ContactData: Codable {
         uniqueIdentifier = try container.decode(String.self, forKey: .uniqueIdentifier)
         name = try container.decode(String.self, forKey: .name)
         type = try container.decodeIfPresent(Int16.self, forKey: .type) ?? 0
+        birthday = try container.decodeIfPresent(Date.self, forKey: .birthday)
+        tel = try container.decodeIfPresent(String.self, forKey: .tel)
+        memo = try container.decodeIfPresent(String.self, forKey: .memo)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         updatedAt = try container.decode(Date.self, forKey: .updatedAt)
         recordStatus = try container.decode(Int16.self, forKey: .recordStatus)
@@ -631,13 +640,16 @@ struct ContactData: Codable {
         try container.encode(uniqueIdentifier, forKey: .uniqueIdentifier)
         try container.encode(name, forKey: .name)
         try container.encode(type ?? 0, forKey: .type)
+        try container.encodeIfPresent(birthday, forKey: .birthday)
+        try container.encodeIfPresent(tel, forKey: .tel)
+        try container.encodeIfPresent(memo, forKey: .memo)
         try container.encode(createdAt, forKey: .createdAt)
         try container.encode(updatedAt, forKey: .updatedAt)
         try container.encode(recordStatus, forKey: .recordStatus)
     }
     
     private enum CodingKeys: String, CodingKey {
-        case uniqueIdentifier, name, type, createdAt, updatedAt, recordStatus
+        case uniqueIdentifier, name, type, birthday, tel, memo, createdAt, updatedAt, recordStatus
     }
 }
 
