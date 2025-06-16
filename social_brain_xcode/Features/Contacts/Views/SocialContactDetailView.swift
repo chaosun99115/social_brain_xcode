@@ -400,7 +400,7 @@ struct SocialContactDetailView: View {
                     .padding(.vertical, 40)
                 } else {
                     ForEach(notes, id: \.noteId) { note in
-                        NavigationLink(destination: NoteDetailNav(note: note)
+                        NavigationLink(destination: SocialNoteDetailView(note: note, useBlurBackground: true)
                             .environmentObject(tabBarManager)) {
                             NoteCardView(note: note)
                         }

@@ -20,7 +20,7 @@ class TabBarManager: ObservableObject {
     // MARK: - View Types
     enum TabBarViewType {
         case mainTab           // SocialBrainView, SocialContactView, SocialNotesView
-        case detailView        // SocialContactDetailView, CircleDetailView, NoteDetailNav, SocialNoteDetailView
+        case detailView        // SocialContactDetailView, CircleDetailView, SocialNoteDetailView
         case modalView         // Any modal or sheet
         case unknown
     }

@@ -13,7 +13,6 @@
 		AF22C5482DFB145600442C52 /* LaunchScreenConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5442DFB145500442C52 /* LaunchScreenConfiguration.swift */; };
 		AF22C5492DFB145600442C52 /* LaunchScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5452DFB145500442C52 /* LaunchScreenView.swift */; };
 		AF22C54B2DFB1C2200442C52 /* ContactSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C54A2DFB1C2200442C52 /* ContactSelectionView.swift */; };
-		AF22C54D2DFB1C4B00442C52 /* NoteDetailNav.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C54C2DFB1C4B00442C52 /* NoteDetailNav.swift */; };
 		AF22C5532DFCC40600442C52 /* SubscriptionStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF22C5522DFCC40600442C52 /* SubscriptionStatusView.swift */; };
 		AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */; };
 		AF4501A52DF346E1000F4F17 /* EditContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4501A42DF346E1000F4F17 /* EditContactView.swift */; };
@@ -100,7 +99,6 @@
 		AF22C5442DFB145500442C52 /* LaunchScreenConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LaunchScreenConfiguration.swift; sourceTree = "<group>"; };
 		AF22C5452DFB145500442C52 /* LaunchScreenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LaunchScreenView.swift; sourceTree = "<group>"; };
 		AF22C54A2DFB1C2200442C52 /* ContactSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactSelectionView.swift; sourceTree = "<group>"; };
-		AF22C54C2DFB1C4B00442C52 /* NoteDetailNav.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NoteDetailNav.swift; sourceTree = "<group>"; };
 		AF22C5522DFCC40600442C52 /* SubscriptionStatusView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SubscriptionStatusView.swift; sourceTree = "<group>"; };
 		AF4501A22DF346B4000F4F17 /* EditCircleContactsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditCircleContactsSheet.swift; sourceTree = "<group>"; };
 		AF4501A42DF346E1000F4F17 /* EditContactView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditContactView.swift; sourceTree = "<group>"; };
@@ -289,7 +287,6 @@
 		AFA2761F2DB03BD400C29B81 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				AF22C54C2DFB1C4B00442C52 /* NoteDetailNav.swift */,
 				AF22C54A2DFB1C2200442C52 /* ContactSelectionView.swift */,
 				AFDDDC972DD289A100425764 /* ConfirmationDialog.swift */,
 				AFAE46E42DE4E57E00DD10E0 /* ContactSelectionView.swift */,
@@ -724,7 +721,6 @@
 				AF1C4FBA2DCBA5D90080DBA9 /* KIMIChatService.swift in Sources */,
 				AF22C5492DFB145600442C52 /* LaunchScreenView.swift in Sources */,
 				AF4501A32DF346B4000F4F17 /* EditCircleContactsSheet.swift in Sources */,
-				AF22C54D2DFB1C4B00442C52 /* NoteDetailNav.swift in Sources */,
 				AFDDDC9E2DD393F100425764 /* CircleDetailView.swift in Sources */,
 				AF22C5462DFB145600442C52 /* LaunchScreenManager.swift in Sources */,
 				AFAE46FC2DE77A3800DD10E0 /* SocialBrainSheetView.swift in Sources */,

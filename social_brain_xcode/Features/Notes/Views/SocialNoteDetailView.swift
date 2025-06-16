@@ -3,6 +3,8 @@ import CoreData
 
 struct SocialNoteDetailView: View {
     let note: Note
+    let useBlurBackground: Bool // New parameter to control background style
+    
     @State private var showingEditModal: Bool = false
     @State private var showingArchiveConfirmation: Bool = false
     @State private var scrollResetID = UUID()
@@ -23,6 +25,18 @@ struct SocialNoteDetailView: View {
     // Keep state for tracking scroll position but remove debug logging
     @State private var scrollOffset: CGFloat = 0
     @State private var isScrolling = false
+    
+    // Default initializer for backward compatibility
+    init(note: Note) {
+        self.note = note
+        self.useBlurBackground = false // Default to solid background
+    }
+    
+    // New initializer with background control
+    init(note: Note, useBlurBackground: Bool = false) {
+        self.note = note
+        self.useBlurBackground = useBlurBackground
+    }
     
     var body: some View {
         ZStack {
@@ -123,7 +137,12 @@ struct SocialNoteDetailView: View {
                     .padding(.top, 0) // Position buttons at the top
                     .padding(.bottom, getBottomSafeAreaInset()) // Only add safe area padding at bottom
                 }
-                .background(Color.primaryBackground)
+                .background(
+                    useBlurBackground ? 
+                    AnyView(VisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+                        .ignoresSafeArea(edges: .bottom)) :
+                    AnyView(Color.primaryBackground)
+                )
             }
         }
         .hideTabBar() // Always hide tab bar for detail views
@@ -265,10 +284,32 @@ struct SocialNoteDetailView_Previews: PreviewProvider {
         note.createdAt = Date()
         
         return NavigationView {
-            SocialNoteDetailView(note: note)
+            SocialNoteDetailView(note: note, useBlurBackground: false)
         }
         .environment(\.colorScheme, .light)
         .environmentObject(NoteManager.shared)
+        .environmentObject(AppModeManager())
+        .environmentObject(TabBarManager.shared)
+        .previewDisplayName("Solid Background")
+    }
+}
+
+struct SocialNoteDetailView_BlurBackground_Previews: PreviewProvider {
+    static var previews: some View {
+        let context = CoreDataManager.shared.viewContext
+        let note = Note(context: context)
+        note.noteId = UUID()
+        note.content = "Sample note content with @Contact mention"
+        note.createdAt = Date()
+        
+        return NavigationView {
+            SocialNoteDetailView(note: note, useBlurBackground: true)
+        }
+        .environment(\.colorScheme, .light)
+        .environmentObject(NoteManager.shared)
+        .environmentObject(AppModeManager())
+        .environmentObject(TabBarManager.shared)
+        .previewDisplayName("Blur Background")
     }
 }
 
