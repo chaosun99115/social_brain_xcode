@@ -91,10 +91,21 @@ class StoreKitManager: ObservableObject {
             self.error = .loadFailed(error)
             print("❌ StoreKit: Failed to load products: \(error)")
             
+            // Handle specific StoreKit errors
+            if let storeKitError = error as? StoreKitError {
+                handleStoreKitError(storeKitError)
+            } else if let urlError = error as? URLError {
+                handleURLError(urlError)
+            } else {
+                // Handle generic errors
+                handleGenericStoreKitError(error)
+            }
+            
             // Check if this is a simulator/StoreKit testing issue
             if isSimulatorEnvironment() {
                 print("⚠️  StoreKit: Running in simulator - StoreKit testing may not be properly configured")
                 print("💡 Tip: Ensure StoreKit testing is enabled in Xcode scheme settings")
+                provideSimulatorTroubleshooting()
             }
         }
         
@@ -225,25 +236,53 @@ class StoreKitManager: ObservableObject {
         // Check if we're running in sandbox environment
         #if DEBUG
         // In debug builds, check if we're using sandbox configuration
-        return true // Assume sandbox for testing
+        // Check if we have a Configuration.storekit file being used
+        return !isUsingStoreKitConfigurationFile()
         #else
         return false
         #endif
     }
     
+    private func isUsingStoreKitConfigurationFile() -> Bool {
+        // Check if we're using the local Configuration.storekit file
+        // This is a heuristic based on the behavior we observed
+        return subscriptions.contains(where: { $0.price == 0 })
+    }
+    
     private func detectActualStoreKitEnvironment() -> String {
         // Try to detect the actual environment being used
         #if targetEnvironment(simulator)
-        return "Simulator (Local Testing)"
+        if isUsingStoreKitConfigurationFile() {
+            return "Simulator (Local Configuration File)"
+        } else {
+            return "Simulator (Sandbox Testing)"
+        }
         #else
         // On device, we need to check the actual configuration
-        // This is a heuristic based on behavior
-        return "Device (Environment Unknown)"
+        if isUsingStoreKitConfigurationFile() {
+            return "Device (Local Configuration File)"
+        } else {
+            return "Device (Sandbox/Production)"
+        }
         #endif
     }
     
     private func logEnvironmentDetails() {
-        // Environment analysis logic can be kept for debugging if needed
+        print("🔍 StoreKit Environment Analysis")
+        print("================================")
+        print("📱 Platform: \(isSimulatorEnvironment() ? "Simulator" : "Device")")
+        print("🔐 Environment: \(detectActualStoreKitEnvironment())")
+        print("📄 Using Config File: \(isUsingStoreKitConfigurationFile())")
+        print("📦 Products Loaded: \(subscriptions.count)")
+        
+        if !subscriptions.isEmpty {
+            print("💰 Product Prices:")
+            for product in subscriptions {
+                print("   - \(product.displayName): \(product.displayPrice) (\(product.price))")
+            }
+        }
+        
+        print("================================")
     }
     
     private func handleURLError(_ error: URLError) {
@@ -273,6 +312,78 @@ class StoreKitManager: ObservableObject {
         default:
             print("❓ StoreKit: Unknown network error: \(error.localizedDescription)")
         }
+    }
+    
+    private func handleStoreKitError(_ error: StoreKitError) {
+        switch error {
+        case .verificationFailed:
+            print("🔐 StoreKit: Purchase verification failed")
+            print("💡 Tip: This may be due to network issues or server problems")
+        case .userCancelled:
+            print("🚫 StoreKit: User cancelled the operation")
+        case .pending:
+            print("⏳ StoreKit: Purchase is pending")
+            print("💡 Tip: Check your email for confirmation or try again later")
+        case .unknown:
+            print("❓ StoreKit: Unknown error occurred")
+        case .loadFailed(let underlyingError):
+            print("📦 StoreKit: Failed to load products")
+            print("💡 Underlying error: \(underlyingError.localizedDescription)")
+        case .purchaseFailed(let underlyingError):
+            print("💳 StoreKit: Purchase failed")
+            print("💡 Underlying error: \(underlyingError.localizedDescription)")
+        case .restoreFailed(let underlyingError):
+            print("🔄 StoreKit: Restore failed")
+            print("💡 Underlying error: \(underlyingError.localizedDescription)")
+        case .statusCheckFailed(let underlyingError):
+            print("🔍 StoreKit: Status check failed")
+            print("💡 Underlying error: \(underlyingError.localizedDescription)")
+        }
+    }
+    
+    private func handleGenericStoreKitError(_ error: Error) {
+        let errorDescription = error.localizedDescription.lowercased()
+        
+        if errorDescription.contains("no active account") {
+            print("👤 StoreKit: No active Apple ID account")
+            print("💡 Tip: Sign in to your Apple ID in Settings > App Store")
+            print("💡 Tip: For testing, use a sandbox Apple ID")
+        } else if errorDescription.contains("error decoding response") {
+            print("📄 StoreKit: Error decoding server response")
+            print("💡 Tip: This may be due to network issues or server problems")
+            print("💡 Tip: Try again later or check your internet connection")
+        } else if errorDescription.contains("did not receive any products") {
+            print("📦 StoreKit: No products received from server")
+            print("💡 Tip: Check that product IDs are correct in App Store Connect")
+            print("💡 Tip: Verify your app's bundle ID matches App Store Connect")
+        } else {
+            print("❓ StoreKit: Generic error: \(error.localizedDescription)")
+        }
+    }
+    
+    private func provideSimulatorTroubleshooting() {
+        print("\n🔧 Simulator StoreKit Troubleshooting:")
+        print("======================================")
+        print("1. Check Xcode Scheme Settings:")
+        print("   - Product > Scheme > Edit Scheme")
+        print("   - Run > Options > StoreKit Configuration")
+        print("   - Set to 'None' for sandbox testing")
+        print("   - Or set to 'Configuration.storekit' for local testing")
+        print("")
+        print("2. For Sandbox Testing:")
+        print("   - Sign in with sandbox Apple ID in Simulator")
+        print("   - Settings > App Store > Sign In")
+        print("   - Use a test account from App Store Connect")
+        print("")
+        print("3. For Local Testing:")
+        print("   - Ensure Configuration.storekit file is properly configured")
+        print("   - Products will show $0.00 prices")
+        print("   - No Apple ID required")
+        print("")
+        print("4. Alternative Solutions:")
+        print("   - Test on a physical device for full StoreKit functionality")
+        print("   - Use StoreKit testing in Xcode 13+ for better simulator support")
+        print("======================================")
     }
     
     // MARK: - Developer Methods (for testing)
@@ -369,6 +480,16 @@ class StoreKitManager: ObservableObject {
             print("💰 Note: Transactions use sandbox test balance")
         } else {
             print("🔐 Environment: Production Mode")
+        }
+        
+        // Configuration file check
+        if isUsingStoreKitConfigurationFile() {
+            print("📄 Configuration: Using Local Configuration File")
+            print("💡 Note: Products will show $0.00 prices")
+            print("💡 Note: No Apple ID authentication required")
+        } else {
+            print("📄 Configuration: Using App Store Connect")
+            print("💡 Note: Requires Apple ID authentication")
         }
         
         // Product status
@@ -519,6 +640,44 @@ class StoreKitManager: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "activatedInvitationCode")
         UserDefaults.standard.removeObject(forKey: "lifetimeAccessActivatedDate")
         print("🔄 Lifetime access reset")
+    }
+    
+    /// Quick test function to check StoreKit setup
+    func quickStoreKitTest() {
+        print("🧪 Quick StoreKit Test")
+        print("======================")
+        
+        // Test environment detection
+        print("📱 Platform: \(isSimulatorEnvironment() ? "Simulator" : "Device")")
+        print("🔐 Environment: \(detectActualStoreKitEnvironment())")
+        print("📄 Using Config File: \(isUsingStoreKitConfigurationFile())")
+        
+        // Test product loading
+        print("📦 Products: \(subscriptions.count) loaded")
+        
+        // Test subscription status
+        print("🔐 Subscription: \(subscriptionStatus)")
+        
+        // Test lifetime access
+        print("🎉 Lifetime Access: \(hasLifetimeAccess() ? "Active" : "Inactive")")
+        
+        print("======================")
+        
+        // Provide specific recommendations
+        if subscriptions.isEmpty {
+            print("🚨 ISSUE: No products loaded")
+            print("💡 SOLUTION: Check Xcode scheme settings for StoreKit configuration")
+        }
+        
+        if isSimulatorEnvironment() && !isUsingStoreKitConfigurationFile() {
+            print("⚠️  WARNING: Simulator without config file may have authentication issues")
+            print("💡 SOLUTION: Sign in with sandbox Apple ID or use Configuration.storekit")
+        }
+        
+        if case .unknown = subscriptionStatus {
+            print("⚠️  WARNING: Subscription status unknown")
+            print("💡 SOLUTION: Check network connectivity and Apple ID authentication")
+        }
     }
 }
 

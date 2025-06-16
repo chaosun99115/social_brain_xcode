@@ -115,7 +115,16 @@ struct SubscriptionView: View {
                     //     }
                     // }
                     // .font(.subheadline)
-                    // .foregroundColor(.secondary)
+                    
+                    #if DEBUG
+                    // Debug Button
+                    Button("🔧 Debug StoreKit") {
+                        storeManager.quickStoreKitTest()
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 8)
+                    #endif
                 }
                 .padding(.bottom, 40)
             }

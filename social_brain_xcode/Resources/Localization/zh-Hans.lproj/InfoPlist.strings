@@ -1,2 +1,3 @@
 /* App Name */
-"CFBundleDisplayName" = "人际大脑"; 
+"CFBundleDisplayName" = "社交大脑";
+"CFBundleName" = "社交大脑"; 
