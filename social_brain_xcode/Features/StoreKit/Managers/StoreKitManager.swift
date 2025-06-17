@@ -1,5 +1,6 @@
 import StoreKit
 import SwiftUI
+import Network
 
 @MainActor
 class StoreKitManager: ObservableObject {
@@ -7,39 +8,70 @@ class StoreKitManager: ObservableObject {
     
     @Published private(set) var subscriptions: [Product] = []
     @Published private(set) var purchasedSubscriptions: [Product] = []
-    @Published private(set) var subscriptionStatus: SubscriptionStatus = .inactive
+    @Published private(set) var subscriptionStatus: SubscriptionStatus = .unknown
     @Published private(set) var isLoading = false
     @Published private(set) var error: StoreKitError?
+    @Published private(set) var isInitialized = false
     
     private var updateListenerTask: Task<Void, Error>?
     private var retryCount = 0
     private let maxRetries = 3
-    
-    // Invitation codes for lifetime access
-    private let validInvitationCodes = [
-        "XKKMNRNJ74X7",
-        "JKXNNWYAM3WP", 
-        "H6X79FANXAFW",
-        "LNAW3TTREPPL",
-        "NLNL9JW77LRX",
-        "H7RYAPXKF6XJ",
-        "7MTKFMTJLAEW",
-        "JET3M3P69P37",
-        "KTMK6PJKNK4F",
-        "NK3Y6JXT66YY"
-    ]
+    private let networkMonitor = NWPathMonitor()
+    private var isNetworkAvailable = false
     
     private init() {
-        updateListenerTask = listenForTransactions()
-        Task {
-            await loadProducts()
-            await updateSubscriptionStatus()
-        }
+        setupNetworkMonitoring()
+        // Don't initialize StoreKit immediately - wait for explicit initialization
     }
     
     deinit {
         updateListenerTask?.cancel()
+        networkMonitor.cancel()
     }
+    
+    // MARK: - Public Initialization
+    
+    /// Initialize StoreKit when needed (call this when user grants internet access)
+    func initialize() async {
+        guard !isInitialized else { return }
+        
+        // Check network connectivity first
+        guard isNetworkAvailable else {
+            return
+        }
+        
+        updateListenerTask = listenForTransactions()
+        await loadProducts()
+        await updateSubscriptionStatus()
+        isInitialized = true
+    }
+    
+    /// Manually trigger initialization (useful for retry scenarios)
+    func retryInitialization() async {
+        print("🔄 StoreKit: Retrying initialization...")
+        isInitialized = false
+        await initialize()
+    }
+    
+    // MARK: - Network Monitoring
+    
+    private func setupNetworkMonitoring() {
+        networkMonitor.pathUpdateHandler = { [weak self] path in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.isNetworkAvailable = path.status == .satisfied
+                if path.status == .satisfied && !self.isInitialized {
+                    // Network became available, try to initialize if not already done
+                    Task { @MainActor in
+                        await self.initialize()
+                    }
+                }
+            }
+        }
+        networkMonitor.start(queue: DispatchQueue.global())
+    }
+    
+    // MARK: - Transaction Listening
     
     private func listenForTransactions() -> Task<Void, Error> {
         return Task.detached {
@@ -58,8 +90,13 @@ class StoreKitManager: ObservableObject {
         await self.updateSubscriptionStatus()
     }
     
+    // MARK: - Product Loading
+    
     func loadProducts() async {
         guard !isLoading else { return }
+        guard isNetworkAvailable else {
+            return
+        }
         
         isLoading = true
         error = nil
@@ -109,22 +146,13 @@ class StoreKitManager: ObservableObject {
         isLoading = false
     }
     
-    private func withRetry<T>(_ operation: @escaping () async throws -> T) async throws -> T {
-        retryCount = 0
-        while true {
-            do {
-                return try await operation()
-            } catch {
-                retryCount += 1
-                if retryCount >= maxRetries {
-                    throw error
-                }
-                try await Task.sleep(nanoseconds: UInt64(1_000_000_000 * pow(2.0, Double(retryCount)))) // Exponential backoff
-            }
-        }
-    }
+    // MARK: - Purchase Methods
     
     func purchase(_ product: Product) async throws {
+        guard isNetworkAvailable else {
+            throw StoreKitError.networkUnavailable
+        }
+        
         isLoading = true
         error = nil
         defer { isLoading = false }
@@ -165,6 +193,10 @@ class StoreKitManager: ObservableObject {
     }
     
     func restorePurchases() async throws {
+        guard isNetworkAvailable else {
+            throw StoreKitError.networkUnavailable
+        }
+        
         isLoading = true
         error = nil
         defer { isLoading = false }
@@ -186,13 +218,14 @@ class StoreKitManager: ObservableObject {
         }
     }
     
+    // MARK: - Subscription Status
+    
     func updateSubscriptionStatus() async {
-        var hasActiveSubscription = false
-        
-        // First check if user has lifetime access via invitation code
-        if hasLifetimeAccess() {
-            hasActiveSubscription = true
+        guard isNetworkAvailable else {
+            return
         }
+        
+        var hasActiveSubscription = false
         
         do {
             for await result in StoreKit.Transaction.currentEntitlements {
@@ -220,6 +253,21 @@ class StoreKitManager: ObservableObject {
     }
     
     // MARK: - Helper Methods
+    
+    private func withRetry<T>(_ operation: @escaping () async throws -> T) async throws -> T {
+        retryCount = 0
+        while true {
+            do {
+                return try await operation()
+            } catch {
+                retryCount += 1
+                if retryCount >= maxRetries {
+                    throw error
+                }
+                try await Task.sleep(nanoseconds: UInt64(1_000_000_000 * pow(2.0, Double(retryCount)))) // Exponential backoff
+            }
+        }
+    }
     
     private func isSimulatorEnvironment() -> Bool {
         #if targetEnvironment(simulator)
@@ -318,6 +366,9 @@ class StoreKitManager: ObservableObject {
             print("💡 Tip: Check your email for confirmation or try again later")
         case .unknown:
             print("❓ StoreKit: Unknown error occurred")
+        case .networkUnavailable:
+            print("🌐 StoreKit: Network is not available")
+            print("💡 Tip: Check your internet connection and try again")
         case .loadFailed(let underlyingError):
             print("📦 StoreKit: Failed to load products")
             print("💡 Underlying error: \(underlyingError.localizedDescription)")
@@ -391,27 +442,6 @@ class StoreKitManager: ObservableObject {
     func setSubscriptionActive() {
         subscriptionStatus = .active
         print("Subscription status set to active for testing")
-    }
-    
-    /// Test invitation code validation (for testing purposes)
-    func testInvitationCode(_ code: String) {
-        print("🧪 Testing invitation code: \(code)")
-        let isValid = validateInvitationCode(code)
-        print("Result: \(isValid ? "Valid" : "Invalid")")
-        
-        if isValid {
-            print("✅ Lifetime access activated")
-            print("📅 Activated date: \(getLifetimeAccessActivatedDate() ?? Date())")
-            print("🔑 Used code: \(getActivatedInvitationCode() ?? "Unknown")")
-        }
-    }
-    
-    /// List all valid invitation codes (for testing purposes)
-    func listValidInvitationCodes() {
-        print("📋 Valid invitation codes:")
-        for (index, code) in validInvitationCodes.enumerated() {
-            print("   \(index + 1). \(code)")
-        }
     }
     
     /// Debug StoreKit configuration and locale issues
@@ -492,15 +522,6 @@ class StoreKitManager: ObservableObject {
         
         // Subscription status
         print("🔐 Subscription status: \(subscriptionStatus)")
-        
-        // Lifetime access status
-        if hasLifetimeAccess() {
-            print("🎉 Lifetime access: Active")
-            print("   - Activated code: \(getActivatedInvitationCode() ?? "Unknown")")
-            print("   - Activated date: \(getLifetimeAccessActivatedDate() ?? Date())")
-        } else {
-            print("🎉 Lifetime access: Inactive")
-        }
         
         // Error status
         if let currentError = error {
@@ -598,49 +619,6 @@ class StoreKitManager: ObservableObject {
         print("======================================")
     }
     
-    // MARK: - Invitation Code Methods
-    
-    /// Validate an invitation code and activate lifetime access if valid
-    func validateInvitationCode(_ code: String) -> Bool {
-        let trimmedCode = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        let isValid = validInvitationCodes.contains(trimmedCode)
-        
-        if isValid {
-            // Store the activation in UserDefaults
-            UserDefaults.standard.set(true, forKey: "lifetimeAccessActivated")
-            UserDefaults.standard.set(trimmedCode, forKey: "activatedInvitationCode")
-            UserDefaults.standard.set(Date(), forKey: "lifetimeAccessActivatedDate")
-            
-            // Update subscription status
-            subscriptionStatus = .active
-        }
-        
-        return isValid
-    }
-    
-    /// Check if user has activated lifetime access via invitation code
-    func hasLifetimeAccess() -> Bool {
-        return UserDefaults.standard.bool(forKey: "lifetimeAccessActivated")
-    }
-    
-    /// Get the activated invitation code
-    func getActivatedInvitationCode() -> String? {
-        return UserDefaults.standard.string(forKey: "activatedInvitationCode")
-    }
-    
-    /// Get the date when lifetime access was activated
-    func getLifetimeAccessActivatedDate() -> Date? {
-        return UserDefaults.standard.object(forKey: "lifetimeAccessActivatedDate") as? Date
-    }
-    
-    /// Reset lifetime access (for testing purposes)
-    func resetLifetimeAccess() {
-        UserDefaults.standard.removeObject(forKey: "lifetimeAccessActivated")
-        UserDefaults.standard.removeObject(forKey: "activatedInvitationCode")
-        UserDefaults.standard.removeObject(forKey: "lifetimeAccessActivatedDate")
-        print("🔄 Lifetime access reset")
-    }
-    
     /// Quick test function to check StoreKit setup
     func quickStoreKitTest() {
         print("🧪 Quick StoreKit Test")
@@ -656,9 +634,6 @@ class StoreKitManager: ObservableObject {
         
         // Test subscription status
         print("🔐 Subscription: \(subscriptionStatus)")
-        
-        // Test lifetime access
-        print("🎉 Lifetime Access: \(hasLifetimeAccess() ? "Active" : "Inactive")")
         
         print("======================")
         
@@ -703,9 +678,6 @@ class StoreKitManager: ObservableObject {
         // Check subscription status
         print("🔐 Subscription status: \(subscriptionStatus)")
         
-        // Check lifetime access
-        print("🎉 Lifetime access: \(hasLifetimeAccess() ? "Available" : "Not activated")")
-        
         // Overall readiness
         let isReady = !isSimulatorEnvironment() && subscriptions.count > 0
         print("✅ Production Ready: \(isReady ? "YES" : "NO")")
@@ -745,6 +717,7 @@ enum StoreKitError: LocalizedError {
     case purchaseFailed(Error)
     case restoreFailed(Error)
     case statusCheckFailed(Error)
+    case networkUnavailable
     
     var errorDescription: String? {
         switch self {
@@ -764,6 +737,8 @@ enum StoreKitError: LocalizedError {
             return "恢复购买失败: \(error.localizedDescription)"
         case .statusCheckFailed(let error):
             return "检查订阅状态失败: \(error.localizedDescription)"
+        case .networkUnavailable:
+            return "网络不可用"
         }
     }
 } 

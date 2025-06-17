@@ -9,9 +9,15 @@ struct SubscriptionStatusView: View {
         NavigationView {
             VStack(spacing: 20) {
                 // Status Icon
-                Image(systemName: storeManager.subscriptionStatus == .active ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .font(.system(size: 60))
-                    .foregroundColor(storeManager.subscriptionStatus == .active ? .green : .red)
+                if !storeManager.isInitialized {
+                    Image(systemName: "wifi.slash")
+                        .font(.system(size: 60))
+                        .foregroundColor(.orange)
+                } else {
+                    Image(systemName: storeManager.subscriptionStatus == .active ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(storeManager.subscriptionStatus == .active ? .green : .red)
+                }
                 
                 // Status Text
                 Text(getStatusTitle())
@@ -23,22 +29,15 @@ struct SubscriptionStatusView: View {
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                 
-                // Additional Info
-                if storeManager.hasLifetimeAccess() {
-                    VStack(spacing: 8) {
-                        Text("激活码: \(storeManager.getActivatedInvitationCode() ?? "未知")")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        if let date = storeManager.getLifetimeAccessActivatedDate() {
-                            Text("激活时间: \(formattedDate(date))")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                // Initialize button if not initialized
+                if !storeManager.isInitialized {
+                    Button("初始化订阅状态") {
+                        Task {
+                            await storeManager.retryInitialization()
                         }
                     }
-                    .padding()
-                    .background(Color.secondary.opacity(0.1))
-                    .cornerRadius(8)
+                    .buttonStyle(.bordered)
+                    .padding(.top)
                 }
                 
                 Spacer()
@@ -67,10 +66,20 @@ struct SubscriptionStatusView: View {
                     }
                 }
             }
+            .onAppear {
+                // Initialize StoreKit when view appears
+                Task {
+                    await storeManager.initialize()
+                }
+            }
         }
     }
     
     private func getStatusTitle() -> String {
+        if !storeManager.isInitialized {
+            return "未初始化"
+        }
+        
         switch storeManager.subscriptionStatus {
         case .active:
             return "订阅已激活"
@@ -82,26 +91,18 @@ struct SubscriptionStatusView: View {
     }
     
     private func getStatusDescription() -> String {
+        if !storeManager.isInitialized {
+            return "订阅状态尚未初始化。请点击下方按钮初始化或检查网络连接。"
+        }
+        
         switch storeManager.subscriptionStatus {
         case .active:
-            if storeManager.hasLifetimeAccess() {
-                return "您已通过邀请码获得终生订阅，可以享受所有高级功能。"
-            } else {
-                return "您的订阅已激活，可以享受所有高级功能。"
-            }
+            return "您的订阅已激活，可以享受所有高级功能。"
         case .inactive:
             return "您当前没有活跃的订阅。请升级到Pro版本以解锁所有功能。"
         case .unknown:
             return "无法确定订阅状态，请检查网络连接后重试。"
         }
-    }
-    
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        formatter.locale = Locale(identifier: "zh_CN")
-        return formatter.string(from: date)
     }
 }
 

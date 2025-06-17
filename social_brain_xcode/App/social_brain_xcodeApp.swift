@@ -86,7 +86,16 @@ class FeatureFlagManager: ObservableObject {
         if !requireSubscriptionForProFeatures {
             return true
         }
-        return StoreKitManager.shared.subscriptionStatus == .active
+        
+        // Check if StoreKit is initialized and has network connectivity
+        let storeManager = StoreKitManager.shared
+        if !storeManager.isInitialized {
+            // If StoreKit is not initialized yet, assume no subscription
+            // This prevents network errors during app startup
+            return false
+        }
+        
+        return storeManager.subscriptionStatus == .active
     }
     
     // MARK: - Developer Methods (for testing)

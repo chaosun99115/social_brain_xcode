@@ -3,6 +3,7 @@ import CloudKit
 import CoreData
 import Combine
 import UIKit
+import Network
 
 @MainActor
 class ICloudSyncManager: ObservableObject {
@@ -14,10 +15,13 @@ class ICloudSyncManager: ObservableObject {
     @Published var lastSyncError: Error?
     @Published var isCheckingAccount = false
     @Published var accountStatus: CKAccountStatus = .couldNotDetermine
+    @Published var isNetworkAvailable = true
     
     // MARK: - Private Properties
     private var persistenceController: PersistenceController
     private var cancellables = Set<AnyCancellable>()
+    private let networkMonitor = NWPathMonitor()
+    private let networkQueue = DispatchQueue(label: "NetworkMonitor")
     
     // Add debouncing for remote changes
     private var remoteChangeDebounceTimer: Timer?
@@ -28,6 +32,11 @@ class ICloudSyncManager: ObservableObject {
     private var lastCloudKitEventType: NSPersistentCloudKitContainer.EventType?
     private var lastCloudKitEventTime: Date = Date()
     private let cloudKitEventDebounceInterval: TimeInterval = 0.5 // 0.5 second debounce for CloudKit events
+    
+    // Add retry tracking for network errors
+    private var networkErrorRetryCount = 0
+    private let maxNetworkRetries = 3
+    private var networkErrorRetryTimer: Timer?
     
     // MARK: - Sync Status Enum
     enum SyncStatus: Equatable {
@@ -53,6 +62,7 @@ class ICloudSyncManager: ObservableObject {
     // MARK: - Initialization
     private init() {
         self.persistenceController = PersistenceController.shared
+        setupNetworkMonitoring()
         setupObservers()
         loadCurrentStatus()
     }
@@ -122,6 +132,45 @@ class ICloudSyncManager: ObservableObject {
             return .completed
         case .failed(let error):
             return .failed(error)
+        }
+    }
+    
+    // MARK: - Network Monitoring
+    private func setupNetworkMonitoring() {
+        networkMonitor.pathUpdateHandler = { [weak self] path in
+            DispatchQueue.main.async {
+                let wasAvailable = self?.isNetworkAvailable ?? true
+                self?.isNetworkAvailable = path.status == .satisfied
+                
+                // If network becomes available and we have pending retries, attempt sync
+                if !wasAvailable && self?.isNetworkAvailable == true {
+                    self?.handleNetworkRestored()
+                }
+            }
+        }
+        networkMonitor.start(queue: networkQueue)
+    }
+    
+    private func handleNetworkRestored() {
+        // Reset retry count when network is restored
+        networkErrorRetryCount = 0
+        
+        // If user wants sync enabled, try to re-enable it
+        let userWantsSync = UserDefaults.standard.bool(forKey: "UserWantsCloudKitSync")
+        if userWantsSync && !isCloudKitEnabled {
+            Task {
+                await retryEnableSyncAfterNetworkRestore()
+            }
+        }
+    }
+    
+    private func retryEnableSyncAfterNetworkRestore() async {
+        do {
+            try await toggleCloudKitSync(true)
+        } catch {
+            // If it still fails, just log the error but don't show it to user
+            // since network just came back and might need time to stabilize
+            print("⚠️ ICloudSyncManager: Failed to re-enable sync after network restore: \(error)")
         }
     }
     

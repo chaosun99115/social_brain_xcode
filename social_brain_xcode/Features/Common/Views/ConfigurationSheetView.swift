@@ -57,19 +57,13 @@ struct ConfigurationSheetView: View {
     @StateObject private var persistenceController = PersistenceController.shared
     
     // Configuration options
-    @State private var isICloudSyncEnabled = false
     @State private var showingSampleDataDialog = false
     @State private var showingProUpgrade = false
     @State private var showingFaceIDError = false
     @State private var faceIDError: String?
     @State private var isAuthenticating = false
-    @State private var showingSyncError = false
-    @State private var syncError: Error?
-    @State private var isCheckingICloud = false
-    @State private var iCloudAccountStatus: CKAccountStatus = .couldNotDetermine
     
     // Add state to track pending actions
-    @State private var pendingICloudSyncAction: Bool?
     @State private var pendingFaceIDAction: Bool?
     
     // Add state for subscription management
@@ -124,12 +118,10 @@ struct ConfigurationSheetView: View {
                 showingFaceIDError: $showingFaceIDError,
                 showingRestoreAlert: $showingRestoreAlert,
                 showingSubscriptionError: $showingSubscriptionError,
-                showingSyncError: $showingSyncError,
                 showingSubscriptionRequirementAlert: $showingSubscriptionRequirementAlert,
                 faceIDError: faceIDError,
                 restoreResult: restoreResult,
                 subscriptionErrorMessage: subscriptionErrorMessage,
-                syncError: syncError,
                 appSettingsManager: appSettingsManager,
                 handleSampleModeSelection: handleSampleModeSelection,
                 handlePendingActions: handlePendingActions,
@@ -140,6 +132,7 @@ struct ConfigurationSheetView: View {
             // Move heavy initialization here
             checkAndIngestPrompts()
             Task {
+                await storeManager.initialize()
                 await storeManager.updateSubscriptionStatus()
             }
         }
@@ -170,17 +163,15 @@ struct ConfigurationSheetView: View {
                     Spacer()
                 }
             }
+            
+            // iCloud Sync Option - moved here and available to all users
+            ICloudSyncView()
         }
     }
     
     @ViewBuilder
     private var advancedFeaturesSection: some View {
         Section(header: Text("Pro功能")) {
-            // iCloud Sync Option
-            ICloudSyncView(onSubscriptionRequired: {
-                showingSubscriptionView = true
-            })
-
             // Face ID Toggle
             Toggle("Face ID锁定", isOn: Binding(
                 get: { appSettingsManager.isFaceIDEnabled },
@@ -259,13 +250,6 @@ struct ConfigurationSheetView: View {
     }
     
     private func handlePendingActions() {
-        if let pendingSync = pendingICloudSyncAction {
-            if isProUser {
-                handleICloudSyncToggle(pendingSync)
-            }
-            pendingICloudSyncAction = nil
-        }
-        
         if let pendingFaceID = pendingFaceIDAction {
             if isProUser {
                 if pendingFaceID {
@@ -324,6 +308,8 @@ struct ConfigurationSheetView: View {
                 return "购买正在处理中，请稍候。"
             case .unknown:
                 return "发生未知错误，请稍后重试。"
+            case .networkUnavailable:
+                return "网络连接不可用，请检查网络设置后重试。"
             case .loadFailed, .purchaseFailed, .restoreFailed, .statusCheckFailed:
                 return "操作失败：\(error.localizedDescription)"
             }
@@ -371,11 +357,6 @@ struct ConfigurationSheetView: View {
         } catch {
             print("Error switching to sample mode: \(error)")
         }
-    }
-    
-    private func handleICloudSyncToggle(_ enabled: Bool) {
-        // Implementation preserved for future development
-        // See documentation comments above for details
     }
     
     private func getPromptListViewMode() -> some View {
@@ -587,13 +568,11 @@ struct ConfigurationSheetModifiers: ViewModifier {
     @Binding var showingFaceIDError: Bool
     @Binding var showingRestoreAlert: Bool
     @Binding var showingSubscriptionError: Bool
-    @Binding var showingSyncError: Bool
     @Binding var showingSubscriptionRequirementAlert: Bool
     
     let faceIDError: String?
     let restoreResult: String?
     let subscriptionErrorMessage: String?
-    let syncError: Error?
     let appSettingsManager: AppSettingsManager
     let handleSampleModeSelection: (SampleModeConfig.ModeDefinition) async -> Void
     let handlePendingActions: () -> Void
@@ -648,28 +627,6 @@ struct ConfigurationSheetModifiers: ViewModifier {
                 }
             } message: {
                 Text(subscriptionErrorMessage ?? "发生未知错误")
-            }
-            .alert("同步错误", isPresented: $showingSyncError) {
-                Button("确定", role: .cancel) { }
-                if let error = syncError as NSError?,
-                   let _ = error.userInfo[NSLocalizedRecoverySuggestionErrorKey] as? String {
-                    Button("查看帮助") {
-                        // Show a sheet with detailed instructions
-                        // TODO: Implement a help sheet with formatted instructions
-                    }
-                }
-            } message: {
-                if let error = syncError as NSError? {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(error.localizedDescription)
-                            .font(.headline)
-                        if let recoverySuggestion = error.userInfo[NSLocalizedRecoverySuggestionErrorKey] as? String {
-                            Text(recoverySuggestion)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
             }
             .alert("尚未订阅", isPresented: $showingSubscriptionRequirementAlert) {
                 Button("取消", role: .cancel) { }
